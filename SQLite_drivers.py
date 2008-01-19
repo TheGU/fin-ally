@@ -1,6 +1,6 @@
 #*******************************************************************************************************
 # Filename: SQLite_drivers.py
-# Author: Daniel Sisco
+# Author: Daniel Sisco, Matt Van Kirk
 # Date Created: 4-20-2007
 # 
 # Abstract: This is the Model/Controller component of the FINally SQLite finance tool. This file provides driver
