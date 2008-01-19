@@ -212,9 +212,9 @@ if __name__ == '__main__':
 	MCUpdateOne(database, 'desc', 'jazz', 2)
 	
 	# EXAMPLE: get all data
-	data = MCGetData(1,-1,-1,-1)
+	data = MCGetData(database, 1, -1, -1, -1)
 	
 	# EXAMPLE: get a range of data
-	data = MCGetData(2, "date > 1002007 AND date < 1042007", -1, -1)
+	data = MCGetData(database, 2, "date > 1002007 AND date < 1042007", -1, -1)
 	
 	MCDeleteData(database, 1)
