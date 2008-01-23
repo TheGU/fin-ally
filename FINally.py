@@ -1,14 +1,14 @@
-#*******************************************************************************************************
-# Filename: FINally.py
-# Author: Daniel Sisco
+#********************************************************************
+# Filename: 	FINally.py
+# Creator: 	Daniel Sisco
+# Contributors: Daniel Sisco
 # Date Created: 4-20-2007
 # 
-# Abstract: This is the primary file for the FINally expense analysis tool. It is responsible for
-# handling read/write access to the SQLite database as well as providing a GUI interface for the user.
+# Abstract: This is the primary file for the FINally expense analysis tool.
+# It is responsible for handling read/write access to the SQLite database as
+# well as providing a GUI interface for the user.
 #
-# * Make sure the cell you've selected is the row you will delete
-# * Make the raw data column invisible or hide it somehow
-#*******************************************************************************************************
+#********************************************************************
 
 import datetime
 import os
