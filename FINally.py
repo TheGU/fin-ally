@@ -1,3 +1,5 @@
+
+#!/usr/bin/env python
 #********************************************************************
 # Filename: 	FINally.py
 # Creator: 	Daniel Sisco
@@ -17,11 +19,8 @@ import re
 import sys
 import wx
 import wx.calendar
-from SQLite_drivers import * 
+from dbDrivers import * 
 
-#********************************************************************
-# Global variables, structures, and definitions
-#********************************************************************
 version = "1.0.0"
 database = "FINally_data.db"
 users = ['rachel','daniel']

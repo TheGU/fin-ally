@@ -1,67 +1,32 @@
-#*******************************************************************************************************
-# Filename: SQLite_drivers.py
-# Author: Daniel Sisco, Matt Van Kirk
-# Date Created: 4-20-2008
+#!/usr/bin/env python
+
+#********************************************************************
+# Filename: 	dbDrivers.py
+# Creator: 	Daniel Sisco
+# Contributors: Daniel Sisco, Matt Van Kirk
+# Date Created: 4-20-2007
 # 
-# Abstract: This is the Model/Controller component of the FINally SQLite finance tool. This file provides driver
-# level functions for data manipulation that can be called by the FINally View component (Model-functionality). This
-# file is also responsible for post processing and manipulating data before passing it back to the View
-# (Controller-functionality). 
-#*******************************************************************************************************
+# Abstract: This is the Model/Controller component of the FINally SQLite finance tool.
+# This file provides driver level functions for data manipulation that can be called
+# by the FINally View component (Model-functionality). This file is also responsible
+# for post processing and manipulating data before passing it back to the View
+# (Controller-functionality).
+#
+# Version History:  See repository
+#********************************************************************
 
 import sqlite3
 import re
+from SQLiteCommands import *
 
-#********************************************************************
 database = 'dummy.db'
 data = []
-
-#********************************************************************
-SQLDEF_EXPENSES = """
-CREATE TABLE IF NOT EXISTS exp (
-id INTEGER PRIMARY KEY,
-who TEXT,
-amount NUMBER,
-date DATE,
-desc TEXT
-)
-"""
-SQLDEF_DELETE = """
-DELETE FROM exp
-WHERE %s = id
-"""
-SQLDEF_INSERT_EXPENSES = """
-INSERT INTO exp (who, amount, date, desc) 
-VALUES ('%s', '%f', '%s', '%s')
-"""
-SQLDEF_GET_ALL = """
-SELECT * from exp
-"""
-SQLDEF_GET_RANGE = """
-SELECT * FROM exp
-WHERE %s
-"""
-SQLDEF_GET_SOME = """
-SELECT (%s) from exp
-WHERE (%s)
-"""
-SQLDEF_UPDATE = """
-UPDATE exp
-SET %s = '%s'
-WHERE id = %s
-"""
-
-#*******************************************************************************************************
-#					    GLOBAL FUNCTIONS
-#*******************************************************************************************************
 	
-#********************************************************************
-# MCDeleteData
-#
-# This function should accept an entry id and delete the data from the
-# database at that location.
 #********************************************************************	
 def MCDeleteData(database, id):
+	"""This function should accept an entry id and delete the data from the
+	database at that location."""
+	
 	(cu, db) = LinkToDatabase(database)
 	
 	if(0 != id):
@@ -74,15 +39,13 @@ def MCDeleteData(database, id):
 	CloseDatabase(db)
 	
 #********************************************************************
-# MCGetData
-#
-# This function returns all data in the current database. The SQLite
-# functions return data in the form of a 2-D tuple, which is immutable.
-# We convert to a 2-D list, which is mutable data. This fcn also takes
-# a 'range' argument which specifies if ALL data is required, or just a
-# certain date range.
-#********************************************************************
 def MCGetData(database, type, arg1, arg2, arg3):
+	"""This function returns all data in the current database. The SQLite
+	functions return data in the form of a 2-D tuple, which is immutable.
+	We convert to a 2-D list, which is mutable data. This fcn also takes
+	a 'range' argument which specifies if ALL data is required, or just a
+	certain date range."""
+	
 	rawData = []
 	
 	# create database connection
@@ -115,12 +78,12 @@ def MCGetData(database, type, arg1, arg2, arg3):
 	return rawData
 
 #********************************************************************
-# MCInitDatabase - this will create the appropriate tables inside the
-# datbase specified via _databaseName_ if necessary. This should be the
-# first function called from a View component that needs access to a certain
-# database.
-#********************************************************************
 def MCInitDatabase(databaseName):
+	"""This will create the appropriate tables inside the
+	datbase specified via _databaseName_ if necessary. This should be the
+	first function called from a View component that needs access to a certain
+	database."""
+	
 	database = databaseName
 	
 	(cu, db) = LinkToDatabase(database)
@@ -128,8 +91,6 @@ def MCInitDatabase(databaseName):
 	CommitChangesToDatabase(db)
 	CloseDatabase(db)
 	
-#********************************************************************
-# MCInsertData - accepts data to insert into the EXPENSES table.
 #********************************************************************    
 def MCInsertData(database, who, amount, date, desc):
 	(cu, db) = LinkToDatabase(database)
@@ -142,9 +103,6 @@ def MCInsertData(database, who, amount, date, desc):
 	CloseDatabase(db)
 
 #********************************************************************
-# MCUpdateOne - for entries matching 'id', this fcn replaces value of
-# 'target' with 'newValue'
-#********************************************************************
 def MCUpdateOne(database, target, newValue, id):
 	(cu, db) = LinkToDatabase(database)
 	
@@ -153,10 +111,6 @@ def MCUpdateOne(database, target, newValue, id):
 	
 	CommitChangesToDatabase(db)
 	CloseDatabase(db)
-
-#*******************************************************************************************************
-#					    LOCAL FUNCTIONS
-#*******************************************************************************************************
 
 #********************************************************************
 def CloseDatabase(db):
@@ -172,15 +126,11 @@ def CreateDatabaseTables(cu):
 	cu.execute(SQLDEF_EXPENSES)
 	
 #********************************************************************
-#
-# LinkToDatabase
-#
-# This function will try to link to an existing database, and will create
-# such a database is none exists. The single argument is the name of the
-# database it is searching for.
-#
-#********************************************************************
 def LinkToDatabase(database):
+	"""This function will try to link to an existing database, and will create
+	such a database is none exists. The single argument is the name of the
+	database it is searching for."""
+	
 	# create global instance of database
 	try:
 		db = sqlite3.connect(database)
@@ -191,10 +141,7 @@ def LinkToDatabase(database):
 	cu = db.cursor()
 	return cu, db
 
-#*******************************************************************************************************
-#                                            TEST MAIN 
-#*******************************************************************************************************
-
+# Test main functionality
 if __name__ == '__main__':
 	
 	# EXAMPLE: Initialize database
