@@ -2,8 +2,7 @@
 
 #********************************************************************
 # Filename: 	dbDrivers.py
-# Creator: 	Daniel Sisco
-# Contributors: Daniel Sisco, Matt Van Kirk
+# Authors: 	Daniel Sisco, Matt Van Kirk
 # Date Created: 4-20-2007
 # 
 # Abstract: This is the Model/Controller component of the FINally SQLite finance tool.
@@ -13,17 +12,33 @@
 # (Controller-functionality).
 #
 # Version History:  See repository
+#
+# Copyright 2008 Daniel Sisco
+# This file is part of Fin-ally.
+#
+# Fin-ally is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Fin-ally is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 #********************************************************************
 
 import sqlite3
 import re
 from SQLiteCommands import *
 
-database = 'dummy.db'
+#database = 'dummy.db'
 data = []
 	
 #********************************************************************	
-def MCDeleteData(database, id):
+def dbDeleteData(database, id):
 	"""This function should accept an entry id and delete the data from the
 	database at that location."""
 	
@@ -39,7 +54,7 @@ def MCDeleteData(database, id):
 	CloseDatabase(db)
 	
 #********************************************************************
-def MCGetData(database, type, arg1, arg2, arg3):
+def dbGetData(database, type, arg1, arg2, arg3):
 	"""This function returns all data in the current database. The SQLite
 	functions return data in the form of a 2-D tuple, which is immutable.
 	We convert to a 2-D list, which is mutable data. This fcn also takes
@@ -78,7 +93,7 @@ def MCGetData(database, type, arg1, arg2, arg3):
 	return rawData
 
 #********************************************************************
-def MCInitDatabase(databaseName):
+def dbInitDatabase(databaseName):
 	"""This will create the appropriate tables inside the
 	datbase specified via _databaseName_ if necessary. This should be the
 	first function called from a View component that needs access to a certain
@@ -92,7 +107,7 @@ def MCInitDatabase(databaseName):
 	CloseDatabase(db)
 	
 #********************************************************************    
-def MCInsertData(database, who, amount, date, desc):
+def dbInsertData(database, who, amount, date, desc):
 	(cu, db) = LinkToDatabase(database)
 	
 	# TODO: check for pre-existing date/amount match, if no match, insert
@@ -103,7 +118,7 @@ def MCInsertData(database, who, amount, date, desc):
 	CloseDatabase(db)
 
 #********************************************************************
-def MCUpdateOne(database, target, newValue, id):
+def dbUpdateOne(database, target, newValue, id):
 	(cu, db) = LinkToDatabase(database)
 	
 	test = SQLDEF_UPDATE % (target, newValue, id)
@@ -141,27 +156,30 @@ def LinkToDatabase(database):
 	cu = db.cursor()
 	return cu, db
 
-# Test main functionality
-if __name__ == '__main__':
-	
+#********************************************************************
+def CreateBlankDatabase(databaseName):
 	# EXAMPLE: Initialize database
-	MCInitDatabase(database)
+	dbInitDatabase(databaseName)
 
 	# EXAMPLE: insert some data
-	MCInsertData(database, 'rachel',1.11, '01012007', 'apple')
-	MCInsertData(database, 'rachel',2.11, '01022007', 'bear')
-	MCInsertData(database, 'rachel',3.11, '01032007', 'camel')
-	MCInsertData(database, 'daniel',4.11, '01042007', 'beer')
-	MCInsertData(database, 'daniel',5.11, '01052007', 'suit')
-	MCInsertData(database, 'daniel',6.11, '01062007', 'elephant')
+	dbInsertData(databaseName, 'rachel',1.11, '01012007', 'apple')
+	dbInsertData(databaseName, 'rachel',2.11, '01022007', 'bear')
+	dbInsertData(databaseName, 'rachel',3.11, '01032007', 'camel')
+	dbInsertData(databaseName, 'daniel',4.11, '01042007', 'beer')
+	dbInsertData(databaseName, 'daniel',5.11, '01052007', 'suit')
+	dbInsertData(databaseName, 'daniel',6.11, '01062007', 'elephant')	
 
-	# EXAMPLE: update one item
-	MCUpdateOne(database, 'desc', 'jazz', 2)
-	
-	# EXAMPLE: get all data
-	data = MCGetData(database, 1, -1, -1, -1)
-	
-	# EXAMPLE: get a range of data
-	data = MCGetData(database, 2, "date > 1002007 AND date < 1042007", -1, -1)
-	
-	MCDeleteData(database, 1)
+# Test main functionality
+if __name__ == '__main__':
+	CreateBlankDatabase("SQLite_expenses.db")
+
+## EXAMPLE: update one item
+#dbUpdateOne(database, 'desc', 'jazz', 2)
+#
+## EXAMPLE: get all data
+#data = dbGetData(database, 1, -1, -1, -1)
+#
+## EXAMPLE: get a range of data
+#data = dbGetData(database, 2, "date > 1002007 AND date < 1042007", -1, -1)
+#
+#dbDeleteData(database, 1)

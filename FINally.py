@@ -1,15 +1,30 @@
-
 #!/usr/bin/env python
+
 #********************************************************************
 # Filename: 	FINally.py
-# Creator: 	Daniel Sisco
-# Contributors: Daniel Sisco
+# Authors: 	Daniel Sisco
 # Date Created: 4-20-2007
 # 
 # Abstract: This is the primary file for the FINally expense analysis tool.
 # It is responsible for handling read/write access to the SQLite database as
 # well as providing a GUI interface for the user.
 #
+# Copyright 2008 Daniel Sisco
+# This file is part of Fin-ally.
+#
+# Fin-ally is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Fin-ally is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+#********************************************************************
 #********************************************************************
 
 import datetime
@@ -19,10 +34,11 @@ import re
 import sys
 import wx
 import wx.calendar
-from dbDrivers import * 
+from dbDrivers import *
+from fileCheck import *
 
 version = "1.0.0"
-database = "FINally_data.db"
+database = "dummy.db" # this name should be clobbered by the main fcn in this file
 users = ['rachel','daniel']
 
 #********************************************************************
@@ -109,7 +125,7 @@ class EntryPage(wx.Panel):
 	def OnEnterClick(self, evt):
 		global desiredVars
 		
-		MCInsertData(database,
+		dbInsertData(database,
 			     desiredVars.desiredUser,
 			     desiredVars.desiredValue,
 			     desiredVars.desiredDate,
@@ -150,8 +166,8 @@ class CustomDataTable(wx.grid.PyGridTableBase):
 		# TODO: we need to dynamically get the real data here so that we always
 		# display the current month at startup
 		#temp = "date > %s AND date < %s" % (currMonthStart, currMonthEnd)
-		#self.localData = MCGetData(database, 2, temp, -1, -1)
-		self.localData = MCGetData(database, 1, -1, -1, -1)
+		#self.localData = dbGetData(database, 2, temp, -1, -1)
+		self.localData = dbGetData(database, 1, -1, -1, -1)
 		
 		self._rows = self.GetNumberRows()
 		self._cols = self.GetNumberCols()
@@ -186,7 +202,7 @@ class CustomDataTable(wx.grid.PyGridTableBase):
 			# match an amount
 			tempValue = float(value)
 		
-		MCUpdateOne(database, tempColumn, tempValue, tempId)
+		dbUpdateOne(database, tempColumn, tempValue, tempId)
 		self.UpdateValues()
 	
 	def GetColLabelValue(self, col):
@@ -202,7 +218,7 @@ class CustomDataTable(wx.grid.PyGridTableBase):
 
 		# TODO: We need to catch the real month here as well
 		temp = "date > %s AND date < %s" % (currMonthStart, currMonthEnd)
-		self.localData = MCGetData(database, 2, temp, -1, -1)
+		self.localData = dbGetData(database, 2, temp, -1, -1)
 		
 		# This code doesn't appear to be necessary, but is typically included in common implementations
 		# if this is re-added, a 'grid' component will need to be passed to this function.
@@ -264,7 +280,7 @@ class GraphicsPage(wx.Panel):
 	def OnDeleteClick(self, evt):
 		global selectionID
 		
-		MCDeleteData(database,selectionID)
+		dbDeleteData(database,selectionID)
 		self.table.UpdateGrid()
 
 #********************************************************************		
@@ -303,7 +319,7 @@ class GPTable(wx.grid.Grid):
 	#	"""this context menu delete will read the row out of the cursor position and then try to delete it"""
 	#	print "delete"
 	#	tempRow = self.tableBase.localData[self.GetGridCursorRow()][0]
-	#	MCDeleteData(database, tempRow)
+	#	dbDeleteData(database, tempRow)
 	#	self.UpdateGrid()
 	#	
 	#def OnCMHighlight(self, evt):
@@ -378,7 +394,7 @@ class ImportPage(wx.Panel):
 			desiredVars.desiredDesc  = line_array[2]
 			
 			# do the import
-			MCInsertData(database,
+			dbInsertData(database,
 			     desiredVars.desiredUser,
 			     desiredVars.desiredValue,
 			     desiredVars.desiredDate,
@@ -425,7 +441,7 @@ class FINallyLauncher(wx.App):
 		win.Show(True)
 		self.SetTopWindow(win)
 	
-		MCInitDatabase(database) # create (if necessary), and init database
+		dbInitDatabase(database) # create (if necessary), and init database
 		
 		return True # required during OnInit
 	
@@ -440,11 +456,13 @@ class FINallyLauncher(wx.App):
 #                                                 MAIN 
 #*******************************************************************************************************
 
-# allows temporary database name change from command line
-# TODO: this should be placed in the registry
-if (2 == len(sys.argv)):
-	database = sys.argv[1]
-	print "Database name changed"
-
-launcher = FINallyLauncher(redirect=False) # create wxApp instance with stdout/stderr redirection
-launcher.Main()
+if __name__ == '__main__':
+	"""This is the starting point for the FIN-ally application. All functionality that must occur
+	pre-GUI-start must be placed here. The final action in this main fcn should be the launch of
+	the GUI Main."""
+	
+	InitialStartup() # set up database using fileCheck utilities
+	database = GetDatabaseName()
+	
+	launcher = FINallyLauncher(redirect=False) # create wxApp instance with stdout/stderr redirection
+	launcher.Main()
