@@ -40,14 +40,17 @@ def InitialStartup():
     dbFiles = list(GetDbFiles())
     if dbFiles:
         #TODO: search for appropriate .db setup in each of these files
+        for tempFileName in dbFiles:    
+            dbNameMatch = re.findall('\\\\.+\.db$', tempFileName)
+            if dbNameMatch:
+                databaseName = dbNameMatch[0]
+                break
+            
+    if databaseName == 'dummy.db':
+        #prompt user to create a new database file
+        print "Please enter a new database name ending in '.db'\n"
+        databaseName = raw_input('database name:')
         
-        #TODO: parse the actual database name out of this path
-        databaseName = "SQLite_expenses.db";
-    else:
-        #TODO: prompt user to input a database name
-        
-        #create a new database file
-        databaseName = "SQLite_expenses.db"
         CreateBlankDatabase(databaseName)
     
 def GetDbFiles():
