@@ -40,17 +40,18 @@ def InitialStartup():
     dbFiles = list(GetDbFiles())
     if dbFiles:
         #TODO: search for appropriate .db setup in each of these files
-        for tempFileName in dbFiles:    
-            dbNameMatch = re.findall('\\\\.+\.db$', tempFileName)
+        for tempFileName in dbFiles:
+            dbNameMatch = re.search('\w+\.db$', tempFileName)
             if dbNameMatch:
-                databaseName = dbNameMatch[0]
-                break
+                databaseName = dbNameMatch.group(0)
+                break #ensures we load the first valid database
             
     if databaseName == 'dummy.db':
-        #prompt user to create a new database file
+        # Prompt user to create a new database file
         print "Please enter a new database name ending in '.db'\n"
-        databaseName = raw_input('database name:')
-        
+        databaseName = raw_input('database name: ')
+        # Strip non alpha-numeric characters out of databaseName
+        databaseName = re.sub('[^a-zA-Z0-9_.]','',databaseName)
         CreateBlankDatabase(databaseName)
     
 def GetDbFiles():
