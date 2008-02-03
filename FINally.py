@@ -38,6 +38,8 @@ from fileCheck import *
 version = "1.0.0"
 database = "dummy.db" # this name should be clobbered by the main fcn in this file
 users = ['rachel','daniel']
+months = ["January", "February", "March", "April", "May", "June", "July",
+	  "August", "September", "October", "November", "December"] 
 
 #********************************************************************
 class desiredVariables:
@@ -152,14 +154,20 @@ class EntryPage(wx.Panel):
 
 #********************************************************************		
 class CustomDataTable(wx.grid.PyGridTableBase):
-	"""This is an instance of the uninstantiated base class PyGridTableBase. Some
-	of the methods in this function must be defined, and some methods provide additional
-	functionality."""
+	"""This is an instance of the uninstantiated base class PyGridTableBase. It must contain
+	methods for actually returning or modifying data in the grid, as well as an init method
+	for populating the grid"""
+	
+	# TODO: How much control should this class have over what data is loaded? How shoulddata
+	# be specified to this class?
 	
 	dataTypes = colInfo.colType # used for custom renderers
 	
 	def __init__(self): 
 		wx.grid.PyGridTableBase.__init__(self)
+		
+		# TODO: This needs tobe cleaned up so that CustomDataTable does not have to deal
+		# with so much data specification. This should be a single fcn call for data
 		
 		# TODO: we need to dynamically get the real data here so that we always
 		# display the current month at startup
@@ -257,21 +265,19 @@ class GraphicsPage(wx.Panel):
 		
 		wx.Panel.__init__(self, parent)
 		
-		# define panel and grid controls
-		panel = wx.Panel(self) 
+		self.buttonPanel = wx.Panel(self) #define another panel for buttons and controls 
 		self.SetBackgroundColour("GREY")
-		self.deleteButton = wx.Button(panel, -1, label = "Delete", pos = (0,0))
-		# HERE - this needs to be modified to provide a month select drop-down, as well as some sort
-		# of control scheme for "searching" based on type, words, who, etc..
-		self.CategorySelect = wx.ComboBox(panel, -1, "January", choices=["January", "February", "March", "April", "May", "June", "July",
-										 "August", "September", "October", "November", "December"],
-						  pos = (700,0), style = wx.CB_DROPDOWN)
+		
+		#add controls to self.buttonPanel
+		self.deleteButton = wx.Button(self.buttonPanel, -1, label = "Delete", pos = (0,0))
+		self.CategorySelect = wx.ComboBox(self.buttonPanel, -1, months[0], choices=months,
+						  pos=(700,0), style=wx.CB_DROPDOWN)
 		
 		self.table = GPTable(self)
-		sizer = wx.BoxSizer(wx.VERTICAL)      # define new box sizer	
-		sizer.Add(self.table, 1, wx.GROW)     # add grid (resize vert and horz)
-		sizer.Add(panel, 0, wx.ALIGN_LEFT)    # add panel (no resize vert and aligned left horz)
-		self.SetSizer(sizer)
+		self.sizer = wx.BoxSizer(wx.VERTICAL)      # define new box sizer	
+		self.sizer.Add(self.table, 1, wx.GROW)     # add grid (resize vert and horz)
+		self.sizer.Add(self.buttonPanel, 0, wx.ALIGN_LEFT)    # add panel (no resize vert and aligned left horz)
+		self.SetSizer(self.sizer)
 		
 		self.Bind(wx.EVT_BUTTON, self.OnDeleteClick, self.deleteButton)
 		
@@ -283,11 +289,20 @@ class GraphicsPage(wx.Panel):
 
 #********************************************************************		
 class GPTable(wx.grid.Grid):
+	"""This is primarily a display class, and it is responsible for maintaining the grid table
+	itself. It is not responsible for data management."""
+		
+	#TODO: determine how much control to give this over the data we want to see. Consider adding
+	#another class for the data itself, a class that would be passed to everything and modified
+	#in many places. This would allow a future calculation object to make changes and force them
+	#to show up in the graphics page.
 		
 	def __init__(self, parent):
 		wx.grid.Grid.__init__(self, parent)
 		
+		#TODO: consider passing a string describing what data to pull from SQL db?
 		self.tableBase = CustomDataTable()		# define the base
+		
 		self.SetTable(self.tableBase) 			# set the grid table
 		self.SetColFormatFloat(2,-1,2) 			# formats the monetary entries correctly
 		self.AutoSize() # auto-sizing here ensures that scrollbars will always be present
@@ -401,50 +416,54 @@ class ImportPage(wx.Panel):
 		file_object.close() # close file object
 #********************************************************************
 class FINallyFrame(wx.Frame):
+	"""This class inherts wx.Frame methods, and is the root of all the GUI-based features.
+	It should be invoked from the wx.App class only."""
 	
-	def __init__(self, parent, id, title, pos=wx.DefaultPosition,
-		     size=(900,400), style=wx.DEFAULT_FRAME_STYLE):
+	def __init__(self, title):
+		self.size = (900,400)
 		
-		wx.Frame.__init__(self, parent, id, title, pos, size, style)
+		wx.Frame.__init__(self,None,id=-1,title=title,pos=wx.DefaultPosition,
+				  size=self.size,style=wx.DEFAULT_FRAME_STYLE)
+		
 		self.SetBackgroundColour("GREY")
 		
-		panel = wx.Panel(self) # basically just a container for the notebook
-		notebook = wx.Notebook(panel, size = self.GetSize())
+		self.panel = wx.Panel(self) # basically just a container for the notebook
+		self.notebook = wx.Notebook(self.panel, size=self.size)
 
-		gPage = GraphicsPage(notebook)
-		ePage = EntryPage(notebook, gPage)
-		tPage = ImportPage(notebook)
+		# TODO: graphics page should be it's own object
+		self.gPage = GraphicsPage(self.notebook)
+		self.ePage = EntryPage(self.notebook, self.gPage)
+		self.tPage = ImportPage(self.notebook)
 		
-		notebook.AddPage(ePage, "Expense Entry")	
-		notebook.AddPage(gPage, "Graphics")
-		notebook.AddPage(tPage, "Import")
+		self.notebook.AddPage(self.ePage, "Expense Entry")	
+		self.notebook.AddPage(self.gPage, "Graphics")
+		self.notebook.AddPage(self.tPage, "Import")
 
 		# arrange notebook windows in a simple box sizer
-		sizer = wx.BoxSizer()
-		sizer.Add(notebook, 1, wx.EXPAND)
-		panel.SetSizer(sizer)	
+		self.sizer = wx.BoxSizer()
+		self.sizer.Add(self.notebook, 1, wx.EXPAND)
+		self.panel.SetSizer(self.sizer)
+		
+	def SetBackgroundColor(colorString):
+		self.SetBackgroundColour(colorString)
 		
 #********************************************************************
 class FINallyLauncher(wx.App):
-
-	title = "FINally version " + version
+	"""This class inherts wx.App methods, and should be the first object created during FINally
+	operation."""
 	
 	def OnInit(self):
 		
+		self.title = "FINally version " + version
 		# (310, 300) is a good size for just the entry window
-		# 
 		# create and make visible a "top level window" of type wxFrame
-		win = FINallyFrame(None, -1, self.title,
-				   style=wx.DEFAULT_FRAME_STYLE|wx.NO_FULL_REPAINT_ON_RESIZE)
-		win.Show(True)
-		self.SetTopWindow(win)
-	
-		dbInitDatabase(database) # create (if necessary), and init database
+		self.win = FINallyFrame(self.title)
+		self.win.Show(True)
+		self.SetTopWindow(self.win)
 		
 		return True # required during OnInit
 	
 	def Main(self):
-		
 		self.MainLoop() # begin program heartbeat
 	
 	def OnExit(self):

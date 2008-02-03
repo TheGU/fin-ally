@@ -31,6 +31,7 @@ from dbDrivers import *
 
 databaseName = "dummy.db"
 
+#********************************************************************
 def InitialStartup():
     """This function returns the name of a properly formatted database from
     the Fin-ally path. It will use the first database it finds if there are more
@@ -54,16 +55,19 @@ def InitialStartup():
         databaseName = re.sub('[^a-zA-Z0-9_.]','',databaseName)
         CreateBlankDatabase(databaseName)
     
+#********************************************************************
 def GetDbFiles():
     """This function returns a list of all *.db files in a directory"""
     for match in glob.glob(os.path.join(GetCurrentDir(), '*.db')):
         yield match
-    
+
+#********************************************************************
 def GetCurrentDir():
     """This function returns the absolute path to this Python script"""
     pathname = os.path.dirname(sys.argv[0])
     return(os.path.abspath(pathname))
 
+#********************************************************************
 def GetDatabaseName():
     """This function returns the name of either the pre-existing database, or the
     database the user specifies."""
