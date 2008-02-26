@@ -86,11 +86,10 @@ class EntryPage(wx.Panel):
 	"""This class contains all necessary methods for user interactions and data
 	management related to the expense entry page."""
 	
-	def __init__(self, parent, grid):
-		
+	def __init__(self, parent, grid, localExpenses):
 		wx.Panel.__init__(self, parent)
 		self.grid = grid
-		self.database = genericExpense()
+		self.expense = localExpenses
 
 		# control definitions
 		self.enterButton = wx.Button(self, -1, label = "enter expense", pos = (10,10))
@@ -131,10 +130,10 @@ class EntryPage(wx.Panel):
 		into the database"""
 		global desiredVars
 		
-		self.database.setData(desiredVars.desiredUser,
-				      desiredVars.desiredValue,
-				      desiredVars.desiredDate,
-				      desiredVars.desiredDesc)
+		self.expense.setData(desiredVars.desiredUser,
+				     desiredVars.desiredValue,
+				     desiredVars.desiredDate,
+				     desiredVars.desiredDesc)
 		
 		# clear the buttons so they don't show the old info
 		self.valueEntry.SetValue("0.00")
@@ -167,11 +166,11 @@ class CustomDataTable(wx.grid.PyGridTableBase):
 	
 	dataTypes = colInfo.colType # used for custom renderers
 	
-	def __init__(self):
+	def __init__(self, localExpenses):
 		# TODO: This needs to be cleaned up so that CustomDataTable does not have to
 		# deal with so much data specification. This should be a single fcn call for
-		# data  
-		self.localData = genericExpense()
+		# data
+		self.localData = localExpenses
 		self.localData.loadData(1, -1, -1, -1)
 		
 		self._rows = self.GetNumberRows()
@@ -264,18 +263,20 @@ class CustomDataTable(wx.grid.PyGridTableBase):
 #********************************************************************
 class GraphicsPage(wx.Panel):
 	
-	def __init__(self, parent):
+	def __init__(self, parent, localExpenses):
 		wx.Panel.__init__(self, parent)
-		
+	
 		self.buttonPanel = wx.Panel(self) #define another panel for buttons and controls 
 		self.SetBackgroundColour("GREY")
+
+		self.expenses = localExpenses
 
 		#add controls to self.buttonPanel
 		self.deleteButton   = wx.Button(self.buttonPanel, -1, label = "Delete", pos = (0,0))
 		self.CategorySelect = wx.ComboBox(self.buttonPanel, -1, months[0], choices=months,
 						  pos=(700,0), style=wx.CB_DROPDOWN)
 
-		self.table = GPTable(self)
+		self.table = GPTable(self, self.expenses)
 		self.sizer = wx.BoxSizer(wx.VERTICAL)      # define new box sizer	
 		self.sizer.Add(self.table, 1, wx.GROW)     # add grid (resize vert and horz)
 		self.sizer.Add(self.buttonPanel, 0, wx.ALIGN_LEFT)    # add panel (no resize vert and aligned left horz)
@@ -286,8 +287,7 @@ class GraphicsPage(wx.Panel):
 	def OnDeleteClick(self, evt):
 		global selectionID
 
-		#DAN - resolve this
-		dbDeleteData(database,selectionID)
+		self.expenses.deleteData(selectionID)
 		self.table.UpdateGrid()
 
 #********************************************************************		
@@ -300,11 +300,13 @@ class GPTable(wx.grid.Grid):
 	#in many places. This would allow a future calculation object to make changes and force them
 	#to show up in the graphics page.
 		
-	def __init__(self, parent):
+	def __init__(self, parent, localExpenses):
 		wx.grid.Grid.__init__(self, parent)
 		
+		self.expenses = localExpenses
+		
 		#TODO: consider passing a string describing what data to pull from SQL db?
-		self.tableBase = CustomDataTable()		# define the base
+		self.tableBase = CustomDataTable(self.expenses)	# define the base
 		
 		self.SetTable(self.tableBase) 			# set the grid table
 		self.SetColFormatFloat(2,-1,2) 			# formats the monetary entries correctly
@@ -334,9 +336,9 @@ class GPTable(wx.grid.Grid):
 #********************************************************************		
 class ImportPage(wx.Panel):
 	
-	def __init__(self, parent):
-		
-		wx.Panel.__init__(self, parent) 
+	def __init__(self, parent, localExpenses):
+		wx.Panel.__init__(self, parent)
+		self.expenses = localExpenses
 		
 		self.importButton = wx.Button(self, -1, label = "import expenses", pos = (10,10))
 		self.Bind(wx.EVT_BUTTON, self.OnImportClick, self.importButton)
@@ -353,7 +355,7 @@ class ImportPage(wx.Panel):
 	
 	def OnImportClick(self, evt):
 		global desiredVars
-		
+
 		print "begin import"
 		# spawn a file browser and ask user to locate import file
 		wildcard = "text file (*.txt)|*.txt|" \
@@ -373,44 +375,44 @@ class ImportPage(wx.Panel):
 		for line in file_object:
 			line = line.rstrip('\n') 	#strip trailing newline
 			line_array = line.split(',') 	#split on commas
-			
+	
 			# load global desiredVars structure
 			desiredVars.desiredValue = float(line_array[0])
 			desiredVars.desiredDate  = line_array[1]
 			# remove all non-standard characters that the import will choke on
 			line_array[2] = re.sub('\'','', line_array[2])
 			desiredVars.desiredDesc  = line_array[2]
-			
-			# do the import
-			dbInsertData(database,
-			     desiredVars.desiredUser,
-			     desiredVars.desiredValue,
-			     desiredVars.desiredDate,
-			     desiredVars.desiredDesc)
-		
+
+			self.expenses.getData(desiredVars.desiredUser,
+					      desiredVars.desiredValue,
+					      desiredVars.desiredDate,
+					      desiredVars.desiredDesc)
+
 		file_object.close() # close file object
 #********************************************************************
+
 class AppMainFrame(wx.Frame):
 	"""This class inherts wx.Frame methods, and is the root of all the GUI features.
 	It should be invoked from the wx.App class only."""
 	
 	def __init__(self, title):
 		self.size = (900,400)
-		
+
 		wx.Frame.__init__(self,None,id=-1,title=title,pos=wx.DefaultPosition,
 				  size=self.size,style=wx.DEFAULT_FRAME_STYLE)
-		
+
 		self.SetBackgroundColour("GREY")
-		
+
+		# This expense object is the master object for all sub-classes of AppMainFrame
+		self.masterExpenses = genericExpense()
+
 		self.panel    = wx.Panel(self) # basically just a container for the notebook
 		self.notebook = wx.Notebook(self.panel, size=self.size)
 
-		self.gPage = GraphicsPage(self.notebook)
-		# the entry page will push data back into the graphics page so it inherits
-		# the graphics page
-		self.ePage = EntryPage(self.notebook, self.gPage)
-		self.tPage = ImportPage(self.notebook) 
-		
+		self.gPage = GraphicsPage(self.notebook, self.masterExpenses)
+		self.ePage = EntryPage(self.notebook, self.gPage, self.masterExpenses)
+		self.tPage = ImportPage(self.notebook, self.masterExpenses) 
+
 		self.notebook.AddPage(self.ePage, "Expense Entry")	
 		self.notebook.AddPage(self.gPage, "Graphics")
 		self.notebook.AddPage(self.tPage, "Import")
@@ -419,10 +421,10 @@ class AppMainFrame(wx.Frame):
 		self.sizer = wx.BoxSizer()
 		self.sizer.Add(self.notebook, 1, wx.EXPAND)
 		self.panel.SetSizer(self.sizer)
-		
+
 	def SetBackgroundColor(colorString):
 		self.SetBackgroundColour(colorString)
-		
+
 #********************************************************************
 class AppLauncher(wx.App):
 	"""This class inherts wx.App methods, and should be the first object created during FINally
