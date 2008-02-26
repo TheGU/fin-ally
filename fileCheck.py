@@ -32,7 +32,7 @@ from dbDrivers import *
 databaseName = "dummy.db"
 
 #********************************************************************
-def InitialStartup():
+def SetupInitialDatabase():
     """This function returns the name of a properly formatted database from
     the Fin-ally path. It will use the first database it finds if there are more
     than one."""
@@ -45,6 +45,10 @@ def InitialStartup():
             dbNameMatch = re.search('\w+\.db$', tempFileName)
             if dbNameMatch:
                 databaseName = dbNameMatch.group(0)
+                # push the database name into the expense object
+                tempExpense = genericExpense()
+                tempExpense.setDatabaseName(databaseName)
+                
                 break #ensures we load the first valid database
             
     if databaseName == 'dummy.db':
@@ -66,10 +70,3 @@ def GetCurrentDir():
     """This function returns the absolute path to this Python script"""
     pathname = os.path.dirname(sys.argv[0])
     return(os.path.abspath(pathname))
-
-#********************************************************************
-def GetDatabaseName():
-    """This function returns the name of either the pre-existing database, or the
-    database the user specifies."""
-    global databaseName
-    return databaseName

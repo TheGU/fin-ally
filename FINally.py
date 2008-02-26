@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 #********************************************************************
-# Filename: 	   FINally.py
-# Authors: 	      Daniel Sisco
-# Date Created:   4-20-2007
+# Filename: 	   	FINally.py
+# Authors: 		Daniel Sisco
+# Date Created:   	4-20-2007
 # 
 # Abstract: This is the primary file for the FINally expense analysis tool. It is responsible for
 # handling read/write access to the SQLite database as well as providing a GUI interface for the user.
@@ -46,10 +46,10 @@ class desiredVariables:
 	"""This class contains the variables required for entry into the EXPENSES
 	table of the assoiated FINally database."""
 
-	desiredUser 		= users[0]
-	desiredDate 		= '01012007'
-	desiredValue 		= float(1.11)
-	desiredDesc 		= ""
+	desiredUser = users[0]
+	desiredDate = '01012007'
+	desiredValue = float(1.11)
+	desiredDesc = ""
 
 #********************************************************************	
 class columnInfo:
@@ -83,12 +83,14 @@ currMonthEnd = str(masterDate.month) + '31' + str(masterDate.year)
 
 #********************************************************************
 class EntryPage(wx.Panel):
+	"""This class contains all necessary methods for user interactions and data
+	management related to the expense entry page."""
 	
 	def __init__(self, parent, grid):
 		
 		wx.Panel.__init__(self, parent)
-		
 		self.grid = grid
+		self.database = genericExpense()
 
 		# control definitions
 		self.enterButton = wx.Button(self, -1, label = "enter expense", pos = (10,10))
@@ -112,24 +114,27 @@ class EntryPage(wx.Panel):
 		self.Bind(wx.EVT_TEXT, self.OnDescEntry, self.descEntry)
 
 	def OnCalSelChanged(self, evt):
+		"""Respond to a user command to change the calendar date"""
 		global desiredVars
 		
 		date = evt.PyGetDate() # grab selected date
 		desiredVars.desiredDate = date.strftime("%m%d%Y")
 
 	def OnDescEntry(self, evt):
+		"""Respond to a user command to change the expense description"""
 		global desiredVars
 	
 		desiredVars.desiredDesc = evt.GetString()
 	
 	def OnEnterClick(self, evt):
+		"""Respond to a user command to actually enter expense information
+		into the database"""
 		global desiredVars
 		
-		dbInsertData(database,
-			     desiredVars.desiredUser,
-			     desiredVars.desiredValue,
-			     desiredVars.desiredDate,
-			     desiredVars.desiredDesc)
+		self.database.setData(desiredVars.desiredUser,
+				      desiredVars.desiredValue,
+				      desiredVars.desiredDate,
+				      desiredVars.desiredDesc)
 		
 		# clear the buttons so they don't show the old info
 		self.valueEntry.SetValue("0.00")
@@ -138,11 +143,13 @@ class EntryPage(wx.Panel):
 		self.grid.table.UpdateGrid()
 	
 	def OnListBox(self, evt):
+		"""Respond to a user command to change the tool user"""
 		global desiredVars
 		
 		desiredVars.desiredUser = evt.GetString()
 	
 	def OnValueEntry(self, evt):
+		"""Respond to a user command to enter a new expense"""
 		global desiredVars
 		
 		amount = evt.GetString()
@@ -158,31 +165,25 @@ class CustomDataTable(wx.grid.PyGridTableBase):
 	methods for actually returning or modifying data in the grid, as well as an init method
 	for populating the grid"""
 	
-	# TODO: How much control should this class have over what data is loaded? How shoulddata
-	# be specified to this class?
-	
 	dataTypes = colInfo.colType # used for custom renderers
 	
-	def __init__(self): 
-		wx.grid.PyGridTableBase.__init__(self)
-		
-		# TODO: This needs tobe cleaned up so that CustomDataTable does not have to deal
-		# with so much data specification. This should be a single fcn call for data
-		
-		# TODO: we need to dynamically get the real data here so that we always
-		# display the current month at startup
-		#temp = "date > %s AND date < %s" % (currMonthStart, currMonthEnd)
-		#self.localData = dbGetData(database, 2, temp, -1, -1)
-		self.localData = dbGetData(database, 1, -1, -1, -1)
+	def __init__(self):
+		# TODO: This needs to be cleaned up so that CustomDataTable does not have to
+		# deal with so much data specification. This should be a single fcn call for
+		# data  
+		self.localData = genericExpense()
+		self.localData.loadData(1, -1, -1, -1)
 		
 		self._rows = self.GetNumberRows()
 		self._cols = self.GetNumberCols()
 		
+		wx.grid.PyGridTableBase.__init__(self)
+		
 	def GetNumberRows(self):
-		return len(self.localData)
+		return len(self.localData.expenseList)
 	
 	def GetNumberCols(self):
-		return len(self.localData[0])
+		return len(self.localData.expenseList[0])
 	
 	def IsEmptyCell(self, row, col):
 		return False
@@ -191,11 +192,11 @@ class CustomDataTable(wx.grid.PyGridTableBase):
 		""" Stores the entry ID to a global var to be used for deletion. """
 		global selectionID
 		
-		selectionID = self.localData[row][0]
-		return self.localData[row][col]
+		selectionID = self.localData.expenseList[row][0]
+		return self.localData.expenseList[row][col]
 	
 	def SetValue(self, row, col, value):
-		tempId = self.localData[row][0]
+		tempId = self.localData.expenseList[row][0]
 		tempColumn = colInfo.colLabels[col]
 		tempValue = '' 
 		
@@ -207,9 +208,10 @@ class CustomDataTable(wx.grid.PyGridTableBase):
 		elif(2 == col):
 			# match an amount
 			tempValue = float(value)
-		
-		dbUpdateOne(database, tempColumn, tempValue, tempId)
-		self.UpdateValues()
+			
+		# save value to database and re-load expense array
+		self.localData.editData(tempColumn, tempValue, tempId)
+		self.localData.loadData(1,-1,-1,-1)
 	
 	def GetColLabelValue(self, col):
 		return colInfo.colLabels[col]
@@ -219,12 +221,13 @@ class CustomDataTable(wx.grid.PyGridTableBase):
 		return self.dataTypes[col]
 	
 	def UpdateValues(self):
-		"""Pull new data from the database. This seems to also update the appropriate values in the table, because
-		calling this and then calling ResetView (to handle added/deleted cols/rows) updates the table appropriately."""
+		"""Forces a new pull of data from the database. This can be called from inside, but
+		it is meant to be called externally."""
 
 		# TODO: We need to catch the real month here as well
-		temp = "date > %s AND date < %s" % (currMonthStart, currMonthEnd)
-		self.localData = dbGetData(database, 2, temp, -1, -1)
+		#temp = "date > %s AND date < %s" % (currMonthStart, currMonthEnd)
+		#self.localData.loadData(2, temp, -1, -1)
+		self.localData.loadData(1,-1,-1,-1)
 		
 		# This code doesn't appear to be necessary, but is typically included in common implementations
 		# if this is re-added, a 'grid' component will need to be passed to this function.
@@ -262,28 +265,28 @@ class CustomDataTable(wx.grid.PyGridTableBase):
 class GraphicsPage(wx.Panel):
 	
 	def __init__(self, parent):
-		
 		wx.Panel.__init__(self, parent)
 		
 		self.buttonPanel = wx.Panel(self) #define another panel for buttons and controls 
 		self.SetBackgroundColour("GREY")
-		
+
 		#add controls to self.buttonPanel
-		self.deleteButton = wx.Button(self.buttonPanel, -1, label = "Delete", pos = (0,0))
+		self.deleteButton   = wx.Button(self.buttonPanel, -1, label = "Delete", pos = (0,0))
 		self.CategorySelect = wx.ComboBox(self.buttonPanel, -1, months[0], choices=months,
 						  pos=(700,0), style=wx.CB_DROPDOWN)
-		
+
 		self.table = GPTable(self)
 		self.sizer = wx.BoxSizer(wx.VERTICAL)      # define new box sizer	
 		self.sizer.Add(self.table, 1, wx.GROW)     # add grid (resize vert and horz)
 		self.sizer.Add(self.buttonPanel, 0, wx.ALIGN_LEFT)    # add panel (no resize vert and aligned left horz)
 		self.SetSizer(self.sizer)
-		
+
 		self.Bind(wx.EVT_BUTTON, self.OnDeleteClick, self.deleteButton)
-		
+
 	def OnDeleteClick(self, evt):
 		global selectionID
-		
+
+		#DAN - resolve this
 		dbDeleteData(database,selectionID)
 		self.table.UpdateGrid()
 
@@ -308,35 +311,7 @@ class GPTable(wx.grid.Grid):
 		self.AutoSize() # auto-sizing here ensures that scrollbars will always be present
 				# during window resizing
 		
-		self.FormatTable()
-	#	self.Bind(wx.EVT_CONTEXT_MENU, self.OnContextMenu)
-	#		
-	#def OnContextMenu(self, evt):
-	#	print"context menu triggered!"
-	#	if not hasattr(self, "popupID1"):
-	#		self.popupID1 = wx.NewId()
-	#		self.popupID2 = wx.NewId()
-	#		
-	#		self.Bind(wx.EVT_MENU, self.OnCMDelete, id = self.popupID1)
-	#		self.Bind(wx.EVT_MENU, self.OnCMHighlight, id = self.popupID2)
-	#	
-	#	menu = wx.Menu()
-	#	
-	#	menu.Append(self.popupID1, "Delete Row")
-	#	menu.Append(self.popupID2, "Highlight High Rollers")
-	#	
-	#	self.PopupMenu(menu)
-	#	menu.Destroy()
-	#	
-	#def OnCMDelete(self, evt):
-	#	"""this context menu delete will read the row out of the cursor position and then try to delete it"""
-	#	print "delete"
-	#	tempRow = self.tableBase.localData[self.GetGridCursorRow()][0]
-	#	dbDeleteData(database, tempRow)
-	#	self.UpdateGrid()
-	#	
-	#def OnCMHighlight(self, evt):
-	#	print "highlight"			
+		self.FormatTable()			
 
 	def FormatTable(self):
 		# format rows
@@ -415,8 +390,8 @@ class ImportPage(wx.Panel):
 		
 		file_object.close() # close file object
 #********************************************************************
-class FINallyFrame(wx.Frame):
-	"""This class inherts wx.Frame methods, and is the root of all the GUI-based features.
+class AppMainFrame(wx.Frame):
+	"""This class inherts wx.Frame methods, and is the root of all the GUI features.
 	It should be invoked from the wx.App class only."""
 	
 	def __init__(self, title):
@@ -427,13 +402,14 @@ class FINallyFrame(wx.Frame):
 		
 		self.SetBackgroundColour("GREY")
 		
-		self.panel = wx.Panel(self) # basically just a container for the notebook
+		self.panel    = wx.Panel(self) # basically just a container for the notebook
 		self.notebook = wx.Notebook(self.panel, size=self.size)
 
-		# TODO: graphics page should be it's own object
 		self.gPage = GraphicsPage(self.notebook)
+		# the entry page will push data back into the graphics page so it inherits
+		# the graphics page
 		self.ePage = EntryPage(self.notebook, self.gPage)
-		self.tPage = ImportPage(self.notebook)
+		self.tPage = ImportPage(self.notebook) 
 		
 		self.notebook.AddPage(self.ePage, "Expense Entry")	
 		self.notebook.AddPage(self.gPage, "Graphics")
@@ -448,16 +424,14 @@ class FINallyFrame(wx.Frame):
 		self.SetBackgroundColour(colorString)
 		
 #********************************************************************
-class FINallyLauncher(wx.App):
+class AppLauncher(wx.App):
 	"""This class inherts wx.App methods, and should be the first object created during FINally
-	operation."""
+	operation. """
 	
 	def OnInit(self):
-		
 		self.title = "FINally version " + version
-		# (310, 300) is a good size for just the entry window
 		# create and make visible a "top level window" of type wxFrame
-		self.win = FINallyFrame(self.title)
+		self.win = AppMainFrame(self.title)
 		self.win.Show(True)
 		self.SetTopWindow(self.win)
 		
@@ -467,6 +441,7 @@ class FINallyLauncher(wx.App):
 		self.MainLoop() # begin program heartbeat
 	
 	def OnExit(self):
+		#TODO: what should we do here?
 		dan = 1
 
 #*******************************************************************************************************
@@ -478,8 +453,9 @@ if __name__ == '__main__':
 	pre-GUI-start must be placed here. The final action in this main fcn should be the launch of
 	the GUI Main."""
 	
-	InitialStartup() # set up database using fileCheck utilities
-	database = GetDatabaseName()
+	# initial setup of database using fileCheck utilities
+	SetupInitialDatabase() 
 	
-	launcher = FINallyLauncher(redirect=False) # create wxApp instance with stdout/stderr redirection
+	# create highest level wx object (wxApp) instance
+	launcher = AppLauncher(redirect=False) 
 	launcher.Main()
