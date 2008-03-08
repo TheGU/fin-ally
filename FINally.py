@@ -35,14 +35,13 @@ import wx.calendar
 from dbDrivers import *
 from fileCheck import *
 
-version = "1.0.0"
-database = "dummy.db" # this name should be clobbered by the main fcn in this file
+version = "2.0.0"
 users = ['rachel','daniel']
 months = ["January", "February", "March", "April", "May", "June", "July",
 	  "August", "September", "October", "November", "December"] 
 
 #********************************************************************
-class desiredVariables:
+class entryVariables:
 	"""This class contains the variables required for entry into the EXPENSES
 	table of the assoiated FINally database."""
 
@@ -68,7 +67,6 @@ class columnInfo:
 	rowHeight = 20
 	
 # create global instances of classes
-desiredVars = desiredVariables()
 colInfo = columnInfo()
 selectionID = 0
 
@@ -90,6 +88,7 @@ class EntryPage(wx.Panel):
 		wx.Panel.__init__(self, parent)
 		self.grid = grid
 		self.expense = localExpenses
+		self.variables = entryVariables()
 
 		# control definitions
 		self.enterButton = wx.Button(self, -1, label = "enter expense", pos = (10,10))
@@ -114,26 +113,20 @@ class EntryPage(wx.Panel):
 
 	def OnCalSelChanged(self, evt):
 		"""Respond to a user command to change the calendar date"""
-		global desiredVars
-		
 		date = evt.PyGetDate() # grab selected date
-		desiredVars.desiredDate = date.strftime("%m%d%Y")
+		self.variables.desiredDate = date.strftime("%m%d%Y")
 
 	def OnDescEntry(self, evt):
 		"""Respond to a user command to change the expense description"""
-		global desiredVars
-	
-		desiredVars.desiredDesc = evt.GetString()
+		self.variables.desiredDesc = evt.GetString()
 	
 	def OnEnterClick(self, evt):
 		"""Respond to a user command to actually enter expense information
 		into the database"""
-		global desiredVars
-		
-		self.expense.setData(desiredVars.desiredUser,
-				     desiredVars.desiredValue,
-				     desiredVars.desiredDate,
-				     desiredVars.desiredDesc)
+		self.expense.setData(self.variables.desiredUser,
+				     self.variables.desiredValue,
+				     self.variables.desiredDate,
+				     self.variables.desiredDesc)
 		
 		# clear the buttons so they don't show the old info
 		self.valueEntry.SetValue("0.00")
@@ -143,20 +136,16 @@ class EntryPage(wx.Panel):
 	
 	def OnListBox(self, evt):
 		"""Respond to a user command to change the tool user"""
-		global desiredVars
-		
-		desiredVars.desiredUser = evt.GetString()
+		self.variables.desiredUser = evt.GetString()
 	
 	def OnValueEntry(self, evt):
 		"""Respond to a user command to enter a new expense"""
-		global desiredVars
-		
 		amount = evt.GetString()
 		# place something here to avoid math errors
 		if(amount == ""):
 			amount = 0.00
-		
-		desiredVars.desiredValue = float(amount)
+	
+		self.variables.desiredValue = float(amount)
 
 #********************************************************************		
 class CustomDataTable(wx.grid.PyGridTableBase):
@@ -227,12 +216,7 @@ class CustomDataTable(wx.grid.PyGridTableBase):
 		#temp = "date > %s AND date < %s" % (currMonthStart, currMonthEnd)
 		#self.localData.loadData(2, temp, -1, -1)
 		self.localData.loadData(1,-1,-1,-1)
-		
-		# This code doesn't appear to be necessary, but is typically included in common implementations
-		# if this is re-added, a 'grid' component will need to be passed to this function.
-		#msg = wx.grid.GridTableMessage(self, wx.grid.GRIDTABLE_REQUEST_VIEW_GET_VALUES)
-		#grid.ProcessTableMessage(msg)
-		
+
 	def ResetView(self, grid):
 		""" (Grid) -> Reset the grid view. Call this to
 		update the grid if rows and columns have been added or deleted """
@@ -266,9 +250,9 @@ class GraphicsPage(wx.Panel):
 	def __init__(self, parent, localExpenses):
 		wx.Panel.__init__(self, parent)
 	
-		self.buttonPanel = wx.Panel(self) #define another panel for buttons and controls 
 		self.SetBackgroundColour("GREY")
-
+	
+		self.buttonPanel = wx.Panel(self) #define another panel for buttons and controls 
 		self.expenses = localExpenses
 
 		#add controls to self.buttonPanel
@@ -339,6 +323,7 @@ class ImportPage(wx.Panel):
 	def __init__(self, parent, localExpenses):
 		wx.Panel.__init__(self, parent)
 		self.expenses = localExpenses
+		self.variables = entryVariables()
 		
 		self.importButton = wx.Button(self, -1, label = "import expenses", pos = (10,10))
 		self.Bind(wx.EVT_BUTTON, self.OnImportClick, self.importButton)
@@ -349,13 +334,9 @@ class ImportPage(wx.Panel):
 		self.userList.SetSelection(0)
 	
 	def OnListBox(self, evt):
-		global desiredVars
-
-		desiredVars.desiredUser = evt.GetString()
+		self.variables.desiredUser = evt.GetString()
 	
 	def OnImportClick(self, evt):
-		global desiredVars
-
 		print "begin import"
 		# spawn a file browser and ask user to locate import file
 		wildcard = "text file (*.txt)|*.txt|" \
@@ -377,16 +358,16 @@ class ImportPage(wx.Panel):
 			line_array = line.split(',') 	#split on commas
 	
 			# load global desiredVars structure
-			desiredVars.desiredValue = float(line_array[0])
-			desiredVars.desiredDate  = line_array[1]
+			self.variables.desiredValue = float(line_array[0])
+			self.variables.desiredDate  = line_array[1]
 			# remove all non-standard characters that the import will choke on
 			line_array[2] = re.sub('\'','', line_array[2])
-			desiredVars.desiredDesc  = line_array[2]
+			self.variables.desiredDesc  = line_array[2]
 
-			self.expenses.getData(desiredVars.desiredUser,
-					      desiredVars.desiredValue,
-					      desiredVars.desiredDate,
-					      desiredVars.desiredDesc)
+			self.expenses.getData(self.variables.desiredUser,
+					      self.variables.desiredValue,
+					      self.variables.desiredDate,
+					      self.variables.desiredDesc)
 
 		file_object.close() # close file object
 #********************************************************************

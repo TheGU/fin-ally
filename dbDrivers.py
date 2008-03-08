@@ -46,7 +46,7 @@ class SQLiteExpense():
 		"""This function should accept an entry id and delete the data from the
 		database at that location."""
 		
-		(cu, db) = LinkToDatabase(self.database)
+		(cu, db) = LinkToDatabase(genericExpense.database)
 		
 		if(0 != id):
 			# delete the id passed in
@@ -64,7 +64,7 @@ class SQLiteExpense():
 		specifies if ALL data is required, or just a certain date range."""
 		
 		# create database connection
-		(cu, db) = LinkToDatabase(self.database)
+		(cu, db) = LinkToDatabase(genericExpense.database)
 		
 		# gather data based on selection type
 		if 1 == type:
@@ -100,13 +100,13 @@ class SQLiteExpense():
 		# the most sensible seperation of SQLite specific functionality and generic
 		# functionality?
 		
-		(cu, db) = LinkToDatabase(self.database)
+		(cu, db) = LinkToDatabase(genericExpense.database)
 		cu.execute(SQLDEF_EXPENSES)
 		db.commit()
 		db.close()
 		
 	def insertDataSQLite(self, who, amount, date, desc):
-		(cu, db) = LinkToDatabase(self.database)
+		(cu, db) = LinkToDatabase(genericExpense.database)
 		
 		# TODO: check for pre-existing date/amount match, if no match, insert	
 		cu.execute(SQLDEF_INSERT_EXPENSES % (who, amount, date, desc))
@@ -115,7 +115,7 @@ class SQLiteExpense():
 		db.close()
 		
 	def updateOneSQLite(self, target, newValue, id):
-		(cu, db) = LinkToDatabase(self.database)
+		(cu, db) = LinkToDatabase(genericExpense.database)
 		
 		test = SQLDEF_UPDATE % (target, newValue, id)
 		cu.execute(test)
@@ -139,7 +139,6 @@ class genericExpense(SQLiteExpense):
 	
 	def __init__(self):
 		self.expenseList = []
-		#self.database = "dummy.db"
 		SQLiteExpense.__init__(self)
 	
 	def deleteData(self, id):
