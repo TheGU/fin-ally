@@ -31,7 +31,6 @@ import wx.grid     as gridlib
 import wx.calendar as callib
 from datetime import date
 from database import *
-#from database import Expense, ExpenseType, User
 
 users = ['rachel','daniel']
 months = ["January", "February", "March", "April", "May", "June", "July",
@@ -433,10 +432,20 @@ class GraphicsGrid(gridlib.Grid):
 		
 		self.SetTable(self.tableBase) 		# set the grid table
 		self.SetColFormatFloat(2,-1,2)		# formats the monetary entries correctly
-		self.AutoSize() 	# auto-sizing here ensures that scrollbars will always be present
+		self.AutoSize() 		# auto-sizing here ensures that scrollbars will always be present
 								# during window resizing
 		
+		# Make certain cols read only
+		self.rowAttr = gridlib.GridCellAttr() 
+		self.CreateReadOnlyCols()
 		self.FormatTable()		
+			
+	def CreateReadOnlyCols(self):
+		self.rowAttr.SetReadOnly(1)
+		for i in range(len(colInfo.colRO)):
+			if colInfo.colRO[i] == 1: 
+				self.SetColAttr(i,self.rowAttr) 
+		self.rowAttr.IncRef() 
 			
 	def UpdateGrid(self):
 		self.tableBase.localData = self.data.GetAllExpenses()
