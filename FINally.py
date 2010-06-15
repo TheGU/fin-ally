@@ -29,7 +29,7 @@
 import wx
 import wx.grid     as gridlib
 import wx.calendar as callib
-from datetime import date
+from datetime import date, datetime
 from database import *
 
 users = ['rachel','daniel']
@@ -196,15 +196,14 @@ class CustomDataTable(gridlib.PyGridTableBase):
 		if(2 == col):
 			localExpenseObj.amount = float(value)
 		if(3 == col):
-			# NOTE: This will not work!
-			localExpenseObj.date = value
+			# strptime will pull a datetime object out of an explicitly formatting string
+			localDate = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+			localExpenseObj.date = localDate
 		if(4 == col):
 			localExpenseObj.description = value
 			
-		# DAN: these calls are causing some problems	
 		self.database.CreateExpense(localExpenseObj)
 		self.parent.UpdateGrid()
-		print "made it out"
 			
 	#***************************
 	# OPTIONAL METHODS
@@ -428,6 +427,7 @@ class GraphicsGrid(gridlib.Grid):
 		"""This function will fire when a cell editor is created, which seems to be 
 		the first time that cell is edited (duh). Standard columns will be left alone 
 		in this method, but unique columns (ie: comboBoxes) will be set explicitly."""
+		
 		Row = event.GetRow()
 		Col = event.GetCol()
 
@@ -446,10 +446,7 @@ class GraphicsGrid(gridlib.Grid):
 		# Col 1 is the Expense Type object column
 		elif Col == 1:
 			self.comboBox = event.GetControl()
-			
 			self.comboBox.Bind(wx.EVT_COMBOBOX, self.ComboBoxSelection)
-			
-			# load combo box with all expense types
 			for i in self.database.GetAllTypes():
 				self.comboBox.Append(i)
 		
@@ -471,7 +468,8 @@ class GraphicsGrid(gridlib.Grid):
 		self.rowAttr.IncRef() 
 			
 	def UpdateGrid(self):
-		# DAN: comment or remove these - I want to know which of them are necessary
+		"""Called after a grid value is edited or newly entered. re-loads
+		underlying grid data and forces grid to display new data"""
 		self.tableBase.localData = self.database.GetAllExpenses()
 		self.tableBase.UpdateValues(self)
 		self.tableBase.ResetView(self)
@@ -484,12 +482,12 @@ class GraphicsGrid(gridlib.Grid):
 		userChoiceEditor = gridlib.GridCellChoiceEditor([], allowOthers = False)
 		typeChoiceEditor = gridlib.GridCellChoiceEditor([], allowOthers = False)
 
-		# format rows
+		# apply editors and row height to each row
 		for i in range(self.GetNumberRows()):
-			#DAN: add a date editor here
-			self.SetCellEditor(i,2,gridlib.GridCellFloatEditor(-1,2))
 			self.SetCellEditor(i,0,userChoiceEditor)
 			self.SetCellEditor(i,1,typeChoiceEditor)
+			self.SetCellEditor(i,2,gridlib.GridCellFloatEditor(-1,2))
+			
 			self.SetRowSize(i, colInfo.rowHeight)
 			
 		# format column width
