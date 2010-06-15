@@ -210,42 +210,6 @@ class CustomDataTable(gridlib.PyGridTableBase):
 	# this type allows custom renderers to be used
 	def GetTypeName(self, row, col):
 		return self.dataTypes[col]
-	
-#	def UpdateValues(self):
-		"""Forces a new pull of data from the database. This can be called from inside, but
-		it is meant to be called externally."""
-
-		# TODO: We need to catch the real month here as well
-		#temp = "date > %s AND date < %s" % (currMonthStart, currMonthEnd)
-		#self.localData.loadData(2, temp, -1, -1)
-#		self.localData.loadData(1,-1,-1,-1)
-
-	def ResetView(self, grid):
-		""" (Grid) -> Reset the grid view. Call this to
-		update the grid if rows and columns have been added or deleted """
-		grid.BeginBatch() #begin supression of screen painting
-	
-		for current, new, delmsg, addmsg in [
-		    (self._rows, self.GetNumberRows(), gridlib.GRIDTABLE_NOTIFY_ROWS_DELETED, gridlib.GRIDTABLE_NOTIFY_ROWS_APPENDED),
-		    (self._cols, self.GetNumberCols(), gridlib.GRIDTABLE_NOTIFY_COLS_DELETED, gridlib.GRIDTABLE_NOTIFY_COLS_APPENDED),
-		]:
-	
-			if new < current:
-				msg = gridlib.GridTableMessage(self,delmsg,new,current-new)
-				grid.ProcessTableMessage(msg)
-			elif new > current:
-				msg = gridlib.GridTableMessage(self,addmsg,new-current)
-				grid.ProcessTableMessage(msg)
-				self.UpdateValues()
-		
-		grid.EndBatch() #end supression of screen painting
-	
-		self._rows = self.GetNumberRows()
-		self._cols = self.GetNumberCols()
-	
-		# update the scrollbars and the displayed part of the grid
-		grid.AdjustScrollbars()
-		grid.ForceRefresh()
 
 #********************************************************************
 class GraphicsPage(wx.Panel):
@@ -371,14 +335,8 @@ class GraphicsPage(wx.Panel):
 		self.expenseObj.user 		= self.userObj
 		self.expenseObj.expenseType = self.expenseTypeObj
 		self.database.CreateExpense(self.expenseObj)
-		#self.UpdateGrid()
+		self.Reset()
 		print "entering!"
-	
-#	def UpdateGrid(self):
-#		#self.grid.UpdateValues()
-#		self.tableBase.ResetView(self.grid)
-#		self.FormatTable()
-#		self.grid.ForceRefresh()
 	
 	def OnUserSelect(self, evt):
 		"""respond to the operator selecting a user by finding the associated user
@@ -412,6 +370,48 @@ class GraphicsPage(wx.Panel):
 		"""Respond to a user command to change the expense description"""
 		self.expenseObj.description=evt.GetString()
 		print self.expenseObj
+		
+	def Reset(self):
+		"""reset the view based on the data in the table.  Call
+		this when rows are added or destroyed"""
+		#self.tableBase = CustomDataTable(self.data.GetAllExpenses())
+		self.tableBase.localData = self.data.GetAllExpenses()
+		self.ResetView()
+		self.UpdateValues()
+		self.grid.ForceRefresh()
+		
+	def ResetView(self):
+		""" (Grid) -> Reset the grid view. Call this to
+		update the grid if rows and columns have been added or deleted """
+		self.grid.BeginBatch() #begin supression of screen painting
+	
+		for current, new, delmsg, addmsg in [
+		    (self.tableBase._rows, self.grid.GetNumberRows(), gridlib.GRIDTABLE_NOTIFY_ROWS_DELETED, gridlib.GRIDTABLE_NOTIFY_ROWS_APPENDED),
+		    (self.tableBase._cols, self.grid.GetNumberCols(), gridlib.GRIDTABLE_NOTIFY_COLS_DELETED, gridlib.GRIDTABLE_NOTIFY_COLS_APPENDED),
+		]:
+	
+			if new < current:
+				msg = gridlib.GridTableMessage(self.grid,delmsg,new,current-new)
+				self.grid.ProcessTableMessage(msg)
+			elif new > current:
+				msg = gridlib.GridTableMessage(self.grid,addmsg,new-current)
+				self.grid.ProcessTableMessage(msg)
+				self.UpdateValues()
+		
+		self.grid.EndBatch() #end supression of screen painting
+	
+		self.tableBase._rows = self.grid.GetNumberRows()
+		self.tableBase._cols = self.grid.GetNumberCols()
+	
+		# update the scrollbars and the displayed part of the grid
+		self.grid.AdjustScrollbars()
+		self.grid.ForceRefresh()
+		
+	def UpdateValues(self):
+		"""Update all displayed values"""
+		# This sends an event to the grid table to update all of the values
+		msg = wx.grid.GridTableMessage(self.tableBase,wx.grid.GRIDTABLE_REQUEST_VIEW_GET_VALUES)
+		self.grid.ProcessTableMessage(msg)
 
 #********************************************************************	
 #class SimpleGrid(gridlib.Grid):
