@@ -56,8 +56,8 @@ class columnInfo:
 	colLabels = ('user', 'type', 'amount', 'date', 'desc', 'id')
 	colWidth  = [100, 50, 50, 200, 350, 50]
 	colRO     = [0,0,0,0,0,1] # 0 = R/W, 1 = R
-	colType   = [gridlib.GRID_VALUE_STRING,
-		     	 gridlib.GRID_VALUE_STRING,
+	colType   = [gridlib.GRID_VALUE_CHOICE,
+		     	 gridlib.GRID_VALUE_CHOICE,
 		     	 gridlib.GRID_VALUE_NUMBER,
 		     	 gridlib.GRID_VALUE_STRING, # should be GRID_VALUE_DATETIME
 		     	 gridlib.GRID_VALUE_STRING,
@@ -185,6 +185,8 @@ class CustomDataTable(gridlib.PyGridTableBase):
 	def SetValue(self, row, col, value):
 		# determine the record being modified using the primary key (located in col 5)
 		localExpenseObj = Expense.query.filter_by(id=self.localData[row][5]).one()
+		
+		# determine which value is being set
 		if(0 == col):
 			localUserObj         = User.query.filter_by(name=value).one()
 			localExpenseObj.user = localUserObj
@@ -199,8 +201,10 @@ class CustomDataTable(gridlib.PyGridTableBase):
 		if(4 == col):
 			localExpenseObj.description = value
 			
+		# DAN: these calls are causing some problems	
 		self.database.CreateExpense(localExpenseObj)
 		self.parent.UpdateGrid()
+		print "made it out"
 			
 	#***************************
 	# OPTIONAL METHODS
@@ -208,10 +212,6 @@ class CustomDataTable(gridlib.PyGridTableBase):
 	
 	def GetColLabelValue(self, col):
 		return colInfo.colLabels[col]
-	
-	# this type allows custom renderers to be used
-	def GetTypeName(self, row, col):
-		return self.dataTypes[col]
 	
 	def ResetView(self, grid):
 		"""
@@ -392,26 +392,6 @@ class GraphicsPage(wx.Panel):
 		
 	def OnDescEntry(self, evt):
 		pass
-#********************************************************************	
-#class SimpleGrid(gridlib.Grid):
-#	"""This is a simple grid class - which means most of the methods are automatically
-#	defined by the wx library"""
-#	def __init__(self, parent):
-#		gridlib.Grid.__init__(self, parent, -1)
-#		self.CreateGrid(10,10)
-#		self.SetColSize(3, 200)
-#		self.SetRowSize(4, 45)
-#		
-#		# create a Database object and pull some data out of it
-#		data = Database().GetAllExpenses()
-#		
-#		# push data into grid, line by line
-#		for i in range(len(data)):
-#			self.SetCellValue(i,0,data[i][0])
-#			self.SetCellValue(i,1,data[i][1])
-#			self.SetCellValue(i,2,data[i][2])
-#			self.SetCellValue(i,3,data[i][3])
-#			self.SetCellValue(i,4,data[i][4])
 
 #********************************************************************		
 class GraphicsGrid(gridlib.Grid):
@@ -427,8 +407,8 @@ class GraphicsGrid(gridlib.Grid):
 		gridlib.Grid.__init__(self, parent)
 		
 		# pull some data out of the database and push it into the tableBase
-		self.data = Database()
-		self.tableBase = CustomDataTable(self,self.data.GetAllExpenses())	# define the base
+		self.database = Database()
+		self.tableBase = CustomDataTable(self,self.database.GetAllExpenses())	# define the base
 		
 		self.SetTable(self.tableBase) 		# set the grid table
 		self.SetColFormatFloat(2,-1,2)		# formats the monetary entries correctly
@@ -438,9 +418,52 @@ class GraphicsGrid(gridlib.Grid):
 		# Make certain cols read only
 		self.rowAttr = gridlib.GridCellAttr() 
 		self.CreateReadOnlyCols()
-		self.FormatTable()		
+		self.InitialTableFormat()		
+
+		# bind editor creation to an event so we can 'catch' unique editors
+		self.Bind(gridlib.EVT_GRID_EDITOR_CREATED,
+				  self.OnGrid1GridEditorCreated)
+
+	def OnGrid1GridEditorCreated(self, event):
+		"""This function will fire when a cell editor is created, which seems to be 
+		the first time that cell is edited (duh). Standard columns will be left alone 
+		in this method, but unique columns (ie: comboBoxes) will be set explicitly."""
+		Row = event.GetRow()
+		Col = event.GetCol()
+
+		# Col 0 is the User object column
+		if Col == 0:
+			#Get a reference to the underlying ComboBox control.
+			self.comboBox = event.GetControl()
+			
+			#Bind the ComboBox events.
+			self.comboBox.Bind(wx.EVT_COMBOBOX, self.ComboBoxSelection)
+			
+			# load combo box with all user types
+			for i in self.database.GetAllUsers():
+				self.comboBox.Append(i)
+				
+		# Col 1 is the Expense Type object column
+		elif Col == 1:
+			self.comboBox = event.GetControl()
+			
+			self.comboBox.Bind(wx.EVT_COMBOBOX, self.ComboBoxSelection)
+			
+			# load combo box with all expense types
+			for i in self.database.GetAllTypes():
+				self.comboBox.Append(i)
+		
+	def ComboBoxSelection(self, event):
+		"""This method fires when the underlying ComboBox object is done with
+		it's selection"""
+
+		# DAN: is this code useless? It seems like it is...
+		value 	  = self.comboBox.GetValue()
+		selection = self.comboBox.GetSelection()
+		pass
 			
 	def CreateReadOnlyCols(self):
+		"""creates read-only columns"""
 		self.rowAttr.SetReadOnly(1)
 		for i in range(len(colInfo.colRO)):
 			if colInfo.colRO[i] == 1: 
@@ -448,18 +471,25 @@ class GraphicsGrid(gridlib.Grid):
 		self.rowAttr.IncRef() 
 			
 	def UpdateGrid(self):
-		self.tableBase.localData = self.data.GetAllExpenses()
+		# DAN: comment or remove these - I want to know which of them are necessary
+		self.tableBase.localData = self.database.GetAllExpenses()
 		self.tableBase.UpdateValues(self)
 		self.tableBase.ResetView(self)
-		self.FormatTable()
-		self.ForceRefresh()
+		# DAN: we need to set the editor for new rows only - find out how to do that
 		
-	def FormatTable(self):
-		"""Formats the grid table - adding width, height, and edit types"""
+	def InitialTableFormat(self):
+		"""Formats the grid table - adding width, height, and unique editors"""
 		
+		# create 'drop down' style choice editors for two columns
+		userChoiceEditor = gridlib.GridCellChoiceEditor([], allowOthers = False)
+		typeChoiceEditor = gridlib.GridCellChoiceEditor([], allowOthers = False)
+
 		# format rows
 		for i in range(self.GetNumberRows()):
+			#DAN: add a date editor here
 			self.SetCellEditor(i,2,gridlib.GridCellFloatEditor(-1,2))
+			self.SetCellEditor(i,0,userChoiceEditor)
+			self.SetCellEditor(i,1,typeChoiceEditor)
 			self.SetRowSize(i, colInfo.rowHeight)
 			
 		# format column width
