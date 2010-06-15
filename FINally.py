@@ -32,20 +32,6 @@ import wx.calendar as callib
 from datetime import date, datetime
 from database import *
 
-users = ['rachel','daniel']
-months = ["January", "February", "March", "April", "May", "June", "July",
-	  "August", "September", "October", "November", "December"] 
-
-#********************************************************************
-class entryVariables:
-	"""This class contains the variables required for entry into the EXPENSES
-	table of the assoiated FINally database."""
-
-	desiredUser = users[0]
-	desiredDate = '01012007'
-	desiredValue = float(1.11)
-	desiredDesc = ""
-
 #********************************************************************	
 class columnInfo:
 	"""This class defines the information required to create and modify columns in
@@ -69,81 +55,9 @@ class columnInfo:
 colInfo = columnInfo()
 selectionID = 0
 
-# TODO: capture the data here
-masterDate = date.today()
-currMonthStart = str(masterDate.month) + '00' + str(masterDate.year)
-currMonthEnd = str(masterDate.month) + '31' + str(masterDate.year)
-
 #********************************************************************
 # FINally class definitions
 #********************************************************************
-
-#********************************************************************
-class EntryPage(wx.Panel):
-	"""This class contains all necessary methods for user interactions and data
-	management related to the expense entry page."""
-	
-	def __init__(self, parent, grid, localExpenses):
-		wx.Panel.__init__(self, parent)
-		self.grid = grid
-		self.expense = localExpenses
-		self.variables = entryVariables()
-
-		# control definitions
-		self.enterButton = wx.Button(self, -1, label = "enter expense", pos = (10,10))
-		self.Bind(wx.EVT_BUTTON, self.OnEnterClick, self.enterButton)
-
-		self.userList = wx.ListBox(self, -1, pos = (10, 70), size = (90, 30),
-					   choices = users, style = wx.LB_SINGLE)
-		self.Bind(wx.EVT_LISTBOX, self.OnListBox, self.userList)
-		self.userList.SetSelection(0)
-
-		self.cal = callib.CalendarCtrl(self, -1, wx.DateTime_Now(), pos = (110,10),
-						    style = callib.CAL_SHOW_HOLIDAYS | callib.CAL_SUNDAY_FIRST)
-		self.Bind(callib.EVT_CALENDAR_SEL_CHANGED, self.OnCalSelChanged, self.cal)
-		# TODO: set calendar date (force)
-
-		self.valueEntry = wx.TextCtrl(self, -1, "0.00", pos = (10,160), size = (90, 21))
-		self.Bind(wx.EVT_TEXT, self.OnValueEntry, self.valueEntry)
-
-		self.descEntry = wx.TextCtrl(self, -1, "item description", pos = (110,160), size = (173,21))
-		self.Bind(wx.EVT_TEXT, self.OnDescEntry, self.descEntry)
-
-	def OnCalSelChanged(self, evt):
-		"""Respond to a user command to change the calendar date"""
-		date = evt.PyGetDate() # grab selected date
-		self.variables.desiredDate = date.strftime("%m%d%Y")
-
-	def OnDescEntry(self, evt):
-		"""Respond to a user command to change the expense description"""
-		self.variables.desiredDesc = evt.GetString()
-	
-	def OnEnterClick(self, evt):
-		"""Respond to a user command to actually enter expense information
-		into the database"""
-		self.expense.setData(self.variables.desiredUser,
-				     self.variables.desiredValue,
-				     self.variables.desiredDate,
-				     self.variables.desiredDesc)
-		
-		# clear the buttons so they don't show the old info
-		self.valueEntry.SetValue("0.00")
-		self.descEntry.SetValue("item description")
-		
-		self.grid.table.UpdateGrid()
-	
-	def OnListBox(self, evt):
-		"""Respond to a user command to change the tool user"""
-		self.variables.desiredUser = evt.GetString()
-	
-	def OnValueEntry(self, evt):
-		"""Respond to a user command to enter a new expense"""
-		amount = evt.GetString()
-		# place something here to avoid math errors
-		if(amount == ""):
-			amount = 0.00
-	
-		self.variables.desiredValue = float(amount)
 
 #********************************************************************		
 class CustomDataTable(gridlib.PyGridTableBase):
@@ -573,12 +487,7 @@ class AppMainFrame(wx.Frame):
 		self.notebook = wx.Notebook(self.panel, size=AppMainFrame.size)
 
 		self.gPage = GraphicsPage(self.notebook)
-		#self.ePage = EntryPage(self.notebook, self.gPage, self.masterExpenses)
-		#self.tPage = ImportPage(self.notebook, self.masterExpenses) 
-
-		#self.notebook.AddPage(self.ePage, "Expense Entry")	
 		self.notebook.AddPage(self.gPage, "Graphics")
-		#self.notebook.AddPage(self.tPage, "Import")
 
 		# arrange notebook windows in a simple box sizer
 		self.sizer = wx.BoxSizer()
