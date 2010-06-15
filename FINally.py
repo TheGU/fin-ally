@@ -52,14 +52,17 @@ class columnInfo:
 	"""This class defines the information required to create and modify columns in
 	a grid. This keeps all columns definition data together, but adding information here
 	does complete the addition of a new column."""
-
-	colLabels = ['user', 'type', 'amount', 'date', 'desc']
-	colWidth  = [50, 50, 50, 50, -1]
+	
+	# TODO: consolidate these into a dict or some other structure
+	colLabels = ('user', 'type', 'amount', 'date', 'desc', 'id')
+	colWidth  = [100, 50, 50, 200, 350, 50]
+	colRO     = [0,0,0,0,0,1] # 0 = R/W, 1 = R
 	colType   = [gridlib.GRID_VALUE_STRING,
 		     	 gridlib.GRID_VALUE_STRING,
 		     	 gridlib.GRID_VALUE_NUMBER,
 		     	 gridlib.GRID_VALUE_STRING, # should be GRID_VALUE_DATETIME
-		     	 gridlib.GRID_VALUE_STRING]
+		     	 gridlib.GRID_VALUE_STRING,
+		     	 gridlib.GRID_VALUE_NUMBER]
 	
 	rowHeight = 20
 	
@@ -151,11 +154,13 @@ class CustomDataTable(gridlib.PyGridTableBase):
 	
 	dataTypes = colInfo.colType # used for custom renderers
 	
-	def __init__(self, data):
+	def __init__(self, parent, data):
 		# TODO: This needs to be cleaned up so that CustomDataTable does not have to
 		# deal with so much data specification. This should be a single fcn call for
 		# data
 		self.localData = data
+		self.database = Database()
+		self.parent = parent
 		
 		self._rows = self.GetNumberRows()
 		self._cols = self.GetNumberCols()
@@ -176,29 +181,27 @@ class CustomDataTable(gridlib.PyGridTableBase):
 		return self.localData[row][col]
 	
 	def IsEmptyCell(self, row, col):
-		#return self.localData.get[row][col] is not None
-		return False
+		return self.localData[row][col] is not None
 		
 	def SetValue(self, row, col, value):
-		print "not done yet!"
-		""" IF calling SetValue on an existing row:
-				allow data entry
-				update database
-			ELSE IF col != 'user':
-				move cursor to 'user' col (first col)
-				call method SetValue()
-			ELSE:
-				allow data entry
-				IF col == 'description':
-					update database
-				ELSE:
-					move cursor to next col
-					call method SetValue()"""
-	
-		#if self.IsEmptyCell(row,col):
-			# allow data entry
-			# update database
-			#self.localData.UpdateExpense(...)
+		# determine the record being modified using the primary key (located in col 5)
+		localExpenseObj = Expense.query.filter_by(id=self.localData[row][5]).one()
+		if(0 == col):
+			localUserObj         = User.query.filter_by(name=value).one()
+			localExpenseObj.user = localUserObj
+		if(1 == col):
+			localTypeObj		 = ExpenseType.query.filter_by(description=value).one()
+			localExpenseObj.expenseType = localTypeObj
+		if(2 == col):
+			localExpenseObj.amount = float(value)
+		if(3 == col):
+			# NOTE: This will not work!
+			localExpenseObj.date = value
+		if(4 == col):
+			localExpenseObj.description = value
+			
+		self.database.CreateExpense(localExpenseObj)
+		self.parent.UpdateGrid()
 			
 	#***************************
 	# OPTIONAL METHODS
@@ -263,9 +266,6 @@ class GraphicsPage(wx.Panel):
 		# create a userlist and type list for the menus
 		# NOTE: this must be done after the Database creation above
 		# define local Expense objects for population
-		self.expenseObj 	= Expense()
-		self.userObj    	= User()
-		self.expenseTypeObj = ExpenseType()
 		self.database       = Database()
 		self.userList		= self.database.GetAllUsers()
 		self.typeList		= self.database.GetAllTypes()
@@ -343,45 +343,56 @@ class GraphicsPage(wx.Panel):
 	def OnEnterClick(self, evt):
 		"""respond to the user clicking 'enter!' by pushing the local objects into the database 
 		layer"""
-		self.expenseObj.user 		= self.userObj
-		self.expenseObj.expenseType = self.expenseTypeObj
-		self.database.CreateExpense(self.expenseObj)
-		self.grid.UpdateGrid()
-		print "entering!"
-	
-	def OnUserSelect(self, evt):
-		"""respond to the operator selecting a user by finding the associated user
-		and loading that user object into our local user object"""
-		self.userObj = User.query.filter_by(name=evt.GetString()).one()
-		print self.userObj
 		
-	def OnTypeSelect(self, evt):
-		"""respond to the operator selecting an expense type by finding the associated
-		expense type and loading that type object into our local type object"""
-		self.expenseTypeObj = ExpenseType.query.filter_by(description=evt.GetString()).one()
-		print self.expenseTypeObj
+		# it's critical to create new database objects here
+		localUserObject    = User()
+		localTypeObject    = ExpenseType()
+		localExpenseObject = Expense()
 		
-	def OnCalSelChanged(self, evt):
-		"""Respond to a user command to change the calendar date"""
-		date = evt.PyGetDate()
-		self.expenseObj.date=date
-		print self.expenseObj
-		
-	def OnValueEntry(self, evt):
-		"""Respond to a user command to enter a new expense"""
-		amount = evt.GetString()
+		#
+		# NOTE: operator selects both User and ExpenseType by selecting a string.
+		# This string is used to look up the existing database objects, which are
+		# fed to the overall Expense object for creation. 
+		# 
+		# TODO: this needs to be smarter: (A) what if the string doesn't match an existing
+		# object? (B) What if the user wants to enter a new object?
+		#
+		localUserObject = User.query.filter_by(name=self.userSelect.GetValue()).one()
+		localTypeObject = ExpenseType.query.filter_by(description=self.typeSelect.GetValue()).one()
+		# configure amount, description, and date
+		amount = self.valueEntry.GetValue()
 		# place something here to avoid math errors
 		if(amount == ""):
 			amount = 0.00
+		localExpenseObject.amount=float(amount)
+		localExpenseObject.description=self.descEntry.GetValue()
+		localExpenseObject.date=self.cal.PyGetDate()
+		
+		# consolidate objects into one expense type
+		localExpenseObject.user 	   = localUserObject
+		localExpenseObject.expenseType = localTypeObject
+		self.database.CreateExpense(localExpenseObject)
+		self.grid.UpdateGrid()
 	
-		self.expenseObj.amount=float(amount)
-		print self.expenseObj
+    #***************************
+	# NOT REQUIRED AT THIS TIME
+	#***************************
+	
+	def OnUserSelect(self, evt):
+		pass
+		
+	def OnTypeSelect(self, evt):
+		pass
+		
+	def OnCalSelChanged(self, evt):
+		print "DATE", self.cal.PyGetDate()
+		pass
+		
+	def OnValueEntry(self, evt):
+		pass
 		
 	def OnDescEntry(self, evt):
-		"""Respond to a user command to change the expense description"""
-		self.expenseObj.description=evt.GetString()
-		print self.expenseObj
-
+		pass
 #********************************************************************	
 #class SimpleGrid(gridlib.Grid):
 #	"""This is a simple grid class - which means most of the methods are automatically
@@ -418,7 +429,7 @@ class GraphicsGrid(gridlib.Grid):
 		
 		# pull some data out of the database and push it into the tableBase
 		self.data = Database()
-		self.tableBase = CustomDataTable(self.data.GetAllExpenses())	# define the base
+		self.tableBase = CustomDataTable(self,self.data.GetAllExpenses())	# define the base
 		
 		self.SetTable(self.tableBase) 		# set the grid table
 		self.SetColFormatFloat(2,-1,2)		# formats the monetary entries correctly

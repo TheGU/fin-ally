@@ -63,7 +63,7 @@ def CreateBlankDatabase():
 	session.commit()
 	
 #********************************************************************
-def DbConnect():
+def DbConnect(new):
 	"""This function is responsible for pre-processing the database name gathered at
 	powerup into the appropriate format, and then connecting to the database and create
 	a global connection object"""
@@ -75,7 +75,8 @@ def DbConnect():
 	metadata.bind.echo = False
 	
 	setup_all()
-	create_all()
+	if(1 == new):
+		create_all()
 	
 #********************************************************************
 #							CLASSES
@@ -116,7 +117,7 @@ class Database():
 					# TODO: replace with SQLObject construct here
 					# self.tempExpense = genericExpense()
 					# self.tempExpense.setDatabaseName(Database.name)
-					DbConnect()
+					DbConnect(0)
 					break #ensures we load the first valid database
 				
 		else: # if no database files present, prompt user to create a new database file...
@@ -128,7 +129,7 @@ class Database():
 			# create a blank db with the appropriate name
 			Database.name= self.databaseName
 			Database.fullName= os.path.abspath(Database.name)
-			DbConnect()
+			DbConnect(1)
 			CreateBlankDatabase()	
 			
 	def GetDatabaseName(self):
@@ -138,8 +139,8 @@ class Database():
 		"""Returns database size in bytes"""
 		return Database.size
 	
-	def CreateExpense(self, expenseObj):
-		"""Creates a new expense"""	
+	def CreateExpense(self, expense):
+		"""Creates a new expense"""
 		session.commit()
 	
 	def GetAllUsers(self):
@@ -161,9 +162,9 @@ class Database():
 	def GetAllExpenses(self):
 		"""returns all data in the database in a 2D list in the following format:
 		
-		   [ 0  ][      1    ][  2   ][ 3  ][     4     ]
-		[0][user][expenseType][amount][date][description]
-		[1][user][expenseType][amount][date][description]
+		   [ 0  ][      1    ][  2   ][ 3  ][     4     ][5 ]
+		[0][user][expenseType][amount][date][description][id]
+		[1][user][expenseType][amount][date][description][id]
 		
 		user and expenseType are dereferenced down to the underlying string, 
 		and amount and date are cast to string types to appease the grid."""
@@ -176,7 +177,7 @@ class Database():
 		
 		# iterate through expenses - packing into listxlist
 		for i in expenseList:
-			print "DAN: ", i
+			#print "DAN: ", i
 			# dereference these all the way down to the string
 			minorList.append(i.user.name) 
 			minorList.append(i.expenseType.description)
@@ -187,6 +188,7 @@ class Database():
 			
 			# this is just normal
 			minorList.append(i.description)
+			minorList.append(i.id)
 			
 			# push minorList into majorList 
 			majorList.append(minorList)
@@ -202,7 +204,7 @@ class Database():
 # Create SQLAlchemy tables in the form of python classes.
 #********************************************************************
 class User(Entity):
-	name 		= Field(String)
+	name 		= Field(String, unique=True)
 	expenses 	= OneToMany('Expense')
 	
 	def __repr__(self):
@@ -210,7 +212,7 @@ class User(Entity):
 
 #********************************************************************
 class ExpenseType(Entity):
-	description = Field(String)
+	description = Field(String, unique=True)
 	expenses 	= OneToMany('Expense')
 
 	def __repr__(self):
