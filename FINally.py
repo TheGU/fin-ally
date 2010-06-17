@@ -408,24 +408,35 @@ class AppMainFrame(wx.Frame):
 
 #********************************************************************
 class AppLauncher(wx.App):
-	"""This class inherts wx.App methods, and should be the first object created during FINally
-	operation. """
+	"""This class inherits wx.App methods, and should be the first object created during FINally
+	operation. This will be the only instance of an application class and will contain the primary
+	Frame (top level window)."""
 	
 	def OnInit(self):
+		"""Should be used instead of __init__ for Application objects"""
+		# NOTE: self is required to ensure that this class owns this variable and that all 
+		# methods defined within have access to the same variable
 		self.title = "FINally version " + version
+		
 		# create and make visible a "top level window" of type wxFrame
-		self.win = AppMainFrame(self.title)
-		self.win.Show(True)
-		self.SetTopWindow(self.win)
+		self.frame = AppMainFrame(self.title)
+		self.frame.Show(True)
+		self.SetTopWindow(self.frame)
 		
 		return True # required during OnInit
 	
 	def Main(self):
-		self.MainLoop() # begin program heartbeat
+		"""kicks off the application heartbeat, which means that we let wxPython watch for user
+		input (mouse, keyboard, etc...) and respond"""
+		self.MainLoop()
 	
 	def OnExit(self):
 		#TODO: what should we do here?
 		dan = 1
+	
+	def GetTitle(self):
+		"""returns the title of the application - as shown in the top level window"""
+		return self.title
 
 #*******************************************************************************************************
 #                                                 MAIN 
