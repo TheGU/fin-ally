@@ -31,8 +31,9 @@
 #********************************************************************
 
 import sqlite3
-import re
+import sys, re, os
 from SQLiteCommands import *
+from fileCheck import GenerateDbFiles, GetCurrentDir
 
 #********************************************************************
 class SQLiteExpense():
@@ -135,7 +136,7 @@ class genericExpense(SQLiteExpense):
 	# data - but they should not touch the data itself. Data touching should be done
 	# by the SQLiteExpense class
 	
-	database = "dummy.db"
+	database = ""
 	
 	def __init__(self):
 		self.expenseList = []
@@ -197,6 +198,62 @@ def CreateBlankDatabase(databaseName):
 	blankDb.insertDataSQLite('rachel',2.11, '01022007', 'bear')
 	
 	blankDb.getData()
+	
+#********************************************************************
+class Database():
+	"""The Database object contains database meta data such as name, size, and location, 
+	as well as methods for locating a database, arbitrating between several databases, 
+	and checking database validity."""
+	
+	# static variables - will be populated by methods of this class
+	name = "";
+	size = 0;
+	location = "";
+		
+	def IdentifyDatabase(self):
+		"""This method will locate a database (.db) file and then load specific pieces of information
+		into the appropriate variables for consumption by other modules"""
+		self.dbFiles = list(GenerateDbFiles())
+	
+		# if any files were present...
+		if self.dbFiles:
+			#TODO: search for appropriate .db setup in each of these files
+			for self.tempFileName in self.dbFiles:
+				self.dbNameMatch = re.search('\w+\.db$', self.tempFileName)
+				if self.dbNameMatch:				
+					# remove the database name from the regex match
+					self.databaseName = self.dbNameMatch.group(0)
+					
+					# store name for global access
+					Database.name = self.databaseName
+					
+					Database.size = os.path.getsize(Database.name)
+					print Database.name, Database.size
+					
+					# push the database name into the expense object
+					self.tempExpense = genericExpense()
+					self.tempExpense.setDatabaseName(Database.name)
+					
+					break #ensures we load the first valid database
+				
+		else: # if no database files present, prompt user to create a new database file...
+			print "Please enter a new database name ending in '.db'\n"
+			self.databaseName = raw_input('database name: ')
+			# Strip non alpha-numeric characters out of databaseName
+			self.databaseName = re.sub('[^a-zA-Z0-9_.]','',self.databaseName)
+			Database.name= self.databaseName # store name for global access 
+			CreateBlankDatabase(Database.name)	
+			
+	def GetDatabaseName(self):
+		return Database.name
+	
+	def GetDatabaseLocation(self):
+		"""Returns fully qualified path to database"""
+		return Database.location
+	
+	def GetDatabaseSize(self):
+		"""Returns database size in bytes"""
+		return Database.size
 
 # Test main functionality
 if __name__ == '__main__':

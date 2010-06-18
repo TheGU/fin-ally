@@ -26,16 +26,13 @@
 #********************************************************************
 
 import datetime
-import os
 import wx.grid
 import re
-import sys
 import wx
 import wx.calendar
 from dbDrivers import *
 from fileCheck import *
 
-version = "2.0.0"
 users = ['rachel','daniel']
 months = ["January", "February", "March", "April", "May", "June", "July",
 	  "August", "September", "October", "November", "December"] 
@@ -373,8 +370,7 @@ class ImportPage(wx.Panel):
 #********************************************************************
 
 class AppMainFrame(wx.Frame):
-	"""This class inherts wx.Frame methods, and is the root of all the GUI features.
-	It should be invoked from the wx.App class only."""
+	"""This class inherts wx.Frame methods, and is the top level window of our application."""
 	
 	def __init__(self, title):
 		self.size = (900,400)
@@ -383,6 +379,10 @@ class AppMainFrame(wx.Frame):
 				  size=self.size,style=wx.DEFAULT_FRAME_STYLE)
 
 		self.SetBackgroundColour("GREY")
+
+		# add an icon!
+		self.icon = wx.Icon("img/FINally.ico", wx.BITMAP_TYPE_ICO)
+		self.SetIcon(self.icon)
 
 		# This expense object is the master object for all sub-classes of AppMainFrame
 		self.masterExpenses = genericExpense()
@@ -403,7 +403,7 @@ class AppMainFrame(wx.Frame):
 		self.sizer.Add(self.notebook, 1, wx.EXPAND)
 		self.panel.SetSizer(self.sizer)
 
-	def SetBackgroundColor(colorString):
+	def SetBackgroundColor(self, colorString):
 		self.SetBackgroundColour(colorString)
 
 #********************************************************************
@@ -412,14 +412,15 @@ class AppLauncher(wx.App):
 	operation. This will be the only instance of an application class and will contain the primary
 	Frame (top level window)."""
 	
+	# static variables go here
+	version = "2.0.1"
+	title   = "FINally version " + version
+	
 	def OnInit(self):
 		"""Should be used instead of __init__ for Application objects"""
-		# NOTE: self is required to ensure that this class owns this variable and that all 
-		# methods defined within have access to the same variable
-		self.title = "FINally version " + version
 		
 		# create and make visible a "top level window" of type wxFrame
-		self.frame = AppMainFrame(self.title)
+		self.frame = AppMainFrame(AppLauncher.title)
 		self.frame.Show(True)
 		self.SetTopWindow(self.frame)
 		
@@ -430,13 +431,13 @@ class AppLauncher(wx.App):
 		input (mouse, keyboard, etc...) and respond"""
 		self.MainLoop()
 	
-	def OnExit(self):
-		#TODO: what should we do here?
-		dan = 1
-	
 	def GetTitle(self):
 		"""returns the title of the application - as shown in the top level window"""
-		return self.title
+		return AppLauncher.title
+	
+	def GetVersion(self):
+		"""returns the version of this application"""
+		return AppLauncher.version
 
 #*******************************************************************************************************
 #                                                 MAIN 
@@ -447,8 +448,9 @@ if __name__ == '__main__':
 	pre-GUI-start must be placed here. The final action in this main fcn should be the launch of
 	the GUI Main."""
 	
-	# initial setup of database using fileCheck utilities
-	SetupInitialDatabase() 
+	# create an instance of the Database class and then perform the initial database ID
+	db = Database();
+	db.IdentifyDatabase();
 	
 	# create highest level wx object (wxApp) instance
 	launcher = AppLauncher(redirect=False) 

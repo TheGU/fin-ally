@@ -26,42 +26,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Fn-ally.  If not, see <http://www.gnu.org/licenses/>.
 #********************************************************************
-import glob, os, sys
-from dbDrivers import * 
-
-databaseName = "dummy.db"
-
-#********************************************************************
-def SetupInitialDatabase():
-    """This function returns the name of a properly formatted database from
-    the Fin-ally path. It will use the first database it finds if there are more
-    than one."""
-    global databaseName
-    
-    dbFiles = list(GetDbFiles())
-    if dbFiles:
-        #TODO: search for appropriate .db setup in each of these files
-        for tempFileName in dbFiles:
-            dbNameMatch = re.search('\w+\.db$', tempFileName)
-            if dbNameMatch:
-                databaseName = dbNameMatch.group(0)
-                # push the database name into the expense object
-                tempExpense = genericExpense()
-                tempExpense.setDatabaseName(databaseName)
-                
-                break #ensures we load the first valid database
-            
-    if databaseName == 'dummy.db':
-        # Prompt user to create a new database file
-        print "Please enter a new database name ending in '.db'\n"
-        databaseName = raw_input('database name: ')
-        # Strip non alpha-numeric characters out of databaseName
-        databaseName = re.sub('[^a-zA-Z0-9_.]','',databaseName)
-        CreateBlankDatabase(databaseName)
+import glob, os, sys, re
+#from dbDrivers import * 
     
 #********************************************************************
-def GetDbFiles():
-    """This function returns a list of all *.db files in a directory"""
+def GenerateDbFiles():
+    """This generator function returns a list of all *.db files in a directory"""
     for match in glob.glob(os.path.join(GetCurrentDir(), '*.db')):
         yield match
 
@@ -70,3 +40,7 @@ def GetCurrentDir():
     """This function returns the absolute path to this Python script"""
     pathname = os.path.dirname(sys.argv[0])
     return(os.path.abspath(pathname))
+
+# Test main functionality
+if __name__ == '__main__':
+    print "Please run Fin-ally by launching FINally.py!"
