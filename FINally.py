@@ -26,10 +26,13 @@
 #********************************************************************
 
 import datetime
-import wx.grid
-import re
+
+# import wxPython libraries - including some simplifiers for grid and calendar
 import wx
-import wx.calendar
+import wx.grid     as gridlib
+import wx.calendar as callib
+
+import re
 from dbDrivers import *
 from fileCheck import *
 
@@ -55,11 +58,11 @@ class columnInfo:
 
 	colLabels = ['id', 'who', 'amount', 'date', 'desc']
 	colWidth  = [50, 50, 50, 50, -1]
-	colType   = [wx.grid.GRID_VALUE_NUMBER,
-		     wx.grid.GRID_VALUE_CHOICE + ':rachel, daniel',
-		     wx.grid.GRID_VALUE_NUMBER,
-		     wx.grid.GRID_VALUE_STRING, # should be GRID_VALUE_DATETIME
-		     wx.grid.GRID_VALUE_STRING]
+	colType   = [gridlib.GRID_VALUE_NUMBER,
+		     gridlib.GRID_VALUE_CHOICE + ':rachel, daniel',
+		     gridlib.GRID_VALUE_NUMBER,
+		     gridlib.GRID_VALUE_STRING, # should be GRID_VALUE_DATETIME
+		     gridlib.GRID_VALUE_STRING]
 	
 	rowHeight = 20
 	
@@ -96,10 +99,9 @@ class EntryPage(wx.Panel):
 		self.Bind(wx.EVT_LISTBOX, self.OnListBox, self.userList)
 		self.userList.SetSelection(0)
 
-		self.cal = wx.calendar.CalendarCtrl(self, -1, wx.DateTime_Now(), pos = (110,10),
-						    style = wx.calendar.CAL_SHOW_HOLIDAYS
-						    | wx.calendar.CAL_SUNDAY_FIRST)
-		self.Bind(wx.calendar.EVT_CALENDAR_SEL_CHANGED, self.OnCalSelChanged, self.cal)
+		self.cal = callib.CalendarCtrl(self, -1, wx.DateTime_Now(), pos = (110,10),
+						    style = callib.CAL_SHOW_HOLIDAYS | callib.CAL_SUNDAY_FIRST)
+		self.Bind(callib.EVT_CALENDAR_SEL_CHANGED, self.OnCalSelChanged, self.cal)
 		# TODO: set calendar date (force)
 
 		self.valueEntry = wx.TextCtrl(self, -1, "0.00", pos = (10,160), size = (90, 21))
@@ -145,7 +147,7 @@ class EntryPage(wx.Panel):
 		self.variables.desiredValue = float(amount)
 
 #********************************************************************		
-class CustomDataTable(wx.grid.PyGridTableBase):
+class CustomDataTable(gridlib.PyGridTableBase):
 	"""This is an instance of the uninstantiated base class PyGridTableBase. It must contain
 	methods for actually returning or modifying data in the grid, as well as an init method
 	for populating the grid"""
@@ -162,7 +164,7 @@ class CustomDataTable(wx.grid.PyGridTableBase):
 		self._rows = self.GetNumberRows()
 		self._cols = self.GetNumberCols()
 		
-		wx.grid.PyGridTableBase.__init__(self)
+		gridlib.PyGridTableBase.__init__(self)
 		
 	def GetNumberRows(self):
 		return len(self.localData.expenseList)
@@ -220,15 +222,15 @@ class CustomDataTable(wx.grid.PyGridTableBase):
 		grid.BeginBatch() #begin supression of screen painting
 	
 		for current, new, delmsg, addmsg in [
-		    (self._rows, self.GetNumberRows(), wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED, wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED),
-		    (self._cols, self.GetNumberCols(), wx.grid.GRIDTABLE_NOTIFY_COLS_DELETED, wx.grid.GRIDTABLE_NOTIFY_COLS_APPENDED),
+		    (self._rows, self.GetNumberRows(), gridlib.GRIDTABLE_NOTIFY_ROWS_DELETED, gridlib.GRIDTABLE_NOTIFY_ROWS_APPENDED),
+		    (self._cols, self.GetNumberCols(), gridlib.GRIDTABLE_NOTIFY_COLS_DELETED, gridlib.GRIDTABLE_NOTIFY_COLS_APPENDED),
 		]:
 	
 			if new < current:
-				msg = wx.grid.GridTableMessage(self,delmsg,new,current-new)
+				msg = gridlib.GridTableMessage(self,delmsg,new,current-new)
 				grid.ProcessTableMessage(msg)
 			elif new > current:
-				msg = wx.grid.GridTableMessage(self,addmsg,new-current)
+				msg = gridlib.GridTableMessage(self,addmsg,new-current)
 				grid.ProcessTableMessage(msg)
 				self.UpdateValues()
 		
@@ -272,7 +274,7 @@ class GraphicsPage(wx.Panel):
 		self.table.UpdateGrid()
 
 #********************************************************************		
-class GPTable(wx.grid.Grid):
+class GPTable(gridlib.Grid):
 	"""This is primarily a display class, and it is responsible for maintaining the grid table
 	itself. It is not responsible for data management."""
 		
@@ -282,7 +284,7 @@ class GPTable(wx.grid.Grid):
 	#to show up in the graphics page.
 		
 	def __init__(self, parent, localExpenses):
-		wx.grid.Grid.__init__(self, parent)
+		gridlib.Grid.__init__(self, parent)
 		
 		self.expenses = localExpenses
 		
@@ -299,7 +301,7 @@ class GPTable(wx.grid.Grid):
 	def FormatTable(self):
 		# format rows
 		for i in range(self.GetNumberRows()):
-			self.SetCellEditor(i,2,wx.grid.GridCellFloatEditor(-1,2))
+			self.SetCellEditor(i,2,gridlib.GridCellFloatEditor(-1,2))
 			self.SetRowSize(i, colInfo.rowHeight)
 			
 		# format column width
