@@ -374,13 +374,16 @@ class ImportPage(wx.Panel):
 class AppMainFrame(wx.Frame):
 	"""This class inherts wx.Frame methods, and is the top level window of our application."""
 	
+	size = (900,900)
+	
 	def __init__(self, title):
-		self.size = (900,400)
-
-		wx.Frame.__init__(self,None,id=-1,title=title,pos=wx.DefaultPosition,
-				  size=self.size,style=wx.DEFAULT_FRAME_STYLE)
-
-		self.SetBackgroundColour("GREY")
+		wx.Frame.__init__(	self,
+				  	None,
+				  	id=-1,
+				  	title=title,
+				  	pos=wx.DefaultPosition,
+		  			size=AppMainFrame.size,
+		  			style=wx.DEFAULT_FRAME_STYLE)
 
 		# add an icon!
 		self.icon = wx.Icon("img/FINally.ico", wx.BITMAP_TYPE_ICO)
@@ -390,7 +393,7 @@ class AppMainFrame(wx.Frame):
 		self.masterExpenses = genericExpense()
 
 		self.panel    = wx.Panel(self) # basically just a container for the notebook
-		self.notebook = wx.Notebook(self.panel, size=self.size)
+		self.notebook = wx.Notebook(self.panel, size=AppMainFrame.size)
 
 		self.gPage = GraphicsPage(self.notebook, self.masterExpenses)
 		self.ePage = EntryPage(self.notebook, self.gPage, self.masterExpenses)
