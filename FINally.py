@@ -31,6 +31,7 @@ import datetime
 import wx
 import wx.grid     as gridlib
 import wx.calendar as callib
+from sqlobject import *
 
 import re
 from dbDrivers import *
