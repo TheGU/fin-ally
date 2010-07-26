@@ -245,7 +245,7 @@ class Database():
 					# TODO: replace with SQLObject construct here
 					# self.tempExpense = genericExpense()
 					# self.tempExpense.setDatabaseName(Database.name)
-					
+					DbConnect()
 					break #ensures we load the first valid database
 				
 		else: # if no database files present, prompt user to create a new database file...
@@ -256,6 +256,8 @@ class Database():
 			
 			# create a blank db with the appropriate name
 			Database.name= self.databaseName
+			Database.fullName= os.path.abspath(Database.name)
+			DbConnect()
 			CreateBlankDatabase()	
 			
 	def GetDatabaseName(self):
@@ -294,6 +296,7 @@ def DbConnect():
 	dbPath = Database.fullName
 	connPath = dbPath.replace(':', '|') # required by SQLObject for the connection string
 	connString = 'sqlite:/' + connPath
+	dPrint(connString)
 	
 	# create a connection for all queries to use
 	connection = connectionForURI(connString)
