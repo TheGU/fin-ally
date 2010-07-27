@@ -31,10 +31,11 @@
 #********************************************************************
 
 import sqlite3
-import sys, re, os, datetime
+import sys, re, os
 from SQLiteCommands import *
 from sqlobject import *
 from utils import *
+from datetime import datetime
 
 #********************************************************************
 class SQLiteExpense():
@@ -200,13 +201,8 @@ def CreateBlankDatabase():
 	et2 = ExpenseType(description='makeup')
 	exp1 = Expense(user=dls, expenseType=et1, amount=50.12, 
 				description='ExpressDude clothes', date=datetime.now())
-	exp2 = Expenses(user=rhs, expenseType=et2, amount=30.45,
+	exp2 = Expense(user=rhs, expenseType=et2, amount=30.45,
 				description='BareMinerals makeup', date=datetime.now())
-	
-	dPrint('printing tables...')
-	dPrint('Users:\n')
-	dPrint(list(userList))
-	dPrint('\n')
 	
 #********************************************************************
 class Database():

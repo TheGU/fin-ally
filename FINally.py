@@ -34,6 +34,7 @@ import wx.calendar as callib
 from sqlobject import *
 
 import re
+from datetime import *
 from database import *
 from utils import *
 
@@ -72,7 +73,7 @@ colInfo = columnInfo()
 selectionID = 0
 
 # TODO: capture the data here
-masterDate = datetime.date.today()
+masterDate = date.today()
 currMonthStart = str(masterDate.month) + '00' + str(masterDate.year)
 currMonthEnd = str(masterDate.month) + '31' + str(masterDate.year)
 
