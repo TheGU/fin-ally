@@ -32,158 +32,12 @@
 
 import sqlite3
 import sys, re, os
-from SQLiteCommands import *
 from sqlobject import *
 from utils import *
 from datetime import datetime
 
 #********************************************************************
-class SQLiteExpense():
-	"""This is a superclass of genericExpense, and contains additional methods
-	for loading data out of the database. """
-	
-	def __init__(self):
-		self.initDatabaseSQLite()
-		
-	def deleteDataSQLite(self, id):
-		"""This function should accept an entry id and delete the data from the
-		database at that location."""
-		
-		(cu, db) = LinkToDatabase(genericExpense.database)
-		
-		if(0 != id):
-			# delete the id passed in
-			temp = SQLDEF_DELETE % (id)
-			cu.execute(temp)
-		
-		# commit and close database
-		db.commit()
-		db.close()
-
-	def getDataSQLite(self, type, arg1, arg2, arg3):
-		"""This function returns all data in the current database. The SQLite
-		functions return data in the form of a tuple (immutable). We convert
-		to a list (mutable). This fcn also takes a 'range' argument which
-		specifies if ALL data is required, or just a certain date range."""
-		
-		# create database connection
-		(cu, db) = LinkToDatabase(genericExpense.database)
-		
-		# gather data based on selection type
-		if 1 == type:
-			# GET DEFAULT DATA
-			cu.execute(SQLDEF_GET_ALL)
-		if 2 == type:
-			# GET RANGE DATA
-			temp = SQLDEF_GET_RANGE % (arg1)
-			cu.execute(temp)
-			# formerly: mpData = GetAllData(cu,"date > 7002007 AND date < 8002007")
-			
-		# actually get the data based on the above requirements	
-		tempData = cu.fetchall()
-		listData = list(tempData)
-		
-		# turn data from tuple into a list (more easily accessible)
-		rawData = []
-		for i in listData:
-			rawData.append(list(i))
-			
-		self.expenseList = rawData
-		
-		# close database
-		db.close()
-		
-	def initDatabaseSQLite(self):
-		"""This will create the appropriate tables inside the
-		datbase specified via _databaseName_ if necessary. This should be the
-		first function called from a View component that needs access to a certain
-		database."""
-		
-		# TODO: how should this function be called along with setDatabase() to provide
-		# the most sensible seperation of SQLite specific functionality and generic
-		# functionality?
-		
-		(cu, db) = LinkToDatabase(genericExpense.database)
-		cu.execute(SQLDEF_EXPENSES)
-		db.commit()
-		db.close()
-		
-	def insertDataSQLite(self, who, amount, date, desc):
-		(cu, db) = LinkToDatabase(genericExpense.database)
-		
-		# TODO: check for pre-existing date/amount match, if no match, insert	
-		cu.execute(SQLDEF_INSERT_EXPENSES % (who, amount, date, desc))
-		
-		db.commit()
-		db.close()
-		
-	def updateOneSQLite(self, target, newValue, id):
-		(cu, db) = LinkToDatabase(genericExpense.database)
-		
-		test = SQLDEF_UPDATE % (target, newValue, id)
-		cu.execute(test)
-		
-		db.commit()
-		db.close()
-
-#********************************************************************
-class genericExpense(SQLiteExpense):
-	"""This is a generic base class, and should call functions specifically tailored
-	for a particular database. Some of these functions may be plain wrappers, and some
-	may contain other generic functionality. This class allows the rest of FINally to use
-	database agnostic functionality."""
-	
-	# TODO: This class should contain all functions that are considered "generic".
-	# They should provide functionality to entering, editing, deleting, and returning
-	# data - but they should not touch the data itself. Data touching should be done
-	# by the SQLiteExpense class
-	
-	database = ""
-	
-	def __init__(self):
-		self.expenseList = []
-		SQLiteExpense.__init__(self)
-	
-	def deleteData(self, id):
-		self.deleteDataSQLite(id)
-		
-	def editData(self, target, newValue, id):
-		# this can be obsoleted if setData handles both edits and sets
-		self.updateOneSQLite(target, newValue, id)
-		
-	def getData(self):
-		return self.expenseList
-	
-	def loadData(self, type, arg1, arg2, arg3):
-		self.getDataSQLite(type, arg1, arg2, arg3)
-		
-	def setData(self, who, amount, date, desc):
-		# this should handle both initial imports and new arrivals if possible
-		self.insertDataSQLite(who, amount, date, desc)
-		
-	def setDatabaseName(self, databaseName):
-		"""Sets the database name used for this expense object."""
-		genericExpense.database = databaseName
-		
-	def getDatabaseName(self):
-		return genericExpense.database
-		
-#********************************************************************
-def LinkToDatabase(database):
-	"""This function will try to link to an existing database, and will create
-	such a database is none exists. The single argument is the name of the
-	database it is searching for."""
-	
-	# create global instance of database
-	try:
-		db = sqlite3.connect(database)
-	except sqlite3.Error, errmsg:
-		print "Could not open the database file: " + str(errmsg)
-		sys.exit()
-	
-	cu = db.cursor()
-	return cu, db
-
+#							FUNCTIONS
 #********************************************************************
 def CreateBlankDatabase():
 	"""This function is called during powerup to ensure that a database
@@ -204,6 +58,23 @@ def CreateBlankDatabase():
 	exp2 = Expense(user=rhs, expenseType=et2, amount=30.45,
 				description='BareMinerals makeup', date=datetime.now())
 	
+#********************************************************************
+def DbConnect():
+	"""This function is responsible for pre-processing the database name gathered at
+	powerup into the appropriate format, and then connecting to the database and create
+	a global connection object"""
+	
+	dbPath = Database.fullName
+	connPath = dbPath.replace(':', '|') # required by SQLObject for the connection string
+	connString = 'sqlite:/' + connPath
+	dPrint(connString)
+	
+	# create a connection for all queries to use
+	connection = connectionForURI(connString)
+	sqlhub.processConnection = connection
+	
+#********************************************************************
+#							CLASSES
 #********************************************************************
 class Database():
 	"""The Database object contains database meta data such as name, size, and location, 
@@ -263,6 +134,29 @@ class Database():
 		"""Returns database size in bytes"""
 		return Database.size
 	
+	def GetUserExpenses(self):
+		"""returns all data in the database"""
+		minorList=[]
+		majorList=[]
+		userlist = User.select()
+		User.sqlmeta.addJoin(MultipleJoin('Expense', joinMethodName='expenses'))
+		
+		for i in list(userlist):
+			#print i.name,"\n"
+			#print i.expenses,"\n"
+			minorList.append(i.name)
+			minorList.append(i.expenses)
+			majorList.append(minorList)
+			minorList=[]
+			
+		return majorList
+			
+		#print "\n"
+		#for j in majorList:
+		#	print j,"\n"
+			
+		#print majorList[0][1]
+	
 #********************************************************************
 class User(SQLObject):
 	"""User table. Contains the name of the user."""
@@ -282,32 +176,14 @@ class Expense(SQLObject):
 	amount 		= CurrencyCol()
 	description = StringCol()
 	date		= DateCol()
-	
+
 #********************************************************************
-def DbConnect():
-	"""This function is responsible for pre-processing the database name gathered at
-	powerup into the appropriate format, and then connecting to the database and create
-	a global connection object"""
-	
-	dbPath = Database.fullName
-	connPath = dbPath.replace(':', '|') # required by SQLObject for the connection string
-	connString = 'sqlite:/' + connPath
-	dPrint(connString)
-	
-	# create a connection for all queries to use
-	connection = connectionForURI(connString)
-	sqlhub.processConnection = connection
+#							MAIN
+#********************************************************************
 
 # Test main functionality
 if __name__ == '__main__':
+	#database = Database()
+	#database.IdentifyDatabase()
+	#x = database.GetUserExpenses()
 	print "Please run Fin-ally by launching FINally.py!"
-
-## EXAMPLE: update one item
-#dbUpdateOne(database, 'desc', 'jazz', 2)
-#
-## EXAMPLE: get all data
-#data = dbGetData(database, 1, -1, -1, -1)
-#
-## EXAMPLE: get a range of data
-#data = dbGetData(database, 2, "date > 1002007 AND date < 1042007", -1, -1)
-
