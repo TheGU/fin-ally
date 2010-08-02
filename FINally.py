@@ -291,11 +291,30 @@ class SimpleGrid(gridlib.Grid):
 		x = Database()
 		data = x.GetUserExpenses()
 		
-		# setting these initial values is brutal- they demand unicode or string values 
-		self.SetCellValue(0,0,data[0][0])
-		self.SetCellValue(0,1,data[1][0])
-		self.SetCellValue(1,0,data[0][1][0].description)
-		self.SetCellValue(1,1,data[0][1][0].description)
+		self.SetCellValue(0,0,str(data[0][0]))
+		self.SetCellValue(0,1,str(data[0][1]))
+		self.SetCellValue(0,2,str(data[0][2].description))
+		self.SetCellValue(0,3,str(data[0][3].name))
+		
+		self.SetCellValue(1,0,str(data[1][0]))
+		self.SetCellValue(1,1,str(data[1][1]))
+		self.SetCellValue(1,2,str(data[1][2].description))
+		self.SetCellValue(1,3,str(data[1][3].name))
+		
+		self.SetCellValue(2,0,str(data[2][0]))
+		self.SetCellValue(2,1,str(data[2][1]))
+		self.SetCellValue(2,2,str(data[2][2].description))
+		self.SetCellValue(2,3,str(data[2][3].name))
+		
+		# getting data out of the "data" object we just created is brutal - it requires three indexes
+		# and a class variable reference! 
+		#self.SetCellValue(0,0,data[0][0])
+		#self.SetCellValue(1,0,data[1][0])
+		#self.SetCellValue(0,1,data[0][1][0].description)
+		#self.SetCellValue(1,1,data[1][1][0].description)
+		# NOTE: GAH - this is what we have to do to use integers!
+		#self.SetCellValue(0,2,str(data[0][1][0].amount))
+		#self.SetCellValue(1,2,str(data[1][1][0].amount))
 
 #********************************************************************		
 class GPTable(gridlib.Grid):

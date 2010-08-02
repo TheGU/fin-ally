@@ -53,10 +53,13 @@ def CreateBlankDatabase():
 	rhs = User(name='Rachel Sisco')
 	et1 = ExpenseType(description='clothes')
 	et2 = ExpenseType(description='makeup')
+	et3 = ExpenseType(description='food')
 	exp1 = Expense(user=dls, expenseType=et1, amount=50.12, 
 				description='ExpressDude clothes', date=datetime.now())
 	exp2 = Expense(user=rhs, expenseType=et2, amount=30.45,
 				description='BareMinerals makeup', date=datetime.now())
+	exp3 = Expense(user=rhs, expenseType=et3, amount=9.36,
+				description='One Potato', date=datetime.now())
 	
 #********************************************************************
 def DbConnect():
@@ -138,24 +141,24 @@ class Database():
 		"""returns all data in the database"""
 		minorList=[]
 		majorList=[]
-		userlist = User.select()
-		User.sqlmeta.addJoin(MultipleJoin('Expense', joinMethodName='expenses'))
+		expenseList= Expense.select()
+		#User.sqlmeta.addJoin(MultipleJoin('Expense', joinMethodName='expenses'))
+		#Expense.sqlmeta.addJoin(MultipleJoin('User', joinMethodName='users'))
 		
-		for i in list(userlist):
-			#print i.name,"\n"
-			#print i.expenses,"\n"
-			minorList.append(i.name)
-			minorList.append(i.expenses)
+		# iterate through
+		for i in list(expenseList):
+			minorList.append(i.amount)
+			minorList.append(i.description)
+			minorList.append(i.expenseType)
+			minorList.append(i.user)
 			majorList.append(minorList)
 			minorList=[]
 			
+		#for i in majorList:
+		#	print i, "\n"
+		#	print i[2].description, "\n"
+			
 		return majorList
-			
-		#print "\n"
-		#for j in majorList:
-		#	print j,"\n"
-			
-		#print majorList[0][1]
 	
 #********************************************************************
 class User(SQLObject):
