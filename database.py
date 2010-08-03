@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 #********************************************************************
-# Filename:		dbDrivers.py
-# Authors:		Daniel Sisco, Matt Van Kirk
+# Filename:			database.py
+# Authors:			Daniel Sisco, Matt Van Kirk
 # Date Created:		4-20-2007
 # 
 # Abstract: This is the Model/Controller component of the FINally SQLite finance tool.
@@ -32,173 +32,52 @@
 
 import sqlite3
 import sys, re, os
-from SQLiteCommands import *
+from sqlobject import *
 from utils import *
+from datetime import datetime
 
 #********************************************************************
-class SQLiteExpense():
-	"""This is a superclass of genericExpense, and contains additional methods
-	for loading data out of the database. """
-	
-	def __init__(self):
-		self.initDatabaseSQLite()
-		
-	def deleteDataSQLite(self, id):
-		"""This function should accept an entry id and delete the data from the
-		database at that location."""
-		
-		(cu, db) = LinkToDatabase(genericExpense.database)
-		
-		if(0 != id):
-			# delete the id passed in
-			temp = SQLDEF_DELETE % (id)
-			cu.execute(temp)
-		
-		# commit and close database
-		db.commit()
-		db.close()
-
-	def getDataSQLite(self, type, arg1, arg2, arg3):
-		"""This function returns all data in the current database. The SQLite
-		functions return data in the form of a tuple (immutable). We convert
-		to a list (mutable). This fcn also takes a 'range' argument which
-		specifies if ALL data is required, or just a certain date range."""
-		
-		# create database connection
-		(cu, db) = LinkToDatabase(genericExpense.database)
-		
-		# gather data based on selection type
-		if 1 == type:
-			# GET DEFAULT DATA
-			cu.execute(SQLDEF_GET_ALL)
-		if 2 == type:
-			# GET RANGE DATA
-			temp = SQLDEF_GET_RANGE % (arg1)
-			cu.execute(temp)
-			# formerly: mpData = GetAllData(cu,"date > 7002007 AND date < 8002007")
-			
-		# actually get the data based on the above requirements	
-		tempData = cu.fetchall()
-		listData = list(tempData)
-		
-		# turn data from tuple into a list (more easily accessible)
-		rawData = []
-		for i in listData:
-			rawData.append(list(i))
-			
-		self.expenseList = rawData
-		
-		# close database
-		db.close()
-		
-	def initDatabaseSQLite(self):
-		"""This will create the appropriate tables inside the
-		datbase specified via _databaseName_ if necessary. This should be the
-		first function called from a View component that needs access to a certain
-		database."""
-		
-		# TODO: how should this function be called along with setDatabase() to provide
-		# the most sensible seperation of SQLite specific functionality and generic
-		# functionality?
-		
-		(cu, db) = LinkToDatabase(genericExpense.database)
-		cu.execute(SQLDEF_EXPENSES)
-		db.commit()
-		db.close()
-		
-	def insertDataSQLite(self, who, amount, date, desc):
-		(cu, db) = LinkToDatabase(genericExpense.database)
-		
-		# TODO: check for pre-existing date/amount match, if no match, insert	
-		cu.execute(SQLDEF_INSERT_EXPENSES % (who, amount, date, desc))
-		
-		db.commit()
-		db.close()
-		
-	def updateOneSQLite(self, target, newValue, id):
-		(cu, db) = LinkToDatabase(genericExpense.database)
-		
-		test = SQLDEF_UPDATE % (target, newValue, id)
-		cu.execute(test)
-		
-		db.commit()
-		db.close()
-
+#							FUNCTIONS
 #********************************************************************
-class genericExpense(SQLiteExpense):
-	"""This is a generic base class, and should call functions specifically tailored
-	for a particular database. Some of these functions may be plain wrappers, and some
-	may contain other generic functionality. This class allows the rest of FINally to use
-	database agnostic functionality."""
-	
-	# TODO: This class should contain all functions that are considered "generic".
-	# They should provide functionality to entering, editing, deleting, and returning
-	# data - but they should not touch the data itself. Data touching should be done
-	# by the SQLiteExpense class
-	
-	database = ""
-	
-	def __init__(self):
-		self.expenseList = []
-		SQLiteExpense.__init__(self)
-	
-	def deleteData(self, id):
-		self.deleteDataSQLite(id)
-		
-	def editData(self, target, newValue, id):
-		# this can be obsoleted if setData handles both edits and sets
-		self.updateOneSQLite(target, newValue, id)
-		
-	def getData(self):
-		return self.expenseList
-	
-	def loadData(self, type, arg1, arg2, arg3):
-		self.getDataSQLite(type, arg1, arg2, arg3)
-		
-	def setData(self, who, amount, date, desc):
-		# this should handle both initial imports and new arrivals if possible
-		self.insertDataSQLite(who, amount, date, desc)
-		
-	def setDatabaseName(self, databaseName):
-		"""Sets the database name used for this expense object."""
-		genericExpense.database = databaseName
-		
-	def getDatabaseName(self):
-		return genericExpense.database
-		
-#********************************************************************
-def LinkToDatabase(database):
-	"""This function will try to link to an existing database, and will create
-	such a database is none exists. The single argument is the name of the
-	database it is searching for."""
-	
-	# create global instance of database
-	try:
-		db = sqlite3.connect(database)
-	except sqlite3.Error, errmsg:
-		print "Could not open the database file: " + str(errmsg)
-		sys.exit()
-	
-	cu = db.cursor()
-	return cu, db
-
-#********************************************************************
-def CreateBlankDatabase(databaseName):
+def CreateBlankDatabase():
 	"""This function is called during powerup to ensure that a database
 	of the appropriate name exists. The object defined here will be discarded,
 	but the database will remain."""
 	
-	blankDb = genericExpense()
+	print "Creating database: \n\t", Database.fullName, "\n\n"
+	User.createTable()
+	ExpenseType.createTable()
+	Expense.createTable()
 	
-	blankDb.setDatabaseName(databaseName)
-	blankDb.initDatabaseSQLite()
+	dls = User(name='Daniel Sisco')
+	rhs = User(name='Rachel Sisco')
+	et1 = ExpenseType(description='clothes')
+	et2 = ExpenseType(description='makeup')
+	et3 = ExpenseType(description='food')
+	exp1 = Expense(user=dls, expenseType=et1, amount=50.12, 
+				description='ExpressDude clothes', date=datetime.now())
+	exp2 = Expense(user=rhs, expenseType=et2, amount=30.45,
+				description='BareMinerals makeup', date=datetime.now())
+	exp3 = Expense(user=rhs, expenseType=et3, amount=9.36,
+				description='One Potato', date=datetime.now())
 	
-	#DAN - remove these when tested
-	blankDb.insertDataSQLite('rachel',1.11, '01012007', 'apple')
-	blankDb.insertDataSQLite('rachel',2.11, '01022007', 'bear')
+#********************************************************************
+def DbConnect():
+	"""This function is responsible for pre-processing the database name gathered at
+	powerup into the appropriate format, and then connecting to the database and create
+	a global connection object"""
 	
-	blankDb.getData()
+	dbPath = Database.fullName
+	connPath = dbPath.replace(':', '|') # required by SQLObject for the connection string
+	connString = 'sqlite:/' + connPath
+	dPrint(connString)
 	
+	# create a connection for all queries to use
+	connection = connectionForURI(connString)
+	sqlhub.processConnection = connection
+	
+#********************************************************************
+#							CLASSES
 #********************************************************************
 class Database():
 	"""The Database object contains database meta data such as name, size, and location, 
@@ -207,8 +86,8 @@ class Database():
 	
 	# static variables - will be populated by methods of this class
 	name = "";
+	fullName = ""
 	size = 0;
-	location = "";
 		
 	def IdentifyDatabase(self):
 		"""This method will locate a database (.db) file and then load specific pieces of information
@@ -226,15 +105,17 @@ class Database():
 					
 					# store name for global access
 					Database.name = self.databaseName
-					
 					Database.size = os.path.getsize(Database.name)
+					Database.fullName= os.path.abspath(Database.name)
+					
 					dPrint(Database.name)
 					dPrint(Database.size)
+					dPrint(Database.fullName)
 					
-					# push the database name into the expense object
-					self.tempExpense = genericExpense()
-					self.tempExpense.setDatabaseName(Database.name)
-					
+					# TODO: replace with SQLObject construct here
+					# self.tempExpense = genericExpense()
+					# self.tempExpense.setDatabaseName(Database.name)
+					DbConnect()
 					break #ensures we load the first valid database
 				
 		else: # if no database files present, prompt user to create a new database file...
@@ -242,29 +123,70 @@ class Database():
 			self.databaseName = raw_input('database name: ')
 			# Strip non alpha-numeric characters out of databaseName
 			self.databaseName = re.sub('[^a-zA-Z0-9_.]','',self.databaseName)
-			Database.name= self.databaseName # store name for global access 
-			CreateBlankDatabase(Database.name)	
+			
+			# create a blank db with the appropriate name
+			Database.name= self.databaseName
+			Database.fullName= os.path.abspath(Database.name)
+			DbConnect()
+			CreateBlankDatabase()	
 			
 	def GetDatabaseName(self):
 		return Database.name
 	
-	def GetDatabaseLocation(self):
-		"""Returns fully qualified path to database"""
-		return Database.location
-	
 	def GetDatabaseSize(self):
 		"""Returns database size in bytes"""
 		return Database.size
+	
+	def GetUserExpenses(self):
+		"""returns all data in the database"""
+		minorList=[]
+		majorList=[]
+		expenseList= Expense.select()
+		#User.sqlmeta.addJoin(MultipleJoin('Expense', joinMethodName='expenses'))
+		#Expense.sqlmeta.addJoin(MultipleJoin('User', joinMethodName='users'))
+		
+		# iterate through
+		for i in list(expenseList):
+			minorList.append(i.amount)
+			minorList.append(i.description)
+			minorList.append(i.expenseType)
+			minorList.append(i.user)
+			majorList.append(minorList)
+			minorList=[]
+			
+		#for i in majorList:
+		#	print i, "\n"
+		#	print i[2].description, "\n"
+			
+		return majorList
+	
+#********************************************************************
+class User(SQLObject):
+	"""User table. Contains the name of the user."""
+	name = StringCol()
+	
+#********************************************************************
+class ExpenseType(SQLObject):
+	"""Expense type table. Contains a description of the expense category"""
+	description = StringCol()
+	
+#********************************************************************
+class Expense(SQLObject):
+	"""Expense table. Pulls in User and a Expense type and contains amount, 
+	description, and date purchased"""
+	user 		= ForeignKey('User')
+	expenseType = ForeignKey('ExpenseType')
+	amount 		= CurrencyCol()
+	description = StringCol()
+	date		= DateCol()
+
+#********************************************************************
+#							MAIN
+#********************************************************************
 
 # Test main functionality
 if __name__ == '__main__':
+	#database = Database()
+	#database.IdentifyDatabase()
+	#x = database.GetUserExpenses()
 	print "Please run Fin-ally by launching FINally.py!"
-
-## EXAMPLE: update one item
-#dbUpdateOne(database, 'desc', 'jazz', 2)
-#
-## EXAMPLE: get all data
-#data = dbGetData(database, 1, -1, -1, -1)
-#
-## EXAMPLE: get a range of data
-#data = dbGetData(database, 2, "date > 1002007 AND date < 1042007", -1, -1)

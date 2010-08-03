@@ -34,6 +34,7 @@ import wx.calendar as callib
 from sqlobject import *
 
 import re
+from datetime import *
 from database import *
 from utils import *
 
@@ -72,7 +73,7 @@ colInfo = columnInfo()
 selectionID = 0
 
 # TODO: capture the data here
-masterDate = datetime.date.today()
+masterDate = date.today()
 currMonthStart = str(masterDate.month) + '00' + str(masterDate.year)
 currMonthEnd = str(masterDate.month) + '31' + str(masterDate.year)
 
@@ -246,33 +247,74 @@ class CustomDataTable(gridlib.PyGridTableBase):
 
 #********************************************************************
 class GraphicsPage(wx.Panel):
+	"""The Graphics page contains two things - a grid or table of entries, and a 
+	button panel to perform some operations on the grid."""
 	
-	def __init__(self, parent, localExpenses):
+	def __init__(self, parent):
 		wx.Panel.__init__(self, parent)
 	
 		self.SetBackgroundColour("GREY")
 	
-		self.buttonPanel = wx.Panel(self) #define another panel for buttons and controls 
-		self.expenses = localExpenses
-
-		#add controls to self.buttonPanel
+		# create button panel and add some controls
+		self.buttonPanel = wx.Panel(self)
 		self.deleteButton   = wx.Button(self.buttonPanel, -1, label = "Delete", pos = (0,0))
-		self.CategorySelect = wx.ComboBox(self.buttonPanel, -1, months[0], choices=months,
-						  pos=(700,0), style=wx.CB_DROPDOWN)
+		#self.CategorySelect = wx.ComboBox(self.buttonPanel, -1, months[0], choices=months,
+		#				  pos=(700,0), style=wx.CB_DROPDOWN)
+		self.Bind(wx.EVT_BUTTON, self.OnDeleteClick, self.deleteButton)
 
-		self.table = GPTable(self, self.expenses)
+		# create table
+		self.table = SimpleGrid(self)
+		
+		# create a sizer for this Panel and add the buttons and the table
 		self.sizer = wx.BoxSizer(wx.VERTICAL)      # define new box sizer	
 		self.sizer.Add(self.table, 1, wx.GROW)     # add grid (resize vert and horz)
 		self.sizer.Add(self.buttonPanel, 0, wx.ALIGN_LEFT)    # add panel (no resize vert and aligned left horz)
 		self.SetSizer(self.sizer)
 
-		self.Bind(wx.EVT_BUTTON, self.OnDeleteClick, self.deleteButton)
-
 	def OnDeleteClick(self, evt):
-		global selectionID
+		"""this should delete whatever piece of data is selected from the database"""
 
-		self.expenses.deleteData(selectionID)
-		self.table.UpdateGrid()
+		#self.expenses.deleteData(selectionID)
+		#self.table.UpdateGrid()
+
+#********************************************************************	
+class SimpleGrid(gridlib.Grid):
+	"""This is a simple grid class - which means most of the methods are automatically
+	defined by the wx library"""
+	def __init__(self, parent):
+		gridlib.Grid.__init__(self, parent, -1)
+		self.CreateGrid(10,10)
+		self.SetColSize(3, 200)
+		self.SetRowSize(4, 45)
+		
+		# create a Database object and pull some data out of it
+		x = Database()
+		data = x.GetUserExpenses()
+		
+		self.SetCellValue(0,0,str(data[0][0]))
+		self.SetCellValue(0,1,str(data[0][1]))
+		self.SetCellValue(0,2,str(data[0][2].description))
+		self.SetCellValue(0,3,str(data[0][3].name))
+		
+		self.SetCellValue(1,0,str(data[1][0]))
+		self.SetCellValue(1,1,str(data[1][1]))
+		self.SetCellValue(1,2,str(data[1][2].description))
+		self.SetCellValue(1,3,str(data[1][3].name))
+		
+		self.SetCellValue(2,0,str(data[2][0]))
+		self.SetCellValue(2,1,str(data[2][1]))
+		self.SetCellValue(2,2,str(data[2][2].description))
+		self.SetCellValue(2,3,str(data[2][3].name))
+		
+		# getting data out of the "data" object we just created is brutal - it requires three indexes
+		# and a class variable reference! 
+		#self.SetCellValue(0,0,data[0][0])
+		#self.SetCellValue(1,0,data[1][0])
+		#self.SetCellValue(0,1,data[0][1][0].description)
+		#self.SetCellValue(1,1,data[1][1][0].description)
+		# NOTE: GAH - this is what we have to do to use integers!
+		#self.SetCellValue(0,2,str(data[0][1][0].amount))
+		#self.SetCellValue(1,2,str(data[1][1][0].amount))
 
 #********************************************************************		
 class GPTable(gridlib.Grid):
@@ -390,19 +432,16 @@ class AppMainFrame(wx.Frame):
 		self.icon = wx.Icon("img/FINally.ico", wx.BITMAP_TYPE_ICO)
 		self.SetIcon(self.icon)
 
-		# This expense object is the master object for all sub-classes of AppMainFrame
-		self.masterExpenses = genericExpense()
-
 		self.panel    = wx.Panel(self) # basically just a container for the notebook
 		self.notebook = wx.Notebook(self.panel, size=AppMainFrame.size)
 
-		self.gPage = GraphicsPage(self.notebook, self.masterExpenses)
-		self.ePage = EntryPage(self.notebook, self.gPage, self.masterExpenses)
-		self.tPage = ImportPage(self.notebook, self.masterExpenses) 
+		self.gPage = GraphicsPage(self.notebook)
+		#self.ePage = EntryPage(self.notebook, self.gPage, self.masterExpenses)
+		#self.tPage = ImportPage(self.notebook, self.masterExpenses) 
 
-		self.notebook.AddPage(self.ePage, "Expense Entry")	
+		#self.notebook.AddPage(self.ePage, "Expense Entry")	
 		self.notebook.AddPage(self.gPage, "Graphics")
-		self.notebook.AddPage(self.tPage, "Import")
+		#self.notebook.AddPage(self.tPage, "Import")
 
 		# arrange notebook windows in a simple box sizer
 		self.sizer = wx.BoxSizer()
