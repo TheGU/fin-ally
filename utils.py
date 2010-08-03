@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 
 #********************************************************************
-# Filename: 	   fileCheck.py
+# Filename: 	  utils.py
 # Authors:        Daniel Sisco
 # Date Created:   1-22-2008
 # 
-# Abstract: A collection of Fin-ally specific utilities for database file
-# location and analysis.
+# Abstract: A collection of utilities for the Fin-ally project. This 
+# file should include most generic utilities. Examples include debug print
+# function, file locators, current directory locators, etc.
 #
 # Version History:  See repository
 #
