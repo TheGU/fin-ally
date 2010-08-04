@@ -37,6 +37,13 @@ from utils import *
 #from datetime import datetime
 from datetime import date
 
+# These "enumerations" represent data pulled from the Expense Table
+EXP_NAME = 0
+EXP_TYPE = 1
+EXP_AMOUNT = 2
+EXP_DATE = 3
+EXP_DESC = 4
+
 #********************************************************************
 #							FUNCTIONS
 #********************************************************************
@@ -138,8 +145,8 @@ class Database():
 		[0][user][expenseType][amount][date][description]
 		[1][user][expenseType][amount][date][description]
 		
-		names in the above diagram correspond to members of the Expense class
-		and have types as described in the Expense class."""
+		user and expenseType are dereferenced down to the underlying string, 
+		and amount and date are cast to string types to appease the grid."""
 		
 		minorList=[]
 		majorList=[]
@@ -147,15 +154,22 @@ class Database():
 		# grab all expenses
 		expenseList= Expense.query.all()
 		
-		# iterate through expenses
-		for i in list(expenseList):
-			minorList.append(i.user)
-			minorList.append(i.expenseType)
-			minorList.append(i.amount)
-			minorList.append(i.date)
+		# iterate through expenses - packing into listxlist
+		for i in expenseList:
+			# dereference these all the way down to the string
+			minorList.append(i.user.name) 
+			minorList.append(i.expenseType.description)
+			
+			# convert these into strings
+			minorList.append(str(i.amount))
+			minorList.append(str(i.date))
+			
+			# this is just normal
 			minorList.append(i.description)
+			
+			# push minorList into majorList 
 			majorList.append(minorList)
-			minorList=[] # clear minor list for next pass
+			minorList=[]
 			
 		return majorList
 	
@@ -185,6 +199,14 @@ class Expense(Entity):
 
 	def __repr__(self):
 		return "<Expense ('%s', '%s', '%s', '%s', '%s')>" % (self.user, self.expenseType, self.amount, self.date, self.description)
+
+# DAN: does this make things too long?
+class ExpenseOrder:
+	EXP_NAME = 0
+	EXP_TYPE = 1
+	EXP_AMOUNT = 2
+	EXP_DATE = 3
+	EXP_DESC = 4
 
 #********************************************************************
 #							MAIN

@@ -294,10 +294,10 @@ class SimpleGrid(gridlib.Grid):
 		
 		# push data into grid, line by line
 		for i in range(len(data)):
-			self.SetCellValue(i,0,data[i][0].name)
-			self.SetCellValue(i,1,data[i][1].description)
-			self.SetCellValue(i,2,str(data[i][2]))
-			self.SetCellValue(i,3,str(data[i][3]))
+			self.SetCellValue(i,0,data[i][0])
+			self.SetCellValue(i,1,data[i][1])
+			self.SetCellValue(i,2,data[i][2])
+			self.SetCellValue(i,3,data[i][3])
 			self.SetCellValue(i,4,data[i][4])
 
 #********************************************************************		
