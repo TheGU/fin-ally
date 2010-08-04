@@ -25,18 +25,12 @@
 # along with Fin-ally.  If not, see <http://www.gnu.org/licenses/>.
 #********************************************************************
 
-import datetime
-
 # import wxPython libraries - including some simplifiers for grid and calendar
 import wx
 import wx.grid     as gridlib
 import wx.calendar as callib
-from sqlobject import *
-
-import re
-from datetime import *
-from database import *
-from utils import *
+from datetime import date
+from database import Database
 
 users = ['rachel','daniel']
 months = ["January", "February", "March", "April", "May", "June", "July",
@@ -265,6 +259,13 @@ class GraphicsPage(wx.Panel):
 		# create table
 		self.table = SimpleGrid(self)
 		
+		# set column lables
+		self.table.SetColLabelValue(0, "user")
+		self.table.SetColLabelValue(1, "type")
+		self.table.SetColLabelValue(2, "dollas")
+		self.table.SetColLabelValue(3, "date")
+		self.table.SetColLabelValue(4, "description")
+		
 		# create a sizer for this Panel and add the buttons and the table
 		self.sizer = wx.BoxSizer(wx.VERTICAL)      # define new box sizer	
 		self.sizer.Add(self.table, 1, wx.GROW)     # add grid (resize vert and horz)
@@ -291,30 +292,13 @@ class SimpleGrid(gridlib.Grid):
 		x = Database()
 		data = x.GetUserExpenses()
 		
-		self.SetCellValue(0,0,str(data[0][0]))
-		self.SetCellValue(0,1,str(data[0][1]))
-		self.SetCellValue(0,2,str(data[0][2].description))
-		self.SetCellValue(0,3,str(data[0][3].name))
-		
-		self.SetCellValue(1,0,str(data[1][0]))
-		self.SetCellValue(1,1,str(data[1][1]))
-		self.SetCellValue(1,2,str(data[1][2].description))
-		self.SetCellValue(1,3,str(data[1][3].name))
-		
-		self.SetCellValue(2,0,str(data[2][0]))
-		self.SetCellValue(2,1,str(data[2][1]))
-		self.SetCellValue(2,2,str(data[2][2].description))
-		self.SetCellValue(2,3,str(data[2][3].name))
-		
-		# getting data out of the "data" object we just created is brutal - it requires three indexes
-		# and a class variable reference! 
-		#self.SetCellValue(0,0,data[0][0])
-		#self.SetCellValue(1,0,data[1][0])
-		#self.SetCellValue(0,1,data[0][1][0].description)
-		#self.SetCellValue(1,1,data[1][1][0].description)
-		# NOTE: GAH - this is what we have to do to use integers!
-		#self.SetCellValue(0,2,str(data[0][1][0].amount))
-		#self.SetCellValue(1,2,str(data[1][1][0].amount))
+		# push data into grid, line by line
+		for i in range(len(data)):
+			self.SetCellValue(i,0,data[i][0].name)
+			self.SetCellValue(i,1,data[i][1].description)
+			self.SetCellValue(i,2,str(data[i][2]))
+			self.SetCellValue(i,3,str(data[i][3]))
+			self.SetCellValue(i,4,data[i][4])
 
 #********************************************************************		
 class GPTable(gridlib.Grid):

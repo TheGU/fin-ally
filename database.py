@@ -32,9 +32,10 @@
 
 import sqlite3
 import sys, re, os
-from sqlobject import *
+from elixir import *
 from utils import *
-from datetime import datetime
+#from datetime import datetime
+from datetime import date
 
 #********************************************************************
 #							FUNCTIONS
@@ -45,21 +46,14 @@ def CreateBlankDatabase():
 	but the database will remain."""
 	
 	print "Creating database: \n\t", Database.fullName, "\n\n"
-	User.createTable()
-	ExpenseType.createTable()
-	Expense.createTable()
-	
-	dls = User(name='Daniel Sisco')
 	rhs = User(name='Rachel Sisco')
-	et1 = ExpenseType(description='clothes')
-	et2 = ExpenseType(description='makeup')
-	et3 = ExpenseType(description='food')
-	exp1 = Expense(user=dls, expenseType=et1, amount=50.12, 
-				description='ExpressDude clothes', date=datetime.now())
-	exp2 = Expense(user=rhs, expenseType=et2, amount=30.45,
-				description='BareMinerals makeup', date=datetime.now())
-	exp3 = Expense(user=rhs, expenseType=et3, amount=9.36,
-				description='One Potato', date=datetime.now())
+	dls = User(name='Daniel Sisco')
+	clothing = ExpenseType(description='clothing!')
+	makeup   = ExpenseType(description='makeup!')
+	e1 = Expense(user=rhs, expenseType=makeup, amount='15.01', date=date.today(), description='makeup for mah FACE!')
+	e2 = Expense(user=dls, expenseType=clothing, amount='50.25', date = date.today(), description='clothing for mah parts.')
+	
+	session.commit()
 	
 #********************************************************************
 def DbConnect():
@@ -68,13 +62,13 @@ def DbConnect():
 	a global connection object"""
 	
 	dbPath = Database.fullName
-	connPath = dbPath.replace(':', '|') # required by SQLObject for the connection string
-	connString = 'sqlite:/' + connPath
+	connString = 'sqlite:///' + dbPath
 	dPrint(connString)
+	metadata.bind = connString
+	metadata.bind.echo = False
 	
-	# create a connection for all queries to use
-	connection = connectionForURI(connString)
-	sqlhub.processConnection = connection
+	setup_all()
+	create_all()
 	
 #********************************************************************
 #							CLASSES
@@ -138,47 +132,59 @@ class Database():
 		return Database.size
 	
 	def GetUserExpenses(self):
-		"""returns all data in the database"""
+		"""returns all data in the database in a 2D list in the following format:
+		
+		   [ 0  ][      1    ][  2   ][ 3  ][     4     ]
+		[0][user][expenseType][amount][date][description]
+		[1][user][expenseType][amount][date][description]
+		
+		names in the above diagram correspond to members of the Expense class
+		and have types as described in the Expense class."""
+		
 		minorList=[]
 		majorList=[]
-		expenseList= Expense.select()
-		#User.sqlmeta.addJoin(MultipleJoin('Expense', joinMethodName='expenses'))
-		#Expense.sqlmeta.addJoin(MultipleJoin('User', joinMethodName='users'))
+
+		# grab all expenses
+		expenseList= Expense.query.all()
 		
-		# iterate through
+		# iterate through expenses
 		for i in list(expenseList):
-			minorList.append(i.amount)
-			minorList.append(i.description)
-			minorList.append(i.expenseType)
 			minorList.append(i.user)
+			minorList.append(i.expenseType)
+			minorList.append(i.amount)
+			minorList.append(i.date)
+			minorList.append(i.description)
 			majorList.append(minorList)
-			minorList=[]
-			
-		#for i in majorList:
-		#	print i, "\n"
-		#	print i[2].description, "\n"
+			minorList=[] # clear minor list for next pass
 			
 		return majorList
 	
 #********************************************************************
-class User(SQLObject):
-	"""User table. Contains the name of the user."""
-	name = StringCol()
-	
+# Create SQLAlchemy tables in the form of python classes.
 #********************************************************************
-class ExpenseType(SQLObject):
-	"""Expense type table. Contains a description of the expense category"""
-	description = StringCol()
+class User(Entity):
+	name 		= Field(String)
+	expenses 	= OneToMany('Expense')
 	
-#********************************************************************
-class Expense(SQLObject):
-	"""Expense table. Pulls in User and a Expense type and contains amount, 
-	description, and date purchased"""
-	user 		= ForeignKey('User')
-	expenseType = ForeignKey('ExpenseType')
-	amount 		= CurrencyCol()
-	description = StringCol()
-	date		= DateCol()
+	def __repr__(self):
+		return "<User ('%s')>" % (self.name)
+
+class ExpenseType(Entity):
+	description = Field(String)
+	expenses 	= OneToMany('Expense')
+
+	def __repr__(self):
+		return "<ExpenseType ('%s')>" % (self.description)
+	
+class Expense(Entity):
+	user 		= ManyToOne('User')
+	expenseType = ManyToOne('ExpenseType')
+	amount 		= Field(Float)
+	date 		= Field(DateTime)
+	description = Field(String)
+
+	def __repr__(self):
+		return "<Expense ('%s', '%s', '%s', '%s', '%s')>" % (self.user, self.expenseType, self.amount, self.date, self.description)
 
 #********************************************************************
 #							MAIN
@@ -186,7 +192,40 @@ class Expense(SQLObject):
 
 # Test main functionality
 if __name__ == '__main__':
-	#database = Database()
-	#database.IdentifyDatabase()
-	#x = database.GetUserExpenses()
+	
+	print "creating database\n"
+	dbPath = "toots.db"
+	connString = 'sqlite:///' + dbPath
+	dPrint(connString)
+	metadata.bind = connString
+	#metadata.bind.echo = True
+	
+	print "adding sample entries\n"
+	
+	setup_all()
+	create_all()
+	
+	rhs = User(name="Rachel Sisco")
+	print rhs
+	dls = User(name="Daniel Sisco")
+	print dls
+	clothing = ExpenseType(description="clothing!")
+	print clothing
+	makeup   = ExpenseType(description="makeup!")
+	print makeup
+	e1 = Expense(user=rhs, expenseType=makeup, amount="15.01", date=date.today(), description="makeup for mah FACE!")
+	#e1.user.append(rhs)
+	#e1.expenseType.append(makeup)
+	e2 = Expense(user=dls, expenseType=clothing, amount="50.25", date = date.today(), description="clothing for mah parts.")
+	#e2.user.append(dls)
+	#e2.expenseType.append(clothing)
+	print "adding", e1, "and", e2, "\n"
+	
+	print "committing!\n"
+	session.commit()
+	
+	print "dumping database\n"
+	q = Expense.query.all()
+	print q
+	
 	print "Please run Fin-ally by launching FINally.py!"
