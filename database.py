@@ -138,7 +138,7 @@ class Database():
 		"""Returns database size in bytes"""
 		return Database.size
 	
-	def GetUserExpenses(self):
+	def GetAllExpenses(self):
 		"""returns all data in the database in a 2D list in the following format:
 		
 		   [ 0  ][      1    ][  2   ][ 3  ][     4     ]
@@ -172,6 +172,10 @@ class Database():
 			minorList=[]
 			
 		return majorList
+	
+	def DeleteExpense(self):
+		"""notes"""
+		print "do something here"
 	
 #********************************************************************
 # Create SQLAlchemy tables in the form of python classes.

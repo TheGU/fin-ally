@@ -52,13 +52,13 @@ class columnInfo:
 	a grid. This keeps all columns definition data together, but adding information here
 	does complete the addition of a new column."""
 
-	colLabels = ['id', 'who', 'amount', 'date', 'desc']
+	colLabels = ['user', 'type', 'amount', 'date', 'desc']
 	colWidth  = [50, 50, 50, 50, -1]
-	colType   = [gridlib.GRID_VALUE_NUMBER,
-		     gridlib.GRID_VALUE_CHOICE + ':rachel, daniel',
-		     gridlib.GRID_VALUE_NUMBER,
-		     gridlib.GRID_VALUE_STRING, # should be GRID_VALUE_DATETIME
-		     gridlib.GRID_VALUE_STRING]
+	colType   = [gridlib.GRID_VALUE_STRING,
+		     	 gridlib.GRID_VALUE_STRING,
+		     	 gridlib.GRID_VALUE_NUMBER,
+		     	 gridlib.GRID_VALUE_STRING, # should be GRID_VALUE_DATETIME
+		     	 gridlib.GRID_VALUE_STRING]
 	
 	rowHeight = 20
 	
@@ -150,12 +150,11 @@ class CustomDataTable(gridlib.PyGridTableBase):
 	
 	dataTypes = colInfo.colType # used for custom renderers
 	
-	def __init__(self, localExpenses):
+	def __init__(self, data):
 		# TODO: This needs to be cleaned up so that CustomDataTable does not have to
 		# deal with so much data specification. This should be a single fcn call for
 		# data
-		self.localData = localExpenses
-		self.localData.loadData(1, -1, -1, -1)
+		self.localData = data
 		
 		self._rows = self.GetNumberRows()
 		self._cols = self.GetNumberCols()
@@ -163,10 +162,10 @@ class CustomDataTable(gridlib.PyGridTableBase):
 		gridlib.PyGridTableBase.__init__(self)
 		
 	def GetNumberRows(self):
-		return len(self.localData.expenseList)
+		return len(self.localData)
 	
 	def GetNumberCols(self):
-		return len(self.localData.expenseList[0])
+		return len(self.localData[0])
 	
 	def IsEmptyCell(self, row, col):
 		return False
@@ -175,26 +174,28 @@ class CustomDataTable(gridlib.PyGridTableBase):
 		""" Stores the entry ID to a global var to be used for deletion. """
 		global selectionID
 		
-		selectionID = self.localData.expenseList[row][0]
-		return self.localData.expenseList[row][col]
+		selectionID = self.localData[row][0]
+		return self.localData[row][col]
 	
 	def SetValue(self, row, col, value):
-		tempId = self.localData.expenseList[row][0]
-		tempColumn = colInfo.colLabels[col]
-		tempValue = '' 
+		print "not done yet!"
+		
+		#tempId = self.localData[row][0]
+		#tempColumn = colInfo.colLabels[col]
+		#tempValue = '' 
 		
 		#HERE - fix this part 
-		if(0 == col):
-			print "this is not an editable column!"
-		elif( (1 == col) or (3 == col) or (4 == col)):
-			tempValue = value
-		elif(2 == col):
+		#if(0 == col):
+	#		print "this is not an editable column!"
+#		elif( (1 == col) or (3 == col) or (4 == col)):
+#			tempValue = value
+#		elif(2 == col):
 			# match an amount
-			tempValue = float(value)
+#			tempValue = float(value)
 			
 		# save value to database and re-load expense array
-		self.localData.editData(tempColumn, tempValue, tempId)
-		self.localData.loadData(1,-1,-1,-1)
+#		self.localData.editData(tempColumn, tempValue, tempId)
+#		self.localData.loadData(1,-1,-1,-1)
 	
 	def GetColLabelValue(self, col):
 		return colInfo.colLabels[col]
@@ -203,14 +204,14 @@ class CustomDataTable(gridlib.PyGridTableBase):
 	def GetTypeName(self, row, col):
 		return self.dataTypes[col]
 	
-	def UpdateValues(self):
+#	def UpdateValues(self):
 		"""Forces a new pull of data from the database. This can be called from inside, but
 		it is meant to be called externally."""
 
 		# TODO: We need to catch the real month here as well
 		#temp = "date > %s AND date < %s" % (currMonthStart, currMonthEnd)
 		#self.localData.loadData(2, temp, -1, -1)
-		self.localData.loadData(1,-1,-1,-1)
+#		self.localData.loadData(1,-1,-1,-1)
 
 	def ResetView(self, grid):
 		""" (Grid) -> Reset the grid view. Call this to
@@ -256,21 +257,39 @@ class GraphicsPage(wx.Panel):
 		#				  pos=(700,0), style=wx.CB_DROPDOWN)
 		self.Bind(wx.EVT_BUTTON, self.OnDeleteClick, self.deleteButton)
 
-		# create table
-		self.table = SimpleGrid(self)
+		# create wx.Grid object
+		self.grid = gridlib.Grid(self)
 		
-		# set column lables
-		self.table.SetColLabelValue(0, "user")
-		self.table.SetColLabelValue(1, "type")
-		self.table.SetColLabelValue(2, "dollas")
-		self.table.SetColLabelValue(3, "date")
-		self.table.SetColLabelValue(4, "description")
+		# pull some data out of the database and push it into the tableBase
+		self.data = Database()
+		self.tableBase = CustomDataTable(self.data.GetAllExpenses())	# define the base
+		
+		self.grid.SetTable(self.tableBase) 		# set the grid table
+		self.grid.SetColFormatFloat(2,-1,2)		# formats the monetary entries correctly
+		self.grid.AutoSize() 	# auto-sizing here ensures that scrollbars will always be present
+								# during window resizing
+		
+		self.FormatTable()	
 		
 		# create a sizer for this Panel and add the buttons and the table
 		self.sizer = wx.BoxSizer(wx.VERTICAL)      # define new box sizer	
-		self.sizer.Add(self.table, 1, wx.GROW)     # add grid (resize vert and horz)
+		self.sizer.Add(self.grid, 1, wx.GROW)     # add grid (resize vert and horz)
 		self.sizer.Add(self.buttonPanel, 0, wx.ALIGN_LEFT)    # add panel (no resize vert and aligned left horz)
 		self.SetSizer(self.sizer)
+		
+	def FormatTable(self):
+		"""Formats the grid table - adding width, height, and edit types"""
+		
+		# format rows
+		for i in range(self.grid.GetNumberRows()):
+			self.grid.SetCellEditor(i,2,gridlib.GridCellFloatEditor(-1,2))
+			self.grid.SetRowSize(i, colInfo.rowHeight)
+			
+		# format column width
+		tmp = 0
+		for i in colInfo.colWidth:
+			self.grid.SetColSize(tmp,i)
+			tmp += 1
 
 	def OnDeleteClick(self, evt):
 		"""this should delete whatever piece of data is selected from the database"""
@@ -279,69 +298,57 @@ class GraphicsPage(wx.Panel):
 		#self.table.UpdateGrid()
 
 #********************************************************************	
-class SimpleGrid(gridlib.Grid):
-	"""This is a simple grid class - which means most of the methods are automatically
-	defined by the wx library"""
-	def __init__(self, parent):
-		gridlib.Grid.__init__(self, parent, -1)
-		self.CreateGrid(10,10)
-		self.SetColSize(3, 200)
-		self.SetRowSize(4, 45)
-		
-		# create a Database object and pull some data out of it
-		x = Database()
-		data = x.GetUserExpenses()
-		
-		# push data into grid, line by line
-		for i in range(len(data)):
-			self.SetCellValue(i,0,data[i][0])
-			self.SetCellValue(i,1,data[i][1])
-			self.SetCellValue(i,2,data[i][2])
-			self.SetCellValue(i,3,data[i][3])
-			self.SetCellValue(i,4,data[i][4])
+#class SimpleGrid(gridlib.Grid):
+#	"""This is a simple grid class - which means most of the methods are automatically
+#	defined by the wx library"""
+#	def __init__(self, parent):
+#		gridlib.Grid.__init__(self, parent, -1)
+#		self.CreateGrid(10,10)
+#		self.SetColSize(3, 200)
+#		self.SetRowSize(4, 45)
+#		
+#		# create a Database object and pull some data out of it
+#		data = Database().GetAllExpenses()
+#		
+#		# push data into grid, line by line
+#		for i in range(len(data)):
+#			self.SetCellValue(i,0,data[i][0])
+#			self.SetCellValue(i,1,data[i][1])
+#			self.SetCellValue(i,2,data[i][2])
+#			self.SetCellValue(i,3,data[i][3])
+#			self.SetCellValue(i,4,data[i][4])
 
 #********************************************************************		
-class GPTable(gridlib.Grid):
-	"""This is primarily a display class, and it is responsible for maintaining the grid table
-	itself. It is not responsible for data management."""
-		
-	#TODO: determine how much control to give this over the data we want to see. Consider adding
-	#another class for the data itself, a class that would be passed to everything and modified
-	#in many places. This would allow a future calculation object to make changes and force them
-	#to show up in the graphics page.
-		
-	def __init__(self, parent, localExpenses):
-		gridlib.Grid.__init__(self, parent)
-		
-		self.expenses = localExpenses
-		
-		#TODO: consider passing a string describing what data to pull from SQL db?
-		self.tableBase = CustomDataTable(self.expenses)	# define the base
-		
-		self.SetTable(self.tableBase) 			# set the grid table
-		self.SetColFormatFloat(2,-1,2) 			# formats the monetary entries correctly
-		self.AutoSize() # auto-sizing here ensures that scrollbars will always be present
-				# during window resizing
-		
-		self.FormatTable()			
-
-	def FormatTable(self):
-		# format rows
-		for i in range(self.GetNumberRows()):
-			self.SetCellEditor(i,2,gridlib.GridCellFloatEditor(-1,2))
-			self.SetRowSize(i, colInfo.rowHeight)
-			
-		# format column width
-		tmp = 0
-		for i in colInfo.colWidth:
-			self.SetColSize(tmp,i)
-			tmp += 1
-			
-	def UpdateGrid(self):
-		self.tableBase.UpdateValues()
-		self.tableBase.ResetView(self)
-		self.FormatTable()
-		self.ForceRefresh()
+#class GraphicsGrid(gridlib.Grid):
+#	"""This is primarily a display class, and it is responsible for maintaining the grid table
+#	itself. It is not responsible for data management."""
+#		
+#	#TODO: determine how much control to give this over the data we want to see. Consider adding
+#	#another class for the data itself, a class that would be passed to everything and modified
+#	#in many places. This would allow a future calculation object to make changes and force them
+#	#to show up in the graphics page.
+#		
+#	def __init__(self, parent):
+#		gridlib.Grid.__init__(self, parent)
+#		
+#		# create a Database object and pull some data out of it
+#		data = Database().GetAllExpenses()
+#		
+#		#TODO: consider passing a string describing what data to pull from SQL db?
+#		self.tableBase = CustomDataTable(data)	# define the base
+#		
+#		self.SetTable(self.tableBase) 			# set the grid table
+#		self.SetColFormatFloat(2,-1,2) 			# formats the monetary entries correctly
+#		self.AutoSize() # auto-sizing here ensures that scrollbars will always be present
+#				# during window resizing
+#		
+#		self.FormatTable()			
+#			
+#	def UpdateGrid(self):
+#		self.tableBase.UpdateValues()
+#		self.tableBase.ResetView(self)
+#		self.FormatTable()
+#		self.ForceRefresh()
 
 #********************************************************************		
 class ImportPage(wx.Panel):
