@@ -138,6 +138,26 @@ class Database():
 		"""Returns database size in bytes"""
 		return Database.size
 	
+	def CreateExpense(self, expenseObj):
+		"""Creates a new expense"""	
+		session.commit()
+	
+	def GetAllUsers(self):
+		"""Returns a list of user names - nothing else."""
+		list = []
+		userList = User.query.all()
+		for i in userList:
+			list.append(str(i.name))
+		return list
+	
+	def GetAllTypes(self):
+		"""Returns a list of expense types - nothing else."""
+		list = []
+		typeList = ExpenseType.query.all()
+		for i in typeList:
+			list.append(str(i.description))
+		return list
+	
 	def GetAllExpenses(self):
 		"""returns all data in the database in a 2D list in the following format:
 		
@@ -156,6 +176,7 @@ class Database():
 		
 		# iterate through expenses - packing into listxlist
 		for i in expenseList:
+			print "DAN: ", i
 			# dereference these all the way down to the string
 			minorList.append(i.user.name) 
 			minorList.append(i.expenseType.description)
@@ -187,13 +208,15 @@ class User(Entity):
 	def __repr__(self):
 		return "<User ('%s')>" % (self.name)
 
+#********************************************************************
 class ExpenseType(Entity):
 	description = Field(String)
 	expenses 	= OneToMany('Expense')
 
 	def __repr__(self):
 		return "<ExpenseType ('%s')>" % (self.description)
-	
+
+#********************************************************************	
 class Expense(Entity):
 	user 		= ManyToOne('User')
 	expenseType = ManyToOne('ExpenseType')

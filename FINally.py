@@ -30,7 +30,8 @@ import wx
 import wx.grid     as gridlib
 import wx.calendar as callib
 from datetime import date
-from database import Database
+from database import *
+#from database import Expense, ExpenseType, User
 
 users = ['rachel','daniel']
 months = ["January", "February", "March", "April", "May", "June", "July",
@@ -160,6 +161,10 @@ class CustomDataTable(gridlib.PyGridTableBase):
 		self._cols = self.GetNumberCols()
 		
 		gridlib.PyGridTableBase.__init__(self)
+	
+	#***************************
+	# REQUIRED METHODS
+	#***************************
 		
 	def GetNumberRows(self):
 		return len(self.localData)
@@ -167,35 +172,37 @@ class CustomDataTable(gridlib.PyGridTableBase):
 	def GetNumberCols(self):
 		return len(self.localData[0])
 	
-	def IsEmptyCell(self, row, col):
-		return False
-	
 	def GetValue(self, row, col):
-		""" Stores the entry ID to a global var to be used for deletion. """
-		global selectionID
-		
-		selectionID = self.localData[row][0]
 		return self.localData[row][col]
 	
+	def IsEmptyCell(self, row, col):
+		#return self.localData.get[row][col] is not None
+		return False
+		
 	def SetValue(self, row, col, value):
 		print "not done yet!"
-		
-		#tempId = self.localData[row][0]
-		#tempColumn = colInfo.colLabels[col]
-		#tempValue = '' 
-		
-		#HERE - fix this part 
-		#if(0 == col):
-	#		print "this is not an editable column!"
-#		elif( (1 == col) or (3 == col) or (4 == col)):
-#			tempValue = value
-#		elif(2 == col):
-			# match an amount
-#			tempValue = float(value)
+		""" IF calling SetValue on an existing row:
+				allow data entry
+				update database
+			ELSE IF col != 'user':
+				move cursor to 'user' col (first col)
+				call method SetValue()
+			ELSE:
+				allow data entry
+				IF col == 'description':
+					update database
+				ELSE:
+					move cursor to next col
+					call method SetValue()"""
+	
+		#if self.IsEmptyCell(row,col):
+			# allow data entry
+			# update database
+			#self.localData.UpdateExpense(...)
 			
-		# save value to database and re-load expense array
-#		self.localData.editData(tempColumn, tempValue, tempId)
-#		self.localData.loadData(1,-1,-1,-1)
+	#***************************
+	# OPTIONAL METHODS
+	#***************************
 	
 	def GetColLabelValue(self, col):
 		return colInfo.colLabels[col]
@@ -249,13 +256,6 @@ class GraphicsPage(wx.Panel):
 		wx.Panel.__init__(self, parent)
 	
 		self.SetBackgroundColour("GREY")
-	
-		# create button panel and add some controls
-		self.buttonPanel = wx.Panel(self)
-		self.deleteButton   = wx.Button(self.buttonPanel, -1, label = "Delete", pos = (0,0))
-		#self.CategorySelect = wx.ComboBox(self.buttonPanel, -1, months[0], choices=months,
-		#				  pos=(700,0), style=wx.CB_DROPDOWN)
-		self.Bind(wx.EVT_BUTTON, self.OnDeleteClick, self.deleteButton)
 
 		# create wx.Grid object
 		self.grid = gridlib.Grid(self)
@@ -270,6 +270,74 @@ class GraphicsPage(wx.Panel):
 								# during window resizing
 		
 		self.FormatTable()	
+		
+		# create a userlist and type list for the menus
+		# NOTE: this must be done after the Database creation above
+		# define local Expense objects for population
+		self.expenseObj 	= Expense()
+		self.userObj    	= User()
+		self.expenseTypeObj = ExpenseType()
+		self.database       = Database()
+		self.userList		= self.database.GetAllUsers()
+		self.typeList		= self.database.GetAllTypes()
+		
+		# create a panel for the buttons
+		self.buttonPanel  = wx.Panel(self)
+		
+		# create and bind a delete button
+#		self.deleteButton = wx.Button(self.buttonPanel, 
+#									  id=-1, 
+#									  label = "Delete", 
+#									  pos = (0,0))
+#		self.Bind(wx.EVT_BUTTON, self.OnDeleteClick, self.deleteButton)
+		
+		self.entryButton = wx.Button(self.buttonPanel,
+									id = -1,
+									label = "Enter!",
+									pos = (0,0))
+		self.Bind(wx.EVT_BUTTON, self.OnEnterClick, self.entryButton)
+		
+		# create and bind a user selection box
+		self.userSelect   = wx.ComboBox(self.buttonPanel, 
+									    id=-1,
+									    value=self.userList[0],
+									    choices=self.userList,
+						  				pos=(100,0), 
+						  				style=wx.CB_DROPDOWN)
+		self.Bind(wx.EVT_COMBOBOX, self.OnUserSelect, self.userSelect)
+		
+		# create and bind a type selection box
+		self.typeSelect	  = wx.ComboBox(self.buttonPanel, 
+									    id=-1,
+									    value=self.typeList[0],
+									    choices=self.typeList,
+						  				pos=(200,0), 
+						  				style=wx.CB_DROPDOWN)
+		self.Bind(wx.EVT_COMBOBOX, self.OnTypeSelect, self.typeSelect)
+		
+		# create and bind a calendar box
+		self.cal 		  = callib.CalendarCtrl(self.buttonPanel, 
+												-1, 
+												wx.DateTime_Now(), 
+												pos = (600,0),
+						    					style = callib.CAL_SHOW_HOLIDAYS | callib.CAL_SUNDAY_FIRST)
+		self.Bind(callib.EVT_CALENDAR_SEL_CHANGED, self.OnCalSelChanged, self.cal)
+
+		# create and bind a value entry box
+		self.valueEntry   = wx.TextCtrl(self.buttonPanel, 
+									    -1, 
+									    "0.00", 
+									    pos = (300,0), 
+									    size = (90, 21))
+		self.Bind(wx.EVT_TEXT, self.OnValueEntry, self.valueEntry)
+
+		# create and bind a description box
+		self.descEntry    = wx.TextCtrl(self.buttonPanel, 
+									    -1, 
+									    "item description", 
+									    pos = (400,0), 
+									    size = (173,21))
+		self.Bind(wx.EVT_TEXT, self.OnDescEntry, self.descEntry)
 		
 		# create a sizer for this Panel and add the buttons and the table
 		self.sizer = wx.BoxSizer(wx.VERTICAL)      # define new box sizer	
@@ -291,11 +359,59 @@ class GraphicsPage(wx.Panel):
 			self.grid.SetColSize(tmp,i)
 			tmp += 1
 
-	def OnDeleteClick(self, evt):
-		"""this should delete whatever piece of data is selected from the database"""
+	#def OnDeleteClick(self, evt):
+	#	"""this should delete whatever piece of data is selected from the database"""
 
 		#self.expenses.deleteData(selectionID)
 		#self.table.UpdateGrid()
+	
+	def OnEnterClick(self, evt):
+		"""respond to the user clicking 'enter!' by pushing the local objects into the database 
+		layer"""
+		self.expenseObj.user 		= self.userObj
+		self.expenseObj.expenseType = self.expenseTypeObj
+		self.database.CreateExpense(self.expenseObj)
+		#self.UpdateGrid()
+		print "entering!"
+	
+#	def UpdateGrid(self):
+#		#self.grid.UpdateValues()
+#		self.tableBase.ResetView(self.grid)
+#		self.FormatTable()
+#		self.grid.ForceRefresh()
+	
+	def OnUserSelect(self, evt):
+		"""respond to the operator selecting a user by finding the associated user
+		and loading that user object into our local user object"""
+		self.userObj = User.query.filter_by(name=evt.GetString()).one()
+		print self.userObj
+		
+	def OnTypeSelect(self, evt):
+		"""respond to the operator selecting an expense type by finding the associated
+		expense type and loading that type object into our local type object"""
+		self.expenseTypeObj = ExpenseType.query.filter_by(description=evt.GetString()).one()
+		print self.expenseTypeObj
+		
+	def OnCalSelChanged(self, evt):
+		"""Respond to a user command to change the calendar date"""
+		date = evt.PyGetDate()
+		self.expenseObj.date=date
+		print self.expenseObj
+		
+	def OnValueEntry(self, evt):
+		"""Respond to a user command to enter a new expense"""
+		amount = evt.GetString()
+		# place something here to avoid math errors
+		if(amount == ""):
+			amount = 0.00
+	
+		self.expenseObj.amount=float(amount)
+		print self.expenseObj
+		
+	def OnDescEntry(self, evt):
+		"""Respond to a user command to change the expense description"""
+		self.expenseObj.description=evt.GetString()
+		print self.expenseObj
 
 #********************************************************************	
 #class SimpleGrid(gridlib.Grid):
