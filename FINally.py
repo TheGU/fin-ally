@@ -210,6 +210,42 @@ class CustomDataTable(gridlib.PyGridTableBase):
 	# this type allows custom renderers to be used
 	def GetTypeName(self, row, col):
 		return self.dataTypes[col]
+	
+	def ResetView(self, grid):
+		"""
+		(Grid) -> Reset the grid view.   Call this to
+		update the grid if rows and columns have been added or deleted
+		"""
+		grid.BeginBatch()
+		
+		for current, new, delmsg, addmsg in [
+		    (self._rows, self.GetNumberRows(),gridlib.GRIDTABLE_NOTIFY_ROWS_DELETED, gridlib.GRIDTABLE_NOTIFY_ROWS_APPENDED),
+		    (self._cols, self.GetNumberCols(),gridlib.GRIDTABLE_NOTIFY_COLS_DELETED, gridlib.GRIDTABLE_NOTIFY_COLS_APPENDED),
+		]:
+			if new < current:
+				msg = gridlib.GridTableMessage(self,delmsg,new,current-new)
+				grid.ProcessTableMessage(msg)
+			elif new > current:
+				msg = gridlib.GridTableMessage(self,addmsg,new-current)
+				grid.ProcessTableMessage(msg)
+				self.UpdateValues(grid)
+		
+		grid.EndBatch()
+		
+		self._rows = self.GetNumberRows()
+		self._cols = self.GetNumberCols()
+		# update the column rendering plugins
+		#self._updateColAttrs(grid)
+		
+		# update the scrollbars and the displayed part of the grid
+		grid.AdjustScrollbars()
+		grid.ForceRefresh()
+		
+	def UpdateValues(self, grid):
+		"""Update all displayed values"""
+		# This sends an event to the grid table to update all of the values
+		msg = gridlib.GridTableMessage(self,gridlib.GRIDTABLE_REQUEST_VIEW_GET_VALUES)
+		grid.ProcessTableMessage(msg)
 
 #********************************************************************
 class GraphicsPage(wx.Panel):
@@ -222,18 +258,7 @@ class GraphicsPage(wx.Panel):
 		self.SetBackgroundColour("GREY")
 
 		# create wx.Grid object
-		self.grid = gridlib.Grid(self)
-		
-		# pull some data out of the database and push it into the tableBase
-		self.data = Database()
-		self.tableBase = CustomDataTable(self.data.GetAllExpenses())	# define the base
-		
-		self.grid.SetTable(self.tableBase) 		# set the grid table
-		self.grid.SetColFormatFloat(2,-1,2)		# formats the monetary entries correctly
-		self.grid.AutoSize() 	# auto-sizing here ensures that scrollbars will always be present
-								# during window resizing
-		
-		self.FormatTable()	
+		self.grid = GraphicsGrid(self)
 		
 		# create a userlist and type list for the menus
 		# NOTE: this must be done after the Database creation above
@@ -308,20 +333,6 @@ class GraphicsPage(wx.Panel):
 		self.sizer.Add(self.grid, 1, wx.GROW)     # add grid (resize vert and horz)
 		self.sizer.Add(self.buttonPanel, 0, wx.ALIGN_LEFT)    # add panel (no resize vert and aligned left horz)
 		self.SetSizer(self.sizer)
-		
-	def FormatTable(self):
-		"""Formats the grid table - adding width, height, and edit types"""
-		
-		# format rows
-		for i in range(self.grid.GetNumberRows()):
-			self.grid.SetCellEditor(i,2,gridlib.GridCellFloatEditor(-1,2))
-			self.grid.SetRowSize(i, colInfo.rowHeight)
-			
-		# format column width
-		tmp = 0
-		for i in colInfo.colWidth:
-			self.grid.SetColSize(tmp,i)
-			tmp += 1
 
 	#def OnDeleteClick(self, evt):
 	#	"""this should delete whatever piece of data is selected from the database"""
@@ -335,7 +346,7 @@ class GraphicsPage(wx.Panel):
 		self.expenseObj.user 		= self.userObj
 		self.expenseObj.expenseType = self.expenseTypeObj
 		self.database.CreateExpense(self.expenseObj)
-		self.Reset()
+		self.grid.UpdateGrid()
 		print "entering!"
 	
 	def OnUserSelect(self, evt):
@@ -370,48 +381,6 @@ class GraphicsPage(wx.Panel):
 		"""Respond to a user command to change the expense description"""
 		self.expenseObj.description=evt.GetString()
 		print self.expenseObj
-		
-	def Reset(self):
-		"""reset the view based on the data in the table.  Call
-		this when rows are added or destroyed"""
-		#self.tableBase = CustomDataTable(self.data.GetAllExpenses())
-		self.tableBase.localData = self.data.GetAllExpenses()
-		self.ResetView()
-		self.UpdateValues()
-		self.grid.ForceRefresh()
-		
-	def ResetView(self):
-		""" (Grid) -> Reset the grid view. Call this to
-		update the grid if rows and columns have been added or deleted """
-		self.grid.BeginBatch() #begin supression of screen painting
-	
-		for current, new, delmsg, addmsg in [
-		    (self.tableBase._rows, self.grid.GetNumberRows(), gridlib.GRIDTABLE_NOTIFY_ROWS_DELETED, gridlib.GRIDTABLE_NOTIFY_ROWS_APPENDED),
-		    (self.tableBase._cols, self.grid.GetNumberCols(), gridlib.GRIDTABLE_NOTIFY_COLS_DELETED, gridlib.GRIDTABLE_NOTIFY_COLS_APPENDED),
-		]:
-	
-			if new < current:
-				msg = gridlib.GridTableMessage(self.grid,delmsg,new,current-new)
-				self.grid.ProcessTableMessage(msg)
-			elif new > current:
-				msg = gridlib.GridTableMessage(self.grid,addmsg,new-current)
-				self.grid.ProcessTableMessage(msg)
-				self.UpdateValues()
-		
-		self.grid.EndBatch() #end supression of screen painting
-	
-		self.tableBase._rows = self.grid.GetNumberRows()
-		self.tableBase._cols = self.grid.GetNumberCols()
-	
-		# update the scrollbars and the displayed part of the grid
-		self.grid.AdjustScrollbars()
-		self.grid.ForceRefresh()
-		
-	def UpdateValues(self):
-		"""Update all displayed values"""
-		# This sends an event to the grid table to update all of the values
-		msg = wx.grid.GridTableMessage(self.tableBase,wx.grid.GRIDTABLE_REQUEST_VIEW_GET_VALUES)
-		self.grid.ProcessTableMessage(msg)
 
 #********************************************************************	
 #class SimpleGrid(gridlib.Grid):
@@ -435,36 +404,49 @@ class GraphicsPage(wx.Panel):
 #			self.SetCellValue(i,4,data[i][4])
 
 #********************************************************************		
-#class GraphicsGrid(gridlib.Grid):
-#	"""This is primarily a display class, and it is responsible for maintaining the grid table
-#	itself. It is not responsible for data management."""
-#		
-#	#TODO: determine how much control to give this over the data we want to see. Consider adding
-#	#another class for the data itself, a class that would be passed to everything and modified
-#	#in many places. This would allow a future calculation object to make changes and force them
-#	#to show up in the graphics page.
-#		
-#	def __init__(self, parent):
-#		gridlib.Grid.__init__(self, parent)
-#		
-#		# create a Database object and pull some data out of it
-#		data = Database().GetAllExpenses()
-#		
-#		#TODO: consider passing a string describing what data to pull from SQL db?
-#		self.tableBase = CustomDataTable(data)	# define the base
-#		
-#		self.SetTable(self.tableBase) 			# set the grid table
-#		self.SetColFormatFloat(2,-1,2) 			# formats the monetary entries correctly
-#		self.AutoSize() # auto-sizing here ensures that scrollbars will always be present
-#				# during window resizing
-#		
-#		self.FormatTable()			
-#			
-#	def UpdateGrid(self):
-#		self.tableBase.UpdateValues()
-#		self.tableBase.ResetView(self)
-#		self.FormatTable()
-#		self.ForceRefresh()
+class GraphicsGrid(gridlib.Grid):
+	"""This is primarily a display class, and it is responsible for maintaining the grid table
+	itself. It is not responsible for data management."""
+		
+	#TODO: determine how much control to give this over the data we want to see. Consider adding
+	#another class for the data itself, a class that would be passed to everything and modified
+	#in many places. This would allow a future calculation object to make changes and force them
+	#to show up in the graphics page.
+		
+	def __init__(self, parent):
+		gridlib.Grid.__init__(self, parent)
+		
+		# pull some data out of the database and push it into the tableBase
+		self.data = Database()
+		self.tableBase = CustomDataTable(self.data.GetAllExpenses())	# define the base
+		
+		self.SetTable(self.tableBase) 		# set the grid table
+		self.SetColFormatFloat(2,-1,2)		# formats the monetary entries correctly
+		self.AutoSize() 	# auto-sizing here ensures that scrollbars will always be present
+								# during window resizing
+		
+		self.FormatTable()		
+			
+	def UpdateGrid(self):
+		self.tableBase.localData = self.data.GetAllExpenses()
+		self.tableBase.UpdateValues(self)
+		self.tableBase.ResetView(self)
+		self.FormatTable()
+		self.ForceRefresh()
+		
+	def FormatTable(self):
+		"""Formats the grid table - adding width, height, and edit types"""
+		
+		# format rows
+		for i in range(self.GetNumberRows()):
+			self.SetCellEditor(i,2,gridlib.GridCellFloatEditor(-1,2))
+			self.SetRowSize(i, colInfo.rowHeight)
+			
+		# format column width
+		tmp = 0
+		for i in colInfo.colWidth:
+			self.SetColSize(tmp,i)
+			tmp += 1
 
 #********************************************************************		
 class ImportPage(wx.Panel):
