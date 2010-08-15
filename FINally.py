@@ -8,7 +8,7 @@
 # Abstract: This is the primary file for the FINally expense analysis tool. It is responsible for
 # handling read/write access to the SQLite database as well as providing a GUI interface for the user.
 #
-# Copyright 2008 Daniel Sisco
+# Copyright 2008-2010 Daniel Sisco
 # This file is part of Fin-ally.
 #
 # Fin-ally is free software: you can redistribute it and/or modify
