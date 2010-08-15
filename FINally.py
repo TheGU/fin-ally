@@ -163,17 +163,9 @@ class CustomDataTable(gridlib.PyGridTableBase):
 		grid.ProcessTableMessage(msg)
 
 #********************************************************************
-class GraphicsPage(wx.Panel):
-	"""The Graphics page contains two things - a grid or table of entries, and a 
-	button panel to perform some operations on the grid."""
-	
-	def __init__(self, parent):
-		wx.Panel.__init__(self, parent)
-	
-		self.SetBackgroundColour("GREY")
-
-		# create wx.Grid object
-		self.grid = GraphicsGrid(self)
+class NewExpenseDialog(wx.Dialog):
+	def __init__(self, parent, id, title):
+		wx.Dialog.__init__(self, parent, id, title, size=(350,300))
 		
 		# create a userlist and type list for the menus
 		# NOTE: this must be done after the Database creation above
@@ -182,15 +174,10 @@ class GraphicsPage(wx.Panel):
 		self.userList		= self.database.GetAllUsers()
 		self.typeList		= self.database.GetAllTypes()
 		
-		# create a panel for the buttons
-		self.buttonPanel  = wx.Panel(self)
+		self.parent = parent
 		
-		# create and bind a delete button
-#		self.deleteButton = wx.Button(self.buttonPanel, 
-#									  id=-1, 
-#									  label = "Delete", 
-#									  pos = (0,0))
-#		self.Bind(wx.EVT_BUTTON, self.OnDeleteClick, self.deleteButton)
+		self.sizer        = wx.BoxSizer(wx.VERTICAL)  # define new box sizer	
+		self.buttonPanel  = wx.Panel(self)		      # create a panel for the buttons
 		
 		self.entryButton = wx.Button(self.buttonPanel,
 									id = -1,
@@ -220,38 +207,175 @@ class GraphicsPage(wx.Panel):
 		self.cal 		  = callib.CalendarCtrl(self.buttonPanel, 
 												-1, 
 												wx.DateTime_Now(), 
-												pos = (600,0),
+												pos = (0,50),
 						    					style = callib.CAL_SHOW_HOLIDAYS | callib.CAL_SUNDAY_FIRST)
 		self.Bind(callib.EVT_CALENDAR_SEL_CHANGED, self.OnCalSelChanged, self.cal)
-
+	
 		# create and bind a value entry box
 		self.valueEntry   = wx.TextCtrl(self.buttonPanel, 
 									    -1, 
 									    "0.00", 
-									    pos = (300,0), 
+									    pos = (0,25), 
 									    size = (90, 21))
 		self.Bind(wx.EVT_TEXT, self.OnValueEntry, self.valueEntry)
-
+	
 		# create and bind a description box
 		self.descEntry    = wx.TextCtrl(self.buttonPanel, 
 									    -1, 
 									    "item description", 
-									    pos = (400,0), 
+									    pos = (100,25), 
 									    size = (173,21))
 		self.Bind(wx.EVT_TEXT, self.OnDescEntry, self.descEntry)
+		
+		self.sizer.Add(self.buttonPanel, 0, wx.ALIGN_LEFT)    # add panel (no resize vert and aligned left horz)
+		self.SetSizer(self.sizer)
+		
+	def OnEnterClick(self, evt):
+		"""respond to the user clicking 'enter!' by pushing the local objects into the database 
+		layer"""
+		
+		# it's critical to create new database objects here
+		localUserObject    = User()
+		localTypeObject    = ExpenseType()
+		localExpenseObject = Expense()
+		
+		#
+		# NOTE: operator selects both User and ExpenseType by selecting a string.
+		# This string is used to look up the existing database objects, which are
+		# fed to the overall Expense object for creation. 
+		# 
+		# TODO: this needs to be smarter: (A) what if the string doesn't match an existing
+		# object? (B) What if the user wants to enter a new object?
+		#
+		localUserObject = User.query.filter_by(name=self.userSelect.GetValue()).one()
+		localTypeObject = ExpenseType.query.filter_by(description=self.typeSelect.GetValue()).one()
+		# configure amount, description, and date
+		amount = self.valueEntry.GetValue()
+		# place something here to avoid math errors
+		if(amount == ""):
+			amount = 0.00
+		localExpenseObject.amount=float(amount)
+		localExpenseObject.description=self.descEntry.GetValue()
+		localExpenseObject.date=self.cal.PyGetDate()
+		
+		# consolidate objects into one expense type
+		localExpenseObject.user 	   = localUserObject
+		localExpenseObject.expenseType = localTypeObject
+		self.database.CreateExpense(localExpenseObject)
+		self.parent.grid.UpdateGrid()
+		
+		self.Close()
+		
+	#***************************
+	# NOT REQUIRED AT THIS TIME
+	#***************************
+	
+	def OnUserSelect(self, evt):
+		pass
+		
+	def OnTypeSelect(self, evt):
+		pass
+		
+	def OnCalSelChanged(self, evt):
+		pass
+		
+	def OnValueEntry(self, evt):
+		pass
+		
+	def OnDescEntry(self, evt):
+		pass
+
+#********************************************************************
+class GraphicsPage(wx.Panel):
+	"""The Graphics page contains two things - a grid or table of entries, and a 
+	button panel to perform some operations on the grid."""
+	
+	def __init__(self, parent):
+		wx.Panel.__init__(self, parent)
+	
+		self.SetBackgroundColour("GREY")
+
+		# create wx.Grid object
+		self.grid = GraphicsGrid(self)
+		
+		# create a userlist and type list for the menus
+		# NOTE: this must be done after the Database creation above
+		# define local Expense objects for population
+		self.database       = Database()
+		self.userList		= self.database.GetAllUsers()
+		self.typeList		= self.database.GetAllTypes()
+		
+		# create a panel for the buttons
+		self.buttonPanel  = wx.Panel(self)
+		
+		# configure either a static button panel or a dialogue based on configuration settings
+		if cfg.NEW_EXPENSE_PANEL == 1:		
+			self.entryButton = wx.Button(self.buttonPanel,
+										id = -1,
+										label = "Enter!",
+										pos = (0,0))
+			self.Bind(wx.EVT_BUTTON, self.OnEnterClick, self.entryButton)
+			
+			# create and bind a user selection box
+			self.userSelect   = wx.ComboBox(self.buttonPanel, 
+										    id=-1,
+										    value=self.userList[0],
+										    choices=self.userList,
+							  				pos=(100,0), 
+							  				style=wx.CB_DROPDOWN)
+			self.Bind(wx.EVT_COMBOBOX, self.OnUserSelect, self.userSelect)
+			
+			# create and bind a type selection box
+			self.typeSelect	  = wx.ComboBox(self.buttonPanel, 
+										    id=-1,
+										    value=self.typeList[0],
+										    choices=self.typeList,
+							  				pos=(200,0), 
+							  				style=wx.CB_DROPDOWN)
+			self.Bind(wx.EVT_COMBOBOX, self.OnTypeSelect, self.typeSelect)
+			
+			# create and bind a calendar box
+			self.cal 		  = callib.CalendarCtrl(self.buttonPanel, 
+													-1, 
+													wx.DateTime_Now(), 
+													pos = (600,0),
+							    					style = callib.CAL_SHOW_HOLIDAYS | callib.CAL_SUNDAY_FIRST)
+			self.Bind(callib.EVT_CALENDAR_SEL_CHANGED, self.OnCalSelChanged, self.cal)
+	
+			# create and bind a value entry box
+			self.valueEntry   = wx.TextCtrl(self.buttonPanel, 
+										    -1, 
+										    "0.00", 
+										    pos = (300,0), 
+										    size = (90, 21))
+			self.Bind(wx.EVT_TEXT, self.OnValueEntry, self.valueEntry)
+	
+			# create and bind a description box
+			self.descEntry    = wx.TextCtrl(self.buttonPanel, 
+										    -1, 
+										    "item description", 
+										    pos = (400,0), 
+										    size = (173,21))
+			self.Bind(wx.EVT_TEXT, self.OnDescEntry, self.descEntry)
+		else:
+			# create and bind a new expense button
+			self.newExpenseButton = wx.Button(self.buttonPanel,
+										      id = -1,
+										      label = "New Expense",
+											  pos = (0,0))
+			self.Bind(wx.EVT_BUTTON, self.ShowNewExpenseDialogue, self.newExpenseButton)
 		
 		# create a sizer for this Panel and add the buttons and the table
 		self.sizer = wx.BoxSizer(wx.VERTICAL)      # define new box sizer	
 		self.sizer.Add(self.grid, 1, wx.GROW)     # add grid (resize vert and horz)
 		self.sizer.Add(self.buttonPanel, 0, wx.ALIGN_LEFT)    # add panel (no resize vert and aligned left horz)
 		self.SetSizer(self.sizer)
-
-	#def OnDeleteClick(self, evt):
-	#	"""this should delete whatever piece of data is selected from the database"""
-
-		#self.expenses.deleteData(selectionID)
-		#self.table.UpdateGrid()
 	
+	def ShowNewExpenseDialogue(self, event):
+		dia = NewExpenseDialog(self, -1, 'New Expense Entry')
+		dia.ShowModal()
+		dia.Destroy()
+		
 	def OnEnterClick(self, evt):
 		"""respond to the user clicking 'enter!' by pushing the local objects into the database 
 		layer"""
@@ -410,65 +534,11 @@ class GraphicsGrid(gridlib.Grid):
 			self.SetColSize(tmp,i)
 			tmp += 1
 
-#********************************************************************		
-class ImportPage(wx.Panel):
-	
-	def __init__(self, parent, localExpenses):
-		wx.Panel.__init__(self, parent)
-		self.expenses = localExpenses
-		self.variables = entryVariables()
-		
-		self.importButton = wx.Button(self, -1, label = "import expenses", pos = (10,10))
-		self.Bind(wx.EVT_BUTTON, self.OnImportClick, self.importButton)
-		
-		self.userList = wx.ListBox(self, -1, pos = (10, 70), size = (90, 30),
-					   choices = users, style = wx.LB_SINGLE)
-		self.Bind(wx.EVT_LISTBOX, self.OnListBox, self.userList)
-		self.userList.SetSelection(0)
-	
-	def OnListBox(self, evt):
-		self.variables.desiredUser = evt.GetString()
-	
-	def OnImportClick(self, evt):
-		print "begin import"
-		# spawn a file browser and ask user to locate import file
-		wildcard = "text file (*.txt)|*.txt|" \
-			"All files (*.*)|*.*"
-		dialog = wx.FileDialog(None, "Choose a file", os.getcwd(),
-				       "", wildcard, wx.OPEN)
-		if dialog.ShowModal() == wx.ID_OK:
-			print dialog.GetPath()
-			path = dialog.GetPath()
-		dialog.Destroy()
-		
-		# TODO: make sure all buttons have been set correctly
-		
-		# do the import
-		file_object = open(path)
-		# iterate over each line in file
-		for line in file_object:
-			line = line.rstrip('\n') 	#strip trailing newline
-			line_array = line.split(',') 	#split on commas
-	
-			# load global desiredVars structure
-			self.variables.desiredValue = float(line_array[0])
-			self.variables.desiredDate  = line_array[1]
-			# remove all non-standard characters that the import will choke on
-			line_array[2] = re.sub('\'','', line_array[2])
-			self.variables.desiredDesc  = line_array[2]
-
-			self.expenses.getData(self.variables.desiredUser,
-					      self.variables.desiredValue,
-					      self.variables.desiredDate,
-					      self.variables.desiredDesc)
-
-		file_object.close() # close file object
 #********************************************************************
-
 class AppMainFrame(wx.Frame):
 	"""This class inherts wx.Frame methods, and is the top level window of our application."""
 	
-	size = (900,900)
+	size = (900,400)
 	
 	def __init__(self, title):
 		wx.Frame.__init__(	self,

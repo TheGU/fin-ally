@@ -24,4 +24,12 @@
 # along with Fin-ally.  If not, see <http://www.gnu.org/licenses/>.
 #********************************************************************
 
-DEBUG = 1       # activates certain debug messages, especially in dPrint()
+# activates certain debug messages, especially in dPrint()
+#    0 = no print
+#    1 = print
+DEBUG = 1       
+
+# activates either a pop-up dialogue for new expenses, or uses a static button panel
+#     1 = static button panel 
+#     0 = pop-up dialogue
+NEW_EXPENSE_PANEL = 0
