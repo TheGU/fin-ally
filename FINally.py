@@ -286,6 +286,15 @@ class NewExpenseDialog(wx.Dialog):
 	def OnDescEntry(self, evt):
 		pass
 
+class EditPage(wx.Panel):
+	"""The Edit page contains grids to display all the current USer and Type objects,
+	as well as allow operators to create new ones in the database"""
+	
+	def __init__(self, parent):
+		wx.Panel.__init__(self, parent)
+		
+		self.SetBackgroundColour("GREY")
+
 #********************************************************************
 class GraphicsPage(wx.Panel):
 	"""The Graphics page contains two things - a grid or table of entries, and a 
@@ -570,6 +579,8 @@ class AppMainFrame(wx.Frame):
 
 		self.gPage = GraphicsPage(self.notebook)
 		self.notebook.AddPage(self.gPage, "Graphics")
+		self.ePage = EditPage(self.notebook)
+		self.notebook.AddPage(self.ePage, "Edit")
 
 		# arrange notebook windows in a simple box sizer
 		self.sizer = wx.BoxSizer()
