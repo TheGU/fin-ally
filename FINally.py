@@ -31,6 +31,7 @@ import wx.grid     as gridlib
 import wx.calendar as callib
 from datetime import date, datetime
 from database import *
+from wx._core import WXK_F1, WXK_F2
 
 #********************************************************************	
 class columnInfo:
@@ -294,6 +295,9 @@ class GraphicsPage(wx.Panel):
 		wx.Panel.__init__(self, parent)
 	
 		self.SetBackgroundColour("GREY")
+		
+		# bind keyboard events
+		self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
 
 		# create wx.Grid object
 		self.grid = GraphicsGrid(self)
@@ -375,6 +379,14 @@ class GraphicsPage(wx.Panel):
 		dia = NewExpenseDialog(self, -1, 'New Expense Entry')
 		dia.ShowModal()
 		dia.Destroy()
+		
+	def OnKeyDown(self, event):
+		# F1 = new expense
+		if (event.GetKeyCode() == WXK_F1):
+			dia = NewExpenseDialog(self, -1, 'NewExpenseEntry')
+			dia.ShowModal()
+			dia.Destroy()
+		event.Skip()
 		
 	def OnEnterClick(self, evt):
 		"""respond to the user clicking 'enter!' by pushing the local objects into the database 
@@ -542,12 +554,12 @@ class AppMainFrame(wx.Frame):
 	
 	def __init__(self, title):
 		wx.Frame.__init__(	self,
-				  	None,
-				  	id=-1,
-				  	title=title,
-				  	pos=wx.DefaultPosition,
-		  			size=AppMainFrame.size,
-		  			style=wx.DEFAULT_FRAME_STYLE)
+						  	None,
+						  	id=-1,
+						  	title=title,
+						  	pos=wx.DefaultPosition,
+				  			size=AppMainFrame.size,
+				  			style=wx.DEFAULT_FRAME_STYLE)
 
 		# add an icon!
 		self.icon = wx.Icon("img/FINally.ico", wx.BITMAP_TYPE_ICO)
