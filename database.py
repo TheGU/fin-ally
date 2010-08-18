@@ -139,6 +139,10 @@ class Database():
 		"""Returns database size in bytes"""
 		return Database.size
 	
+	def CreateUser(self, user):
+		"""Creates a new user"""
+		session.commit()
+	
 	def CreateExpense(self, expense):
 		"""Creates a new expense"""
 		session.commit()

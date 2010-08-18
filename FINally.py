@@ -384,7 +384,7 @@ class GraphicsPage(wx.Panel):
 	def OnKeyDown(self, event):
 		# F1 = new expense
 		if (event.GetKeyCode() == WXK_F1):
-			dia = NewExpenseDialog(self, -1, 'NewExpenseEntry')
+			dia = NewExpenseDialog(self, -1, 'New Expense Entry')
 			dia.ShowModal()
 			dia.Destroy()
 		event.Skip()
@@ -466,9 +466,9 @@ class GraphicsGrid(gridlib.Grid):
 								# during window resizing
 		
 		# Make certain cols read only
-		self.rowAttr = gridlib.GridCellAttr() 
+		self.rowAttr = gridlib.GridCellAttr()
 		self.CreateReadOnlyCols()
-		self.InitialTableFormat()		
+		self.InitialTableFormat()
 
 		# bind editor creation to an event so we can 'catch' unique editors
 		self.Bind(gridlib.EVT_GRID_EDITOR_CREATED,
