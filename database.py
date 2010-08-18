@@ -139,11 +139,15 @@ class Database():
 		"""Returns database size in bytes"""
 		return Database.size
 	
+	def CreateUser(self, user):
+		"""Creates a new user"""
+		session.commit()
+	
 	def CreateExpense(self, expense):
 		"""Creates a new expense"""
 		session.commit()
 	
-	def GetAllUsers(self):
+	def GetUserList(self):
 		"""Returns a list of user names - nothing else."""
 		list = []
 		userList = User.query.all()
@@ -151,13 +155,67 @@ class Database():
 			list.append(str(i.name))
 		return list
 	
-	def GetAllTypes(self):
+	def GetAllUsers(self):
+		"""returns all user data in the database in a 2D list in the following format:
+		
+		   [ 0  ][5 ]
+		[0][user][id]
+		[1][user][id]
+		
+		user and expenseType are dereferenced down to the underlying string, 
+		and amount and date are cast to string types to appease the grid."""
+		
+		minorList=[]
+		majorList=[]
+
+		# grab all expenses
+		userList= User.query.all()
+		
+		# iterate through expenses - packing into listxlist
+		for i in userList:
+			# dereference these all the way down to the string
+			minorList.append(i.name) 
+			minorList.append(str(i.id))
+			
+			# push minorList into majorList 
+			majorList.append(minorList)
+			minorList=[]
+			
+		return majorList		
+	
+	def GetTypeList(self):
 		"""Returns a list of expense types - nothing else."""
 		list = []
 		typeList = ExpenseType.query.all()
 		for i in typeList:
 			list.append(str(i.description))
 		return list
+	
+	def GetAllTypes(self):
+		"""returns all user data in the database in a 2D list in the following format:
+		
+		   [     0     ][5 ]
+		[0][description][id]
+		[1][description][id]
+		"""
+		
+		minorList=[]
+		majorList=[]
+
+		# grab all expenses
+		typeList= ExpenseType.query.all()
+		
+		# iterate through expenses - packing into listxlist
+		for i in typeList:
+			# dereference these all the way down to the string
+			minorList.append(i.description) 
+			minorList.append(str(i.id))
+			
+			# push minorList into majorList 
+			majorList.append(minorList)
+			minorList=[]
+			
+		return majorList
 	
 	def GetAllExpenses(self):
 		"""returns all data in the database in a 2D list in the following format:
