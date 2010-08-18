@@ -32,6 +32,7 @@ import wx.calendar as callib
 from datetime import date, datetime
 from database import *
 from wx._core import WXK_F1, WXK_F2
+from editPage import EditPage
 
 #********************************************************************	
 class columnInfo:
@@ -172,8 +173,8 @@ class NewExpenseDialog(wx.Dialog):
 		# NOTE: this must be done after the Database creation above
 		# define local Expense objects for population
 		self.database       = Database()
-		self.userList		= self.database.GetAllUsers()
-		self.typeList		= self.database.GetAllTypes()
+		self.userList		= self.database.GetUserList()
+		self.typeList		= self.database.GetTypeList()
 		
 		self.parent = parent
 		
@@ -306,8 +307,8 @@ class GraphicsPage(wx.Panel):
 		# NOTE: this must be done after the Database creation above
 		# define local Expense objects for population
 		self.database       = Database()
-		self.userList		= self.database.GetAllUsers()
-		self.typeList		= self.database.GetAllTypes()
+		self.userList		= self.database.GetUserList()
+		self.typeList		= self.database.GetTypeList()
 		
 		# create a panel for the buttons
 		self.buttonPanel  = wx.Panel(self)
@@ -383,7 +384,7 @@ class GraphicsPage(wx.Panel):
 	def OnKeyDown(self, event):
 		# F1 = new expense
 		if (event.GetKeyCode() == WXK_F1):
-			dia = NewExpenseDialog(self, -1, 'NewExpenseEntry')
+			dia = NewExpenseDialog(self, -1, 'New Expense Entry')
 			dia.ShowModal()
 			dia.Destroy()
 		event.Skip()
@@ -465,9 +466,9 @@ class GraphicsGrid(gridlib.Grid):
 								# during window resizing
 		
 		# Make certain cols read only
-		self.rowAttr = gridlib.GridCellAttr() 
+		self.rowAttr = gridlib.GridCellAttr()
 		self.CreateReadOnlyCols()
-		self.InitialTableFormat()		
+		self.InitialTableFormat()
 
 		# bind editor creation to an event so we can 'catch' unique editors
 		self.Bind(gridlib.EVT_GRID_EDITOR_CREATED,
@@ -490,14 +491,14 @@ class GraphicsGrid(gridlib.Grid):
 			self.comboBox.Bind(wx.EVT_COMBOBOX, self.ComboBoxSelection)
 			
 			# load combo box with all user types
-			for i in self.database.GetAllUsers():
+			for i in self.database.GetUserList():
 				self.comboBox.Append(i)
 				
 		# Col 1 is the Expense Type object column
 		elif Col == 1:
 			self.comboBox = event.GetControl()
 			self.comboBox.Bind(wx.EVT_COMBOBOX, self.ComboBoxSelection)
-			for i in self.database.GetAllTypes():
+			for i in self.database.GetTypeList():
 				self.comboBox.Append(i)
 		
 	def ComboBoxSelection(self, event):
@@ -570,6 +571,8 @@ class AppMainFrame(wx.Frame):
 
 		self.gPage = GraphicsPage(self.notebook)
 		self.notebook.AddPage(self.gPage, "Graphics")
+		self.ePage = EditPage(self.notebook)
+		self.notebook.AddPage(self.ePage, "Types + Users")
 
 		# arrange notebook windows in a simple box sizer
 		self.sizer = wx.BoxSizer()
