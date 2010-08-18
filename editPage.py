@@ -96,13 +96,13 @@ class EditPage(wx.Panel):
         box2.Add(SampleWindow(self, ""), 1, wx.EXPAND)      #left
         userBox = wx.BoxSizer(wx.VERTICAL)
         userBox.AddMany([ (self.newUserButton, 0, wx.EXPAND),
-                          (self.userGrid, 1, wx.EXPAND),
+                          (self.userGrid, 0, wx.EXPAND),
                         ])
         box2.Add(userBox, 0, wx.EXPAND)
         box2.Add(SampleWindow(self, ""), 1, wx.EXPAND)      # middle
         typeBox = wx.BoxSizer(wx.VERTICAL)
         typeBox.AddMany([ (self.newTypeButton,0, wx.EXPAND),
-                          (self.typeGrid, 1, wx.EXPAND),
+                          (self.typeGrid, 0, wx.EXPAND),
                         ])
         box2.Add(typeBox, 0, wx.EXPAND)
         box2.Add(SampleWindow(self, ""), 1, wx.EXPAND)      #right
@@ -270,8 +270,8 @@ class SimpleTypeGrid(gridlib.Grid):
     """This is a simple grid class - which means most of the methods are automatically
     defined by the wx library"""
     def __init__(self, parent):
-        gridlib.Grid.__init__(self, parent, -1)
-        self.CreateGrid(25,2)
+        gridlib.Grid.__init__(self, parent, -1, size=(250,300))
+        self.CreateGrid(100,2)
         
         self.SetColLabelValue(0,"expense type")
         self.SetColLabelValue(1,"id")        
@@ -312,7 +312,7 @@ class SimpleUserGrid(gridlib.Grid):
     """This is a simple grid class - which means most of the methods are automatically
     defined by the wx library"""
     def __init__(self, parent):
-        gridlib.Grid.__init__(self, parent, -1)
+        gridlib.Grid.__init__(self, parent, -1, size=(250,300))
         self.CreateGrid(25,2)
         
         self.SetColLabelValue(0,"user")
