@@ -33,7 +33,7 @@
 import sqlite3
 import sys, re, os
 from SQLiteCommands import *
-from fileCheck import GenerateDbFiles, GetCurrentDir
+from utils import *
 
 #********************************************************************
 class SQLiteExpense():
@@ -213,7 +213,7 @@ class Database():
 	def IdentifyDatabase(self):
 		"""This method will locate a database (.db) file and then load specific pieces of information
 		into the appropriate variables for consumption by other modules"""
-		self.dbFiles = list(GenerateDbFiles())
+		self.dbFiles = list(GenFileList('*.db'))
 	
 		# if any files were present...
 		if self.dbFiles:
@@ -228,7 +228,8 @@ class Database():
 					Database.name = self.databaseName
 					
 					Database.size = os.path.getsize(Database.name)
-					print Database.name, Database.size
+					dPrint(Database.name)
+					dPrint(Database.size)
 					
 					# push the database name into the expense object
 					self.tempExpense = genericExpense()

@@ -34,8 +34,8 @@ import wx.calendar as callib
 from sqlobject import *
 
 import re
-from dbDrivers import *
-from fileCheck import *
+from database import *
+from utils import *
 
 users = ['rachel','daniel']
 months = ["January", "February", "March", "April", "May", "June", "July",
