@@ -26,13 +26,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Fn-ally.  If not, see <http://www.gnu.org/licenses/>.
 #********************************************************************
-import glob, os, sys, re
-#from dbDrivers import * 
-    
+import glob, os, sys, re, cfg
+ 
 #********************************************************************
-def GenerateDbFiles():
-    """This generator function returns a list of all *.db files in a directory"""
-    for match in glob.glob(os.path.join(GetCurrentDir(), '*.db')):
+def GenFileList(searchString):
+    """This generator function returns a list of all files matching the searchString in a directory"""
+    for match in glob.glob(os.path.join(GetCurrentDir(), searchString)):
         yield match
 
 #********************************************************************
@@ -40,6 +39,11 @@ def GetCurrentDir():
     """This function returns the absolute path to this Python script"""
     pathname = os.path.dirname(sys.argv[0])
     return(os.path.abspath(pathname))
+
+#********************************************************************
+def dPrint(string):
+    if cfg.DEBUG == 1:
+        print string
 
 # Test main functionality
 if __name__ == '__main__':
