@@ -93,6 +93,7 @@ class CustomDataTable(gridlib.PyGridTableBase):
 		return len(self.localData[0])
 	
 	def GetValue(self, row, col):
+		#print "(", row, ",", col, ")"
 		return self.localData[row][col]
 	
 	def IsEmptyCell(self, row, col):
@@ -120,6 +121,14 @@ class CustomDataTable(gridlib.PyGridTableBase):
 			
 		self.database.CreateExpense(localExpenseObj)
 		self.parent.UpdateGrid()
+		
+	def DeleteRow(self, row):
+		"""removes the row provided in the argument and removes data from the database"""
+		print "you deleted a row!"
+		#id = self.GetValue(row,5)
+		#self.database.DeleteExpense(id)
+		#self.UpdateValues(self.parent)
+		#self.ResetView(self.parent)	
 			
 	#***************************
 	# OPTIONAL METHODS
@@ -473,6 +482,39 @@ class GraphicsGrid(gridlib.Grid):
 		# bind editor creation to an event so we can 'catch' unique editors
 		self.Bind(gridlib.EVT_GRID_EDITOR_CREATED,
 				  self.OnGrid1GridEditorCreated)
+		self.Bind(gridlib.EVT_GRID_CELL_RIGHT_CLICK, self.onGridRightClick)
+
+	def onGridRightClick(self, event):
+		# highlight the grid row in red
+		row = event.GetRow()
+		attr = gridlib.GridCellAttr()
+		attr.SetBackgroundColour(wx.RED)
+		self.SetRowAttr(row, attr)
+		self.UpdateGrid()
+		
+		# only do this part the first time so the events are only bound once
+		#
+		# Yet another anternate way to do IDs. Some prefer them up top to
+		# avoid clutter, some prefer them close to the object of interest
+		# for clarity. 
+		if not hasattr(self, "popupDeleteId"):
+			self.popupDeleteId = wx.NewId()
+
+		# use of lambda functions prevent two new methods
+		self.Bind(wx.EVT_MENU, lambda evt, temp=row: self.OnPopupDelete(evt, temp), id=self.popupDeleteId)
+
+		# create a menu and pack it some some options
+		menu = wx.Menu()
+		menu.Append(self.popupDeleteId, "Delete")
+
+		self.PopupMenu(menu)
+		menu.Destroy()
+
+	def OnPopupDelete(self, event, row):
+		# delete the current row
+		# TODO: add a #define here or something
+		self.tableBase.DeleteRow(row)
+		event.Skip()
 
 	def OnGrid1GridEditorCreated(self, event):
 		"""This function will fire when a cell editor is created, which seems to be 

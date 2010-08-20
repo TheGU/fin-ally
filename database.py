@@ -147,6 +147,12 @@ class Database():
 		"""Creates a new expense"""
 		session.commit()
 	
+	def DeleteExpense(self, deleteId):
+		"""Removes an expense with the appropriate ID from the database"""
+		expense = Expense.query.filter_by(id=deleteId).one()
+		expense.delete()
+		session.commit()
+	
 	def GetUserList(self):
 		"""Returns a list of user names - nothing else."""
 		list = []
@@ -233,6 +239,8 @@ class Database():
 		# grab all expenses
 		expenseList= Expense.query.all()
 		
+		print "Getting expenses..."
+		
 		# iterate through expenses - packing into listxlist
 		for i in expenseList:
 			#print "DAN: ", i
@@ -253,10 +261,6 @@ class Database():
 			minorList=[]
 			
 		return majorList
-	
-	def DeleteExpense(self):
-		"""notes"""
-		print "do something here"
 	
 #********************************************************************
 # Create SQLAlchemy tables in the form of python classes.
