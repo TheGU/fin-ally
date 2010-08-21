@@ -97,6 +97,7 @@ class GraphicsGrid(gridlib.Grid):
         attr = gridlib.GridCellAttr()
         attr.SetBackgroundColour(wx.RED)
         self.SetRowAttr(row, attr)
+        self.ForceRefresh()
         
         # only do this part the first time so the events are only bound once
         #
@@ -191,11 +192,11 @@ class CustomDataTable(gridlib.PyGridTableBase):
     """
     Class Name:     CustomDataTable
     Extends:        wx.grid.PyGridTableBase (gridlib.PyGridTableBase)
-    Description:    An instance of the uninstantiatd base class PyGridTableBase. This instance
+    Description:    An instance of the uninstantiated base class PyGridTableBase. This instance
     must contain several methods (listed below) for modifying/viewing/querying data in the grid.
     As well as an init method that populates the grid with data. 
     
-    Requred members are: GetNumber[Rows|Cols], GetValue, SetValue, and IsEmptyCell.
+    Required members are: GetNumber[Rows|Cols], GetValue, SetValue, and IsEmptyCell.
     """
     
     dataTypes = colInfo.colType # used for custom renderers
@@ -224,11 +225,16 @@ class CustomDataTable(gridlib.PyGridTableBase):
         return len(self.localData[0])
     
     def GetValue(self, row, col):
-        #print "(", row, ",", col, ")"
         return self.localData[row][col]
     
     def IsEmptyCell(self, row, col):
-        return self.localData[row][col] is not None
+        try:
+            if self.localData[row][col] != "":
+                return True
+            else:
+                return False
+        except:
+            return False    
         
     def SetValue(self, row, col, value):
         # determine the record being modified using the primary key (located in col 5)
@@ -258,16 +264,18 @@ class CustomDataTable(gridlib.PyGridTableBase):
     #***************************
     
     def DeleteRow(self, row):
+        print "DELETE"
+        print "data has ", self.GetNumberRows(), "rows"
+        print "starting to delete row ", row
         # remove from the database
         id = self.localData[row][5]
-        print "trying to remove row", row, "with id ", id
+        print "with id ", id
         self.database.DeleteExpense(id)
         # remove from the local data        
-        self.localData.pop(row)
         self.GetView().ProcessTableMessage(gridlib.GridTableMessage(self,
                                            gridlib.GRIDTABLE_NOTIFY_ROWS_DELETED, 
                                            row, 1))
-        print "you deleted a row!" 
+        self.localData.pop(row)
     
     def AddRow(self):
         # reload all expenses
@@ -275,7 +283,6 @@ class CustomDataTable(gridlib.PyGridTableBase):
         self.GetView().ProcessTableMessage(gridlib.GridTableMessage(self,
                                            gridlib.GRIDTABLE_NOTIFY_ROWS_APPENDED,
                                            1))
-        print "you added a row!"
         
     def GetColLabelValue(self, col):
         return colInfo.colLabels[col]

@@ -118,15 +118,16 @@ class NewExpenseDialog(wx.Dialog):
 		"""respond to the user clicking 'enter!' by pushing the local objects into the database 
 		layer"""
 		
-		# it's critical to create new database objects here
-		localUserObject    = User()
-		localTypeObject    = ExpenseType()
+		# it's critical to create a new expense object here to avoid overwriting
+		# an existing expense object. However, we will *not* create user
+		# or expenseType because calls below create a new expense
 		localExpenseObject = Expense()
 		
 		#
 		# NOTE: operator selects both User and ExpenseType by selecting a string.
 		# This string is used to look up the existing database objects, which are
-		# fed to the overall Expense object for creation. 
+		# fed to the overall Expense object for creation. These calls also create
+		# new User and ExpenseType objects as well as populate them.
 		# 
 		# TODO: this needs to be smarter: (A) what if the string doesn't match an existing
 		# object? (B) What if the user wants to enter a new object?
@@ -256,11 +257,28 @@ class GraphicsPage(wx.Panel):
 											  pos = (0,0))
 			self.Bind(wx.EVT_BUTTON, self.ShowNewExpenseDialogue, self.newExpenseButton)
 		
+			# create and bind a value entry box
+			self.deleteRowEntry   = wx.TextCtrl(self.buttonPanel, 
+										    -1, 
+										    "0", 
+										    pos = (300,0))
+			self.Bind(wx.EVT_TEXT, self.OnDeleteRowEntry, self.deleteRowEntry)
+		
+			self.deleteButton = wx.Button(self.buttonPanel,
+										      id = -1,
+										      label = "Delete",
+											  pos = (500,0))
+			self.Bind(wx.EVT_BUTTON, self.DeleteRowAction, self.deleteButton)		
+		
 		# create a sizer for this Panel and add the buttons and the table
 		self.sizer = wx.BoxSizer(wx.VERTICAL)      # define new box sizer	
 		self.sizer.Add(self.grid, 1, wx.GROW)     # add grid (resize vert and horz)
 		self.sizer.Add(self.buttonPanel, 0, wx.ALIGN_LEFT)    # add panel (no resize vert and aligned left horz)
 		self.SetSizer(self.sizer)
+		
+	def DeleteRowAction(self, event):
+		row = self.deleteRowEntry.GetValue()
+		self.grid.tableBase.DeleteRow(int(row)-1)
 	
 	def ShowNewExpenseDialogue(self, event):
 		dia = NewExpenseDialog(self, -1, 'New Expense Entry')
@@ -312,6 +330,9 @@ class GraphicsPage(wx.Panel):
     #***************************
 	# NOT REQUIRED AT THIS TIME
 	#***************************
+	
+	def OnDeleteRowEntry(self, evt):
+		pass
 	
 	def OnUserSelect(self, evt):
 		pass
@@ -371,7 +392,7 @@ class AppLauncher(wx.App):
 	Frame (top level window)."""
 	
 	# static variables go here
-	version = "2.0.1"
+	version = "2.1.0"
 	title   = "FINally version " + version
 	
 	def OnInit(self):

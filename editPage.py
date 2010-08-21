@@ -171,7 +171,7 @@ class NewTypeDialog(wx.Dialog):
         localTypeObject.description = self.typeEntry.GetValue()
         
         # create new User in database
-        self.database.CreateUser(localTypeObject)
+        self.database.CreateType(localTypeObject)
         self.parent.typeGrid.RefreshData()
         
         self.Close()
@@ -329,7 +329,7 @@ class SimpleUserGrid(gridlib.Grid):
         for i in range(len(data)):
             self.SetCellValue(i,0,str(data[i][0]))
             self.SetCellValue(i,1,str(data[i][1]))
-            
+        
         self.SetColSize(0,100)
         self.SetColSize(1,50)
         
