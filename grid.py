@@ -28,10 +28,8 @@
 # import wxPython libraries - including some simplifiers for grid and calendar
 import wx
 import wx.grid     as gridlib
-#import wx.calendar as callib
 from datetime import date, datetime
 from database import *
-#from wx._core import WXK_F1, WXK_F2
 
 #********************************************************************    
 class columnInfo:
@@ -99,11 +97,10 @@ class GraphicsGrid(gridlib.Grid):
         attr = gridlib.GridCellAttr()
         attr.SetBackgroundColour(wx.RED)
         self.SetRowAttr(row, attr)
-        self.UpdateGrid()
         
         # only do this part the first time so the events are only bound once
         #
-        # Yet another anternate way to do IDs. Some prefer them up top to
+        # Yet another alternate way to do IDs. Some prefer them up top to
         # avoid clutter, some prefer them close to the object of interest
         # for clarity. 
         if not hasattr(self, "popupDeleteId"):
@@ -123,7 +120,6 @@ class GraphicsGrid(gridlib.Grid):
         # delete the current row
         # TODO: add a #define here or something
         self.tableBase.DeleteRow(row)
-        event.Skip()
 
     def OnGrid1GridEditorCreated(self, event):
         """This function will fire when a cell editor is created, which seems to be 
@@ -168,14 +164,6 @@ class GraphicsGrid(gridlib.Grid):
             if colInfo.colRO[i] == 1: 
                 self.SetColAttr(i,self.rowAttr) 
         self.rowAttr.IncRef() 
-            
-    def UpdateGrid(self):
-        """Called after a grid value is edited or newly entered. re-loads
-        underlying grid data and forces grid to display new data"""
-        self.tableBase.localData = self.database.GetAllExpenses()
-        self.tableBase.UpdateValues(self)
-        self.tableBase.ResetView(self)
-        # DAN: we need to set the editor for new rows only - find out how to do that
         
     def InitialTableFormat(self):
         """Formats the grid table - adding width, height, and unique editors"""
@@ -263,55 +251,31 @@ class CustomDataTable(gridlib.PyGridTableBase):
             localExpenseObj.description = value
             
         self.database.CreateExpense(localExpenseObj)
-        self.parent.UpdateGrid()
-        
-    def DeleteRow(self, row):
-        """removes the row provided in the argument and removes data from the database"""
-        print "you deleted a row!"
-        #id = self.GetValue(row,5)
-        #self.database.DeleteExpense(id)
-        #self.UpdateValues(self.parent)
-        #self.ResetView(self.parent)    
+        self.localData = self.database.GetAllExpenses()
             
     #***************************
     # OPTIONAL METHODS
     #***************************
     
+    def DeleteRow(self, row):
+        # remove from the database
+        id = self.localData[row][5]
+        print "trying to remove row", row, "with id ", id
+        self.database.DeleteExpense(id)
+        # remove from the local data        
+        self.localData.pop(row)
+        self.GetView().ProcessTableMessage(gridlib.GridTableMessage(self,
+                                           gridlib.GRIDTABLE_NOTIFY_ROWS_DELETED, 
+                                           row, 1))
+        print "you deleted a row!" 
+    
+    def AddRow(self):
+        # reload all expenses
+        self.localData = self.database.GetAllExpenses()
+        self.GetView().ProcessTableMessage(gridlib.GridTableMessage(self,
+                                           gridlib.GRIDTABLE_NOTIFY_ROWS_APPENDED,
+                                           1))
+        print "you added a row!"
+        
     def GetColLabelValue(self, col):
         return colInfo.colLabels[col]
-    
-    def ResetView(self, grid):
-        """
-        (Grid) -> Reset the grid view.   Call this to
-        update the grid if rows and columns have been added or deleted
-        """
-        grid.BeginBatch()
-        
-        for current, new, delmsg, addmsg in [
-            (self._rows, self.GetNumberRows(),gridlib.GRIDTABLE_NOTIFY_ROWS_DELETED, gridlib.GRIDTABLE_NOTIFY_ROWS_APPENDED),
-            (self._cols, self.GetNumberCols(),gridlib.GRIDTABLE_NOTIFY_COLS_DELETED, gridlib.GRIDTABLE_NOTIFY_COLS_APPENDED),
-        ]:
-            if new < current:
-                msg = gridlib.GridTableMessage(self,delmsg,new,current-new)
-                grid.ProcessTableMessage(msg)
-            elif new > current:
-                msg = gridlib.GridTableMessage(self,addmsg,new-current)
-                grid.ProcessTableMessage(msg)
-                self.UpdateValues(grid)
-        
-        grid.EndBatch()
-        
-        self._rows = self.GetNumberRows()
-        self._cols = self.GetNumberCols()
-        # update the column rendering plugins
-        #self._updateColAttrs(grid)
-        
-        # update the scrollbars and the displayed part of the grid
-        grid.AdjustScrollbars()
-        grid.ForceRefresh()
-        
-    def UpdateValues(self, grid):
-        """Update all displayed values"""
-        # This sends an event to the grid table to update all of the values
-        msg = gridlib.GridTableMessage(self,gridlib.GRIDTABLE_REQUEST_VIEW_GET_VALUES)
-        grid.ProcessTableMessage(msg)
