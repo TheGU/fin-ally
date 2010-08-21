@@ -38,15 +38,16 @@ class columnInfo:
     does complete the addition of a new column."""
     
     # TODO: consolidate these into a dict or some other structure
-    colLabels = ('user', 'type', 'amount', 'date', 'desc', 'id')
-    colWidth  = [100, 50, 50, 200, 350, 50]
-    colRO     = [0,0,0,0,0,1] # 0 = R/W, 1 = R
+    colLabels = ('user', 'type', 'amount', 'date', 'desc', 'id', 'del')
+    colWidth  = [100, 50, 50, 200, 300, 50, 50]
+    colRO     = [0,0,0,0,0,1,0] # 0 = R/W, 1 = R
     colType   = [gridlib.GRID_VALUE_CHOICE,
                   gridlib.GRID_VALUE_CHOICE,
                   gridlib.GRID_VALUE_NUMBER,
                   gridlib.GRID_VALUE_STRING, # should be GRID_VALUE_DATETIME
                   gridlib.GRID_VALUE_STRING,
-                  gridlib.GRID_VALUE_NUMBER]
+                  gridlib.GRID_VALUE_NUMBER,
+                  gridlib.GRID_VALUE_STRING]
     
     rowHeight = 20
     
@@ -83,7 +84,6 @@ class GraphicsGrid(gridlib.Grid):
         
         # Make certain cols read only
         self.rowAttr = gridlib.GridCellAttr()
-        self.CreateReadOnlyCols()
         self.InitialTableFormat()
 
         # bind editor creation to an event so we can 'catch' unique editors
@@ -166,35 +166,40 @@ class GraphicsGrid(gridlib.Grid):
         value       = self.comboBox.GetValue()
         selection = self.comboBox.GetSelection()
         pass
-            
-    def CreateReadOnlyCols(self):
-        """creates read-only columns"""
+        
+    def InitialTableFormat(self):
+        """Performs initial table configuration, """
+
+        # create read-only columns        
         self.rowAttr.SetReadOnly(1)
         for i in range(len(colInfo.colRO)):
             if colInfo.colRO[i] == 1: 
                 self.SetColAttr(i,self.rowAttr) 
         self.rowAttr.IncRef() 
         
-    def InitialTableFormat(self):
-        """Formats the grid table - adding width, height, and unique editors"""
-        
-        # create 'drop down' style choice editors for two columns
-        userChoiceEditor = gridlib.GridCellChoiceEditor([], allowOthers = False)
-        typeChoiceEditor = gridlib.GridCellChoiceEditor([], allowOthers = False)
-
         # apply editors and row height to each row
         for i in range(self.GetNumberRows()):
-            self.SetCellEditor(i,0,userChoiceEditor)
-            self.SetCellEditor(i,1,typeChoiceEditor)
-            self.SetCellEditor(i,2,gridlib.GridCellFloatEditor(-1,2))
-            
-            self.SetRowSize(i, colInfo.rowHeight)
+            self.FormatTableRow(i)
             
         # format column width
         tmp = 0
         for i in colInfo.colWidth:
             self.SetColSize(tmp,i)
             tmp += 1
+            
+    def FormatTableRow(self, row):
+        """Formats a single row entry - editor types, height, color, etc..."""
+        # create 'drop down' style choice editors for two columns
+        userChoiceEditor = gridlib.GridCellChoiceEditor([], allowOthers = False)
+        typeChoiceEditor = gridlib.GridCellChoiceEditor([], allowOthers = False)
+        
+        self.SetCellEditor(row,0,userChoiceEditor)
+        self.SetCellEditor(row,1,typeChoiceEditor)
+        self.SetCellEditor(row,2,gridlib.GridCellFloatEditor(-1,2))
+        
+        self.SetRowSize(row, colInfo.rowHeight)
+        
+        self.SetCellBackgroundColour(row,6,"GREEN")
 
 #********************************************************************        
 class CustomDataTable(gridlib.PyGridTableBase):
