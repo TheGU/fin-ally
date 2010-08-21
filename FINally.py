@@ -146,7 +146,7 @@ class NewExpenseDialog(wx.Dialog):
 		localExpenseObject.user 	   = localUserObject
 		localExpenseObject.expenseType = localTypeObject
 		self.database.CreateExpense(localExpenseObject)
-		self.parent.grid.UpdateGrid()
+		self.parent.grid.tableBase.AddRow()
 		
 		self.Close()
 		
@@ -307,7 +307,7 @@ class GraphicsPage(wx.Panel):
 		localExpenseObject.user 	   = localUserObject
 		localExpenseObject.expenseType = localTypeObject
 		self.database.CreateExpense(localExpenseObject)
-		self.grid.UpdateGrid()
+		self.grid.tableBase.AddRow()
 	
     #***************************
 	# NOT REQUIRED AT THIS TIME
