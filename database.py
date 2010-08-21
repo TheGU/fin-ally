@@ -142,6 +142,10 @@ class Database():
 	def CreateUser(self, user):
 		"""Creates a new user"""
 		session.commit()
+		
+	def CreateType(self, type):
+		"""Creates a new type"""
+		session.commit()
 	
 	def CreateExpense(self, expense):
 		"""Creates a new expense"""
@@ -238,8 +242,6 @@ class Database():
 
 		# grab all expenses
 		expenseList= Expense.query.all()
-		
-		print "Getting expenses..."
 		
 		# iterate through expenses - packing into listxlist
 		for i in expenseList:
