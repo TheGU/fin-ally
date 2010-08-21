@@ -89,38 +89,47 @@ class GraphicsGrid(gridlib.Grid):
         # bind editor creation to an event so we can 'catch' unique editors
         self.Bind(gridlib.EVT_GRID_EDITOR_CREATED,
                   self.OnGrid1GridEditorCreated)
-        self.Bind(gridlib.EVT_GRID_CELL_RIGHT_CLICK, self.onGridRightClick)
+        
+        # bind grid-based context menu if active
+        if cfg.GRID_CONTEXT_MENU == 1:
+            self.Bind(gridlib.EVT_GRID_CELL_RIGHT_CLICK, self.onGridRightClick)
 
     def onGridRightClick(self, event):
-        # highlight the grid row in red
-        row = event.GetRow()
-        attr = gridlib.GridCellAttr()
-        attr.SetBackgroundColour(wx.RED)
-        self.SetRowAttr(row, attr)
-        self.ForceRefresh()
-        
-        # only do this part the first time so the events are only bound once
-        #
-        # Yet another alternate way to do IDs. Some prefer them up top to
-        # avoid clutter, some prefer them close to the object of interest
-        # for clarity. 
-        if not hasattr(self, "popupDeleteId"):
-            self.popupDeleteId = wx.NewId()
-
-        # use of lambda functions prevent two new methods
-        self.Bind(wx.EVT_MENU, lambda evt, temp=row: self.OnPopupDelete(evt, temp), id=self.popupDeleteId)
-
-        # create a menu and pack it some some options
-        menu = wx.Menu()
-        menu.Append(self.popupDeleteId, "Delete")
-
-        self.PopupMenu(menu)
-        menu.Destroy()
+        if cfg.GRID_CONTEXT_MENU == 1:
+            # highlight the grid row in red
+            row = event.GetRow()
+            attr = gridlib.GridCellAttr()
+            attr.SetBackgroundColour(wx.RED)
+            self.SetRowAttr(row, attr)
+            self.ForceRefresh()
+            
+            # only do this part the first time so the events are only bound once
+            #
+            # Yet another alternate way to do IDs. Some prefer them up top to
+            # avoid clutter, some prefer them close to the object of interest
+            # for clarity. 
+            if not hasattr(self, "popupDeleteId"):
+                self.popupDeleteId = wx.NewId()
+    
+            # use of lambda functions prevent two new methods
+            self.Bind(wx.EVT_MENU, lambda evt, temp=row: self.OnPopupDelete(evt, temp), id=self.popupDeleteId)
+    
+            # create a menu and pack it some some options
+            menu = wx.Menu()
+            menu.Append(self.popupDeleteId, "Delete")
+    
+            self.PopupMenu(menu)
+            menu.Destroy()
+        else:
+            event.Skip
 
     def OnPopupDelete(self, event, row):
-        # delete the current row
-        # TODO: add a #define here or something
-        self.tableBase.DeleteRow(row)
+        if cfg.GRID_CONTEXT_MENU == 1:
+            # delete the current row
+            # TODO: add a #define here or something
+            self.tableBase.DeleteRow(row)
+        else:
+            event.Skip()
 
     def OnGrid1GridEditorCreated(self, event):
         """This function will fire when a cell editor is created, which seems to be 

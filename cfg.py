@@ -33,3 +33,8 @@ DEBUG = 1
 #     1 = static button panel 
 #     0 = pop-up dialogue
 NEW_EXPENSE_PANEL = 0
+
+# activates a grid-based context menu in which a user can delete a row
+#    1 = grid-based context menu active
+#    0 = menu inactive
+GRID_CONTEXT_MENU = 0
