@@ -230,9 +230,9 @@ class Database():
 	def GetAllExpenses(self):
 		"""returns all data in the database in a 2D list in the following format:
 		
-		   [ 0  ][      1    ][  2   ][ 3  ][     4     ][5 ]
-		[0][user][expenseType][amount][date][description][id]
-		[1][user][expenseType][amount][date][description][id]
+		   [ 0  ][      1    ][  2   ][ 3  ][     4     ][5 ][6  ]
+		[0][user][expenseType][amount][date][description][id][del]
+		[1][user][expenseType][amount][date][description][id][del]
 		
 		user and expenseType are dereferenced down to the underlying string, 
 		and amount and date are cast to string types to appease the grid."""
@@ -257,6 +257,9 @@ class Database():
 			# this is just normal
 			minorList.append(i.description)
 			minorList.append(i.id)
+			
+			# append the 'delete' column
+			minorList.append("delete")
 			
 			# push minorList into majorList 
 			majorList.append(minorList)
