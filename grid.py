@@ -93,6 +93,13 @@ class GraphicsGrid(gridlib.Grid):
         # bind grid-based context menu if active
         if cfg.GRID_CONTEXT_MENU == 1:
             self.Bind(gridlib.EVT_GRID_CELL_RIGHT_CLICK, self.onGridRightClick)
+        
+        self.Bind(gridlib.EVT_GRID_CELL_LEFT_CLICK, self.onGridClick)
+        
+    def onGridClick(self, event):
+        if(event.GetCol() == 6):
+            self.tableBase.DeleteRow(event.GetRow())
+        event.Skip()
 
     def onGridRightClick(self, event):
         if cfg.GRID_CONTEXT_MENU == 1:

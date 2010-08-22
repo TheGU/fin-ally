@@ -259,7 +259,7 @@ class Database():
 			minorList.append(i.id)
 			
 			# append the 'delete' column
-			minorList.append("")
+			minorList.append("delete")
 			
 			# push minorList into majorList 
 			majorList.append(minorList)
