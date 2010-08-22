@@ -143,11 +143,14 @@ class NewExpenseDialog(wx.Dialog):
 		localExpenseObject.description=self.descEntry.GetValue()
 		localExpenseObject.date=self.cal.PyGetDate()
 		
-		# consolidate objects into one expense type
+		# consolidate objects into one expense type and push into database
 		localExpenseObject.user 	   = localUserObject
 		localExpenseObject.expenseType = localTypeObject
 		self.database.CreateExpense(localExpenseObject)
+		
+		# update grid with new row, format new row
 		self.parent.grid.tableBase.AddRow()
+		self.parent.grid.FormatTableRow(self.parent.grid.tableBase.GetNumberRows()-1)
 		
 		self.Close()
 		
