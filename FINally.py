@@ -258,30 +258,13 @@ class GraphicsPage(wx.Panel):
 										      id = -1,
 										      label = "New Expense",
 											  pos = (0,0))
-			self.Bind(wx.EVT_BUTTON, self.ShowNewExpenseDialogue, self.newExpenseButton)
-		
-			# create and bind a value entry box
-			self.deleteRowEntry   = wx.TextCtrl(self.buttonPanel, 
-										    -1, 
-										    "0", 
-										    pos = (300,0))
-			self.Bind(wx.EVT_TEXT, self.OnDeleteRowEntry, self.deleteRowEntry)
-		
-			self.deleteButton = wx.Button(self.buttonPanel,
-										      id = -1,
-										      label = "Delete",
-											  pos = (500,0))
-			self.Bind(wx.EVT_BUTTON, self.DeleteRowAction, self.deleteButton)		
+			self.Bind(wx.EVT_BUTTON, self.ShowNewExpenseDialogue, self.newExpenseButton)	
 		
 		# create a sizer for this Panel and add the buttons and the table
 		self.sizer = wx.BoxSizer(wx.VERTICAL)      # define new box sizer	
 		self.sizer.Add(self.grid, 1, wx.GROW)     # add grid (resize vert and horz)
 		self.sizer.Add(self.buttonPanel, 0, wx.ALIGN_LEFT)    # add panel (no resize vert and aligned left horz)
 		self.SetSizer(self.sizer)
-		
-	def DeleteRowAction(self, event):
-		row = self.deleteRowEntry.GetValue()
-		self.grid.tableBase.DeleteRow(int(row)-1)
 	
 	def ShowNewExpenseDialogue(self, event):
 		dia = NewExpenseDialog(self, -1, 'New Expense Entry')
@@ -333,9 +316,6 @@ class GraphicsPage(wx.Panel):
     #***************************
 	# NOT REQUIRED AT THIS TIME
 	#***************************
-	
-	def OnDeleteRowEntry(self, evt):
-		pass
 	
 	def OnUserSelect(self, evt):
 		pass
@@ -395,8 +375,8 @@ class AppLauncher(wx.App):
 	Frame (top level window)."""
 	
 	# static variables go here
-	version = "2.1.0"
-	title   = "FINally version " + version
+	version = "0.0.1"
+	title   = "FINally v" + version
 	
 	def OnInit(self):
 		"""Should be used instead of __init__ for Application objects"""
