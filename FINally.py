@@ -34,6 +34,7 @@ from database import *
 from wx._core import WXK_F1, WXK_F2
 from editPage import EditPage
 from grid import GraphicsGrid
+from migrate import versionCheck
 
 #********************************************************************
 # FINally class definitions
@@ -351,6 +352,9 @@ class AppMainFrame(wx.Frame):
 		# add an icon!
 		self.icon = wx.Icon("img/FINally.ico", wx.BITMAP_TYPE_ICO)
 		self.SetIcon(self.icon)
+		
+		# before any data can be used, we must verify version number compatibilities
+		versionCheck()
 
 		self.panel    = wx.Panel(self) # basically just a container for the notebook
 		self.notebook = wx.Notebook(self.panel, size=AppMainFrame.size)
@@ -375,8 +379,7 @@ class AppLauncher(wx.App):
 	Frame (top level window)."""
 	
 	# static variables go here
-	version = "0.0.1"
-	title   = "FINally v" + version
+	title   = "FINally v%s.%s" % (cfg.VERSION[0], cfg.VERSION[1])
 	
 	def OnInit(self):
 		"""Should be used instead of __init__ for Application objects"""
