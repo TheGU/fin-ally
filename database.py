@@ -37,12 +37,8 @@ from utils import *
 #from datetime import datetime
 from datetime import date
 
-# These "enumerations" represent data pulled from the Expense Table
-EXP_NAME = 0
-EXP_TYPE = 1
-EXP_AMOUNT = 2
-EXP_DATE = 3
-EXP_DESC = 4
+# database version
+dbVer = (1,0)
 
 #********************************************************************
 #							FUNCTIONS
@@ -60,6 +56,8 @@ def CreateBlankDatabase():
 	e1 = Expense(user=rhs, expenseType=makeup, amount='15.01', date=date.today(), description='makeup for mah FACE!')
 	e2 = Expense(user=dls, expenseType=clothing, amount='50.25', date = date.today(), description='clothing for mah parts.')
 	
+	# create version entry
+	version = Version(version_major=dbVer[0], version_minor=dbVer[1])
 	session.commit()
 	
 #********************************************************************
@@ -296,14 +294,13 @@ class Expense(Entity):
 	def __repr__(self):
 		return "<Expense ('%s', '%s', '%s', '%s', '%s')>" % (self.user, self.expenseType, self.amount, self.date, self.description)
 
-# DAN: does this make things too long?
-class ExpenseOrder:
-	EXP_NAME = 0
-	EXP_TYPE = 1
-	EXP_AMOUNT = 2
-	EXP_DATE = 3
-	EXP_DESC = 4
-
+#********************************************************************	
+class Version(Entity):
+	version_major = Field(Integer)
+	version_minor = Field(Integer)
+	
+	def __repr__(self):
+		return "<Version (%s, %s)>" % (self.version_major, self.version_minor)
 #********************************************************************
 #							MAIN
 #********************************************************************
