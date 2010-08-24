@@ -285,22 +285,20 @@ class CustomDataTable(gridlib.PyGridTableBase):
     #***************************
     
     def DeleteRow(self, row):
-        print "DELETE"
-        print "data has ", self.GetNumberRows(), "rows"
-        print "starting to delete row ", row
         # remove from the database
         id = self.localData[row][5]
-        print "with id ", id
         self.database.DeleteExpense(id)
-        # remove from the local data        
+        # inform the grid
         self.GetView().ProcessTableMessage(gridlib.GridTableMessage(self,
                                            gridlib.GRIDTABLE_NOTIFY_ROWS_DELETED, 
                                            row, 1))
+        # remove from the local data   
         self.localData.pop(row)
     
     def AddRow(self):
         # reload all expenses
         self.localData = self.database.GetAllExpenses()
+        #inform the grid
         self.GetView().ProcessTableMessage(gridlib.GridTableMessage(self,
                                            gridlib.GRIDTABLE_NOTIFY_ROWS_APPENDED,
                                            1))
