@@ -269,6 +269,7 @@ class Database():
 # Create SQLAlchemy tables in the form of python classes.
 #********************************************************************
 class User(Entity):
+	using_options(tablename='User')
 	name 		= Field(String, unique=True)
 	expenses 	= OneToMany('Expense')
 	
@@ -277,6 +278,7 @@ class User(Entity):
 
 #********************************************************************
 class ExpenseType(Entity):
+	using_options(tablename='ExpenseType')
 	description = Field(String, unique=True)
 	expenses 	= OneToMany('Expense')
 
@@ -285,6 +287,7 @@ class ExpenseType(Entity):
 
 #********************************************************************	
 class Expense(Entity):
+	using_options(tablename='Expense')
 	user 		= ManyToOne('User')
 	expenseType = ManyToOne('ExpenseType')
 	amount 		= Field(Float)
@@ -296,6 +299,7 @@ class Expense(Entity):
 
 #********************************************************************	
 class Version(Entity):
+	using_options(tablename='Version')
 	version_major = Field(Integer)
 	version_minor = Field(Integer)
 	
