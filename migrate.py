@@ -31,6 +31,7 @@
 #********************************************************************
 
 from database import *
+import os
 
 def versionCheck():
     """checks compatibility between the FINally version and the database version"""
@@ -40,4 +41,27 @@ def versionCheck():
     # check compatibility
     if(dbVer != storedDbVersion):
         # perform migration
-        print "mismatch - please upgrade from version ", storedDbVersion, "to version ", dbVer, "!"      
+        print "mismatch - please upgrade from version", storedDbVersion, "to version", dbVer, "!"   
+        exit(1)
+        
+def migrate(storedVer, desiredVer):
+    """migrates the SQLite database from the stored version to the new version."""
+    # create a backup of the database with a new name
+    print "creating backup of database..."
+    string = "cp %s %s.backup" % (Database().name, Database().name)
+    os.popen(string)
+    
+    if(desiredVer == (1,1)):
+        # we're moving to version 1.1
+        if(storedVer == (1,0)):
+            # we're coming from version 1.0
+            #dump all entries
+            print "dumping all tables"
+            ExpenseTypeList = ExpenseType.query.all()
+            ExpenseList = Expense.query.all()
+            UserListNames = session.query(User.name)
+            print "User table names:", UserListNames
+            UserListExpenses = session.query(User.expenses)
+            print "User table expenses:", UserListExpenses
+            exit(1)
+            
