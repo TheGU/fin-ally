@@ -40,7 +40,7 @@ from sqlalchemy import UniqueConstraint
 
 # database version
 # NOTE: modifying this requires a change to migrate.py to support the migration
-dbVer = (1,1)
+dbVer = (1,0)
 
 #********************************************************************
 #							FUNCTIONS
@@ -270,45 +270,7 @@ class Database():
 #********************************************************************
 # Create SQLAlchemy tables in the form of python classes.
 #********************************************************************
-class User(Entity):
-	using_options(tablename='User')
-	name 		= Field(String, unique=True)
-	expenses 	= OneToMany('Expense')
-	defaultUser = Field(Integer)
-	
-	def __repr__(self):
-		return "<User ('%s')>" % (self.name)
 
-#********************************************************************
-class ExpenseType(Entity):
-	using_options(tablename='ExpenseType')
-	description = Field(String, unique=True)
-	expenses 	= OneToMany('Expense')
-
-	def __repr__(self):
-		return "<ExpenseType ('%s')>" % (self.description)
-
-#********************************************************************	
-class Expense(Entity):
-	using_options(tablename='Expense')
-	user 		= ManyToOne('User')
-	expenseType = ManyToOne('ExpenseType')
-	amount 		= Field(Float)
-	date 		= Field(DateTime)
-	description = Field(String)
-
-	def __repr__(self):
-		return "<Expense ('%s', '%s', '%s', '%s', '%s')>" % (self.user, self.expenseType, self.amount, self.date, self.description)
-
-#********************************************************************	
-class Version(Entity):
-	using_options(tablename='Version')
-	version_major = Field(Integer)
-	version_minor = Field(Integer)
-	using_table_options(UniqueConstraint('version_major', 'version_minor'))
-	
-	def __repr__(self):
-		return "<Version (%s, %s)>" % (self.version_major, self.version_minor)
 #********************************************************************
 #							MAIN
 #********************************************************************

@@ -34,10 +34,29 @@ from database import *
 import os
 import sqlite3
 
+# TODO can this be moved into the migration function?
+dict = {}
+
+def dumpFrom1_0():
+    from schema_1_0 import SchemaObject
+    global dict
+    object = SchemaObject(Database().name)
+    dict = object.dump()
+
+def loadTo1_1():
+    from demoSchema_1_1 import SchemaObject
+    global dict
+    object = SchemaObject(Database().name)
+    object.load(dict)
+
 def versionCheck():
     """checks compatibility between the FINally version and the database version"""
     # read database version into a tuple
     storedDbVersion = (Version.query.all()[0].version_major, Version.query.all()[0].version_minor)
+    
+    print "entering version check"
+    print "storedDbVersion = ", storedDbVersion
+    print "desiredDbVersion = ", dbVer
     
     # check compatibility
     if(dbVer != storedDbVersion):
@@ -47,6 +66,8 @@ def versionCheck():
         
 def migrate(storedVer, desiredVer):
     """migrates the SQLite database from the stored version to the new version."""
+    dict = {}
+    
     # create a backup of the database with a new name
     print "creating backup of database..."
     string = "cp %s %s.backup" % (Database().name, Database().name)
@@ -55,27 +76,9 @@ def migrate(storedVer, desiredVer):
     if(desiredVer == (1,1)):
         # we're moving to version 1.1
         if(storedVer == (1,0)):
-            Migrate1_0to1_1(desiredVer)
-            
-def Migrate1_0to1_1(desiredVer):
-    """Updates the database to match the schema in this version of code. """
-    # Addition of defaultUser column in the database
-    con = sqlite3.connect(Database.fullName)
-    try:
-        c = con.execute("ALTER TABLE User ADD COLUMN defaultUser INTEGER")
-    except sqlite3.OperationalError:
-        print "table likely already exists"
-    
-    UpdateVersion(desiredVer)
-    session.commit() 
-    
-def UpdateVersion(desiredVer):
-    """Updates the version in the database to the version of the schema"""
-    # update the version number
-    localVersion = Version.query.one()
-    localVersion.version_major = desiredVer[0]
-    localVersion.version_minor = desiredVer[1]
-    print "updating version to: ",localVersion
+            print "updating from 1.0 to 1.1"
+            dumpFrom1_0()
+            loadTo1_1()
             
 # Test main functionality
 if __name__ == '__main__':   
