@@ -36,9 +36,10 @@ from elixir import *
 from utils import *
 #from datetime import datetime
 from datetime import date
+from sqlalchemy import UniqueConstraint
 
 # database version
-dbVer = (1,0)
+dbVer = (1,1)
 
 #********************************************************************
 #							FUNCTIONS
@@ -272,6 +273,7 @@ class User(Entity):
 	using_options(tablename='User')
 	name 		= Field(String, unique=True)
 	expenses 	= OneToMany('Expense')
+	defaultUser = Field(Integer)
 	
 	def __repr__(self):
 		return "<User ('%s')>" % (self.name)
@@ -302,6 +304,7 @@ class Version(Entity):
 	using_options(tablename='Version')
 	version_major = Field(Integer)
 	version_minor = Field(Integer)
+	using_table_options(UniqueConstraint('version_major', 'version_minor'))
 	
 	def __repr__(self):
 		return "<Version (%s, %s)>" % (self.version_major, self.version_minor)
