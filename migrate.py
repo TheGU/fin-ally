@@ -55,20 +55,27 @@ def migrate(storedVer, desiredVer):
     if(desiredVer == (1,1)):
         # we're moving to version 1.1
         if(storedVer == (1,0)):
-            # Addition of defaultUser column in the database
-            con = sqlite3.connect(Database.fullName)
-            try:
-                c = con.execute("ALTER TABLE User ADD COLUMN defaultUser INTEGER")
-            except sqlite3.OperationalError:
-                print "table likely already exists"
-                
-            # update the version number
-            localVersion = Version.query.one()
-            print localVersion
-            localVersion.version_major = desiredVer[0]
-            localVersion.version_minor = desiredVer[1]
-            print "updating version to: ",localVersion
-            session.commit()
+            Migrate1_0to1_1(desiredVer)
+            
+def Migrate1_0to1_1(desiredVer):
+    """Updates the database to match the schema in this version of code. """
+    # Addition of defaultUser column in the database
+    con = sqlite3.connect(Database.fullName)
+    try:
+        c = con.execute("ALTER TABLE User ADD COLUMN defaultUser INTEGER")
+    except sqlite3.OperationalError:
+        print "table likely already exists"
+    
+    UpdateVersion(desiredVer)
+    session.commit() 
+    
+def UpdateVersion(desiredVer):
+    """Updates the version in the database to the version of the schema"""
+    # update the version number
+    localVersion = Version.query.one()
+    localVersion.version_major = desiredVer[0]
+    localVersion.version_minor = desiredVer[1]
+    print "updating version to: ",localVersion
             
 # Test main functionality
 if __name__ == '__main__':   

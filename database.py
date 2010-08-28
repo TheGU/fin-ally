@@ -39,6 +39,7 @@ from datetime import date
 from sqlalchemy import UniqueConstraint
 
 # database version
+# NOTE: modifying this requires a change to migrate.py to support the migration
 dbVer = (1,1)
 
 #********************************************************************
