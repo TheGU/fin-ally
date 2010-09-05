@@ -36,6 +36,7 @@ Implements required methods (dumpContent, loadContent).
 """
 
 version = "1.0"
+dbVer = (1,0)
 
 #************************************
 # database schema
