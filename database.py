@@ -31,16 +31,16 @@
 #********************************************************************
 
 import sqlite3
-import sys, re, os
+import sys
+import re
+import os
 from elixir import *
 from utils import *
-#from datetime import datetime
 from datetime import date
 from sqlalchemy import UniqueConstraint
 
-# database version
-# NOTE: modifying this requires a change to migrate.py to support the migration
-dbVer = (1,0)
+# this import pulls in schema classes
+from schema_1_0 import *
 
 #********************************************************************
 #							FUNCTIONS
@@ -266,6 +266,10 @@ class Database():
 			minorList=[]
 			
 		return majorList
+	
+	def GetVersion(self):
+		localVersion = (Version.query.all()[0].version_major, Version.query.all()[0].version_minor)
+		return localVersion
 	
 #********************************************************************
 # Create SQLAlchemy tables in the form of python classes.

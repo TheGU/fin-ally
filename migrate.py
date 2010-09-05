@@ -30,9 +30,7 @@
 # along with Fin-ally.  If not, see <http://www.gnu.org/licenses/>.
 #********************************************************************
 
-from database import *
-import os
-import sqlite3
+from database import dbVer, Database
 
 # TODO can this be moved into the migration function?
 dict = {}
@@ -44,19 +42,20 @@ def dumpFrom1_0():
     dict = object.dump()
 
 def loadTo1_1():
-    from demoSchema_1_1 import SchemaObject
+    from schema_1_1 import SchemaObject
     global dict
     object = SchemaObject(Database().name)
     object.load(dict)
 
 def versionCheck():
-    """checks compatibility between the FINally version and the database version"""
+    """
+    checks compatibility between the FINally version and the database version
+    """
     # read database version into a tuple
-    storedDbVersion = (Version.query.all()[0].version_major, Version.query.all()[0].version_minor)
+    storedDbVersion = Database().GetVersion()
     
-    print "entering version check"
-    print "storedDbVersion = ", storedDbVersion
-    print "desiredDbVersion = ", dbVer
+    print "stored version is: ", storedDbVersion
+    print "local version is: ", dbVer
     
     # check compatibility
     if(dbVer != storedDbVersion):
@@ -68,11 +67,7 @@ def migrate(storedVer, desiredVer):
     """migrates the SQLite database from the stored version to the new version."""
     dict = {}
     
-    # create a backup of the database with a new name
-    print "creating backup of database..."
-    string = "cp %s %s.backup" % (Database().name, Database().name)
-    os.popen(string)
-    
+    #TODO: this needs to be replaced by more svelte functionality
     if(desiredVer == (1,1)):
         # we're moving to version 1.1
         if(storedVer == (1,0)):
