@@ -352,9 +352,6 @@ class AppMainFrame(wx.Frame):
 		# add an icon!
 		self.icon = wx.Icon("img/FINally.ico", wx.BITMAP_TYPE_ICO)
 		self.SetIcon(self.icon)
-		
-		# before any data can be used, we must verify version number compatibilities
-		versionCheck()
 
 		self.panel    = wx.Panel(self) # basically just a container for the notebook
 		self.notebook = wx.Notebook(self.panel, size=AppMainFrame.size)
@@ -415,7 +412,11 @@ if __name__ == '__main__':
 	
 	# create an instance of the Database class and then perform the initial database ID
 	db = Database();
+	# TODO: we should initialize database only after it's been version checked
 	db.IdentifyDatabase();
+	# before any data can be used, we must verify version number compatibilities
+	versionCheck(db.GetVersion(contained = True), dbVer, db.name)
+	#db.Connect()
 	
 	# create highest level wx object (wxApp) instance
 	launcher = AppLauncher(redirect=False) 

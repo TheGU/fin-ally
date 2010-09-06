@@ -57,6 +57,7 @@ def CreateBlankDatabase():
 	makeup   = ExpenseType(description='makeup!')
 	e1 = Expense(user=rhs, expenseType=makeup, amount='15.01', date=date.today(), description='makeup for mah FACE!')
 	e2 = Expense(user=dls, expenseType=clothing, amount='50.25', date = date.today(), description='clothing for mah parts.')
+	#p = Preference()
 	
 	# create version entry
 	version = Version(version_major=dbVer[0], version_minor=dbVer[1])
@@ -117,7 +118,7 @@ class Database():
 					# TODO: replace with SQLObject construct here
 					# self.tempExpense = genericExpense()
 					# self.tempExpense.setDatabaseName(Database.name)
-					DbConnect(0)
+					#DbConnect(0)
 					break #ensures we load the first valid database
 				
 		else: # if no database files present, prompt user to create a new database file...
@@ -267,9 +268,22 @@ class Database():
 			
 		return majorList
 	
-	def GetVersion(self):
-		localVersion = (Version.query.all()[0].version_major, Version.query.all()[0].version_minor)
+	def GetVersion(self, contained=False):
+		if(contained == True):
+			# create a new connection, query for version, close connection
+			connString = 'sqlite:///' + self.fullName
+			metadata.bind = connString
+			setup_all()
+			
+			localVersion = (Version.query.all()[0].version_major, Version.query.all()[0].version_minor) 
+			
+			cleanup_all()
+		else:
+			localVersion = (Version.query.all()[0].version_major, Version.query.all()[0].version_minor)
 		return localVersion
+	
+	def Connect(self):
+		DbConnect(0)
 	
 #********************************************************************
 # Create SQLAlchemy tables in the form of python classes.

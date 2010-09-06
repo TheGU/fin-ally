@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
 #********************************************************************
-# Filename:            schema_1_0.py
+# Filename:            schema_1_1.py
 # Authors:             Daniel Sisco
 # Date Created:        9-4-2010
 # 
-# Abstract: Version 1.0 of the FINally database schema
+# Abstract: Version 1.1 of the FINally database schema
 #
 # Version History:  See repository
 #
@@ -31,12 +31,12 @@ from sqlalchemy import UniqueConstraint
 from elixirmigrate.migrate import MigrateObject
 
 """
-Defines version 1.0 of the schema, as well as instantiates an instance of the MigrateObject class.
+Defines version 1.1 of the schema, as well as instantiates an instance of the MigrateObject class.
 Implements required methods (dumpContent, loadContent).
 """
 
-version = "1.0"
-dbVer = (1,0)
+version = "1.1"
+dbVer = (1,1)
 
 #************************************
 # database schema
@@ -45,6 +45,7 @@ class User(Entity):
     using_options(tablename='User')
     name         = Field(String, unique=True)
     expenses     = OneToMany('Expense')
+    default      = OneToMany('Preference')
     
     def __repr__(self):
         return "<User ('%s')>" % (self.name)
@@ -54,6 +55,7 @@ class ExpenseType(Entity):
     using_options(tablename='ExpenseType')
     description = Field(String, unique=True)
     expenses     = OneToMany('Expense')
+    default      = OneToMany('Preference')
 
     def __repr__(self):
         return "<ExpenseType ('%s')>" % (self.description)
@@ -62,13 +64,23 @@ class ExpenseType(Entity):
 class Expense(Entity):
     using_options(tablename='Expense')
     user         = ManyToOne('User')
-    expenseType  = ManyToOne('ExpenseType')
-    amount       = Field(Float)
+    expenseType = ManyToOne('ExpenseType')
+    amount         = Field(Float)
     date         = Field(DateTime)
-    description  = Field(String)
+    description = Field(String)
 
     def __repr__(self):
         return "<Expense ('%s', '%s', '%s', '%s', '%s')>" % (self.user, self.expenseType, self.amount, self.date, self.description)
+
+#********************************************************************
+class Preference(Entity):
+    using_options(tablename='Preference')
+    defaultUser = ManyToOne('User')
+    defaultType = ManyToOne('ExpenseType')
+    defaultText = Field(String)
+    
+    def __repr__(self):
+        return "<Preference ('%s', '%s', '%s')>" % (self.defaultUser, self.defaultType, self.defaultText)
 
 #********************************************************************    
 class Version(Entity):
@@ -86,6 +98,7 @@ class SchemaObject(MigrateObject):
     version 1.0 schema object - defines custom dumpContent and loadContent methods
     """
     def __init__(self, dbPath):
+        print "creating SchemaObject with path: ", dbPath, "and version: ", version
         MigrateObject.__init__(self, dbPath, version)
         
     def dumpContent(self):
@@ -94,7 +107,21 @@ class SchemaObject(MigrateObject):
         self.localDict['ExpenseType'] = ExpenseType.query.all()
         self.localDict['Expense'] = Expense.query.all()
         self.localDict['Version'] = Version.query.all()
+        self.localDict['Preference'] = Preference.query.all()
         
     def loadContent(self):
         """no support for v1.0 load at this time"""
-        pass
+        for i in self.localDict['User']:
+            u = User()
+            u = i
+            u.default = "Rachel Sisco"
+        for i in self.localDict['ExpenseType']:
+            t = ExpenseType()
+            t = i
+            t.default = "makeup!"
+        for i in self.localDict['Expense']:
+            e = Expense()
+            e = i
+        for i in self.localDict['Version']:
+            v = Version()
+            v = i
