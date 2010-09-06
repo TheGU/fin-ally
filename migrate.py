@@ -30,32 +30,40 @@
 # along with Fin-ally.  If not, see <http://www.gnu.org/licenses/>.
 #********************************************************************
 
-from database import dbVer, Database
-
 # TODO can this be moved into the migration function?
 dict = {}
+dbName = ""
 
 def dumpFrom1_0():
-    from schema_1_0 import SchemaObject
+    from schema_1_0 import *
     global dict
-    object = SchemaObject(Database().name)
+    object = SchemaObject(dbName)
     dict = object.dump()
+    for i in dict['User']:
+        print i   
+    for i in dict['Version']:
+        print i
+    for i in dict['ExpenseType']:
+        print i   
+    for i in dict['Expense']:
+        print i
+
+#for key, string in dict.items():
+#        for i in string:
+#            print i
 
 def loadTo1_1():
     from schema_1_1 import SchemaObject
     global dict
-    object = SchemaObject(Database().name)
+    object = SchemaObject(dbName)
     object.load(dict)
 
-def versionCheck():
+def versionCheck(storedDbVersion, dbVer, localDbName):
     """
     checks compatibility between the FINally version and the database version
     """
-    # read database version into a tuple
-    storedDbVersion = Database().GetVersion()
-    
-    print "stored version is: ", storedDbVersion
-    print "local version is: ", dbVer
+    global dbName
+    dbName = localDbName
     
     # check compatibility
     if(dbVer != storedDbVersion):
@@ -74,29 +82,30 @@ def migrate(storedVer, desiredVer):
             print "updating from 1.0 to 1.1"
             dumpFrom1_0()
             loadTo1_1()
-            
-# Test main functionality
-if __name__ == '__main__':   
-    print "creating database\n"
-    dbPath = "test.db"
-    connString = 'sqlite:///' + dbPath
-    
-    con = sqlite3.connect(dbPath)
-    # print list of tables in database
-    c = con.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
-    for i in c:
-        print i
-        
-    # print list of users in database
-    c = con.execute("SELECT * from User")
-    for i in c:
-        print i
        
-    try:
-        c = con.execute("ALTER TABLE User ADD COLUMN defaultUser INTEGER")
-    except sqlite3.OperationalError:
-        print "table likely already exists"
-    
-    c = con.execute("SELECT * from USER")
-    for i in c:
-        print i
+     
+# Test main functionality
+#if __name__ == '__main__':   
+#    print "creating database\n"
+#    dbPath = "test.db"
+#    connString = 'sqlite:///' + dbPath
+#    
+#    con = sqlite3.connect(dbPath)
+#    # print list of tables in database
+#    c = con.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
+#    for i in c:
+#        print i
+#        
+#    # print list of users in database
+#    c = con.execute("SELECT * from User")
+#    for i in c:
+#        print i
+#       
+#    try:
+#        c = con.execute("ALTER TABLE User ADD COLUMN defaultUser INTEGER")
+#    except sqlite3.OperationalError:
+#        print "table likely already exists"
+#    
+#    c = con.execute("SELECT * from USER")
+#    for i in c:
+#        print i
