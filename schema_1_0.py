@@ -47,7 +47,7 @@ class User(Entity):
     expenses     = OneToMany('Expense')
     
     def __repr__(self):
-        return "<User ('%s')>" % (self.name)
+        return "<User ('%s', '%s', '%s')>" % (self.id, self.name, self.expenses)
 
 #********************************************************************
 class ExpenseType(Entity):
@@ -56,7 +56,7 @@ class ExpenseType(Entity):
     expenses     = OneToMany('Expense')
 
     def __repr__(self):
-        return "<ExpenseType ('%s')>" % (self.description)
+        return "<ExpenseType ('%s', '%s')>" % (self.id, self.description)
 
 #********************************************************************    
 class Expense(Entity):
@@ -68,7 +68,7 @@ class Expense(Entity):
     description  = Field(String)
 
     def __repr__(self):
-        return "<Expense ('%s', '%s', '%s', '%s', '%s')>" % (self.user, self.expenseType, self.amount, self.date, self.description)
+        return "<Expense ('%s', '%s', '%s', '%s', '%s', '%s')>" % (self.id, self.amount, self.date, self.description, self.user, self.expenseType)
 
 #********************************************************************    
 class Version(Entity):
@@ -90,11 +90,14 @@ class SchemaObject(MigrateObject):
         
     def dumpContent(self):
         """dumps User and Version tables as-is"""
+        f = open('dump.txt', 'w')
         self.localDict['User'] = User.query.all()
+        f.write('%s' % (self.localDict['User']))
         self.localDict['ExpenseType'] = ExpenseType.query.all()
+        f.write("%s" % (self.localDict['ExpenseType']))
         self.localDict['Expense'] = Expense.query.all()
-        self.localDict['Version'] = Version.query.all()
-        
+        f.write("%s" % (self.localDict['Expense']))
+        f.close()
     def loadContent(self):
         """no support for v1.0 load at this time"""
         pass

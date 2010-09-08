@@ -44,34 +44,33 @@ dbVer = (1,1)
 class User(Entity):
     using_options(tablename='User')
     name         = Field(String, unique=True)
-    expenses     = OneToMany('Expense')
+    #expenses     = OneToMany('Expense')
     default      = OneToMany('Preference')
     
     def __repr__(self):
-        return "<User ('%s')>" % (self.name)
+        return "<User ('%s', '%s')>" % (self.id, self.name)
 
 #********************************************************************
 class ExpenseType(Entity):
     using_options(tablename='ExpenseType')
     description = Field(String, unique=True)
-    expenses     = OneToMany('Expense')
+    #expenses     = OneToMany('Expense')
     default      = OneToMany('Preference')
 
     def __repr__(self):
-        return "<ExpenseType ('%s')>" % (self.description)
+        return "<ExpenseType ('%s', '%s')>" % (self.id, self.description)
 
 #********************************************************************    
 class Expense(Entity):
     using_options(tablename='Expense')
     user         = ManyToOne('User')
-    expenseType = ManyToOne('ExpenseType')
-    amount         = Field(Float)
+    expenseType  = ManyToOne('ExpenseType')
+    amount       = Field(Float)
     date         = Field(DateTime)
-    description = Field(String)
+    description  = Field(String)
 
-    def __repr__(self):
-        return "<Expense ('%s', '%s', '%s', '%s', '%s')>" % (self.user, self.expenseType, self.amount, self.date, self.description)
-
+    #def __repr__(self):
+    #    return "<Expense ('%s', %s', '%s', '%s', '%s', '%s')>" % (self.id, self.amount, self.date, self.description, self.user, self.expenseType)
 #********************************************************************
 class Preference(Entity):
     using_options(tablename='Preference')
@@ -98,7 +97,6 @@ class SchemaObject(MigrateObject):
     version 1.0 schema object - defines custom dumpContent and loadContent methods
     """
     def __init__(self, dbPath):
-        print "creating SchemaObject with path: ", dbPath, "and version: ", version
         MigrateObject.__init__(self, dbPath, version)
         
     def dumpContent(self):
@@ -106,22 +104,30 @@ class SchemaObject(MigrateObject):
         self.localDict['User'] = User.query.all()
         self.localDict['ExpenseType'] = ExpenseType.query.all()
         self.localDict['Expense'] = Expense.query.all()
-        self.localDict['Version'] = Version.query.all()
         self.localDict['Preference'] = Preference.query.all()
         
     def loadContent(self):
         """no support for v1.0 load at this time"""
+        f = open('load.txt', 'w')
+        f.write('%s' % self.localDict['User'])
         for i in self.localDict['User']:
             u = User()
-            u = i
-            u.default = "Rachel Sisco"
+            u.name = i.name
+        f.write('%s' % self.localDict['ExpenseType'])
         for i in self.localDict['ExpenseType']:
             t = ExpenseType()
-            t = i
-            t.default = "makeup!"
+            t.description = i.description
+        f.write('%s' % self.localDict['Expense'])
         for i in self.localDict['Expense']:
             e = Expense()
-            e = i
-        for i in self.localDict['Version']:
-            v = Version()
-            v = i
+            e.user = i.user
+            e.expenseType = i.expenseType            
+            e.amount = i.amount
+            e.date = i.date
+            e.description = i.description
+            
+        # update the version number
+        # TODO: move this into elixirmigrate core
+        v = Version()
+        v.version_minor = dbVer[0]
+        v.version_major = dbVer[1]
