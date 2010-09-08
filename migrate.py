@@ -30,82 +30,45 @@
 # along with Fin-ally.  If not, see <http://www.gnu.org/licenses/>.
 #********************************************************************
 
+import sys
+
 # TODO can this be moved into the migration function?
-dict = {}
-dbName = ""
+dict          = {}
+dbName        = ""
+storedVersion = (0,0)
+schemaVersion = (0,0)
 
 def dumpFrom1_0():
-    from schema_1_0 import *
+    from schema_1_0 import SchemaObject
     global dict
-    object = SchemaObject(dbName)
+    object = SchemaObject(name)
     dict = object.dump()
-    for i in dict['User']:
-        print i   
-    for i in dict['Version']:
-        print i
-    for i in dict['ExpenseType']:
-        print i   
-    for i in dict['Expense']:
-        print i
-
-#for key, string in dict.items():
-#        for i in string:
-#            print i
 
 def loadTo1_1():
     from schema_1_1 import SchemaObject
     global dict
-    object = SchemaObject(dbName)
+    object = SchemaObject(name)
     object.load(dict)
-
-def versionCheck(storedDbVersion, dbVer, localDbName):
-    """
-    checks compatibility between the FINally version and the database version
-    """
-    global dbName
-    dbName = localDbName
-    
-    # check compatibility
-    if(dbVer != storedDbVersion):
-        # perform migration
-        print "mismatch - please upgrade from version", storedDbVersion, "to version", dbVer, "!" 
-        migrate(storedDbVersion, dbVer)  
-        
-def migrate(storedVer, desiredVer):
-    """migrates the SQLite database from the stored version to the new version."""
-    dict = {}
-    
-    #TODO: this needs to be replaced by more svelte functionality
-    if(desiredVer == (1,1)):
-        # we're moving to version 1.1
-        if(storedVer == (1,0)):
-            print "updating from 1.0 to 1.1"
-            dumpFrom1_0()
-            loadTo1_1()
-       
      
 # Test main functionality
-#if __name__ == '__main__':   
-#    print "creating database\n"
-#    dbPath = "test.db"
-#    connString = 'sqlite:///' + dbPath
-#    
-#    con = sqlite3.connect(dbPath)
-#    # print list of tables in database
-#    c = con.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
-#    for i in c:
-#        print i
-#        
-#    # print list of users in database
-#    c = con.execute("SELECT * from User")
-#    for i in c:
-#        print i
-#       
-#    try:
-#        c = con.execute("ALTER TABLE User ADD COLUMN defaultUser INTEGER")
-#    except sqlite3.OperationalError:
-#        print "table likely already exists"
-#    
-#    c = con.execute("SELECT * from USER")
-#    for i in c:
-#        print i
+if __name__ == '__main__':
+
+    for arg in sys.argv:
+        print arg
+
+    name = sys.argv[3]
+    tempStoredVersion = sys.argv[1]
+    tempSchemaVersion = sys.argv[2]
+    storedVersion = (int(tempStoredVersion[0]), int(tempStoredVersion[1]))
+    schemaVersion = (int(tempSchemaVersion[0]), int(tempSchemaVersion[1]))
+   
+    if(schemaVersion != storedVersion):
+        # perform migration
+        print "mismatch - please upgrade from version", storedVersion, "to version", schemaVersion, "!" 
+        
+        if(schemaVersion == (1,1)):
+            # we're moving to version 1.1
+            if(storedVersion == (1,0)):
+                print "updating from 1.0 to 1.1"
+                dumpFrom1_0()
+                loadTo1_1()

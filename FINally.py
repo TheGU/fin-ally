@@ -34,7 +34,7 @@ from database import *
 from wx._core import WXK_F1, WXK_F2
 from editPage import EditPage
 from grid import GraphicsGrid
-from migrate import versionCheck
+import cfg
 
 #********************************************************************
 # FINally class definitions
@@ -411,13 +411,12 @@ if __name__ == '__main__':
 	the GUI Main."""
 	
 	# create an instance of the Database class and then perform the initial database ID
-	db = Database();
+	db = Database()
 	# TODO: we should initialize database only after it's been version checked
-	db.IdentifyDatabase();
-	# before any data can be used, we must verify version number compatibilities
+	db.IdentifyDatabase()
 	versionCheck(db.GetVersion(contained = True), dbVer, db.name)
 	#db.Connect()
 	
 	# create highest level wx object (wxApp) instance
-	launcher = AppLauncher(redirect=False) 
-	launcher.Main()
+	#launcher = AppLauncher(redirect=False) 
+	#launcher.Main()

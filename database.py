@@ -40,7 +40,7 @@ from datetime import date
 from sqlalchemy import UniqueConstraint
 
 # this import pulls in schema classes
-from schema_1_0 import *
+from schema_1_1 import *
 
 #********************************************************************
 #							FUNCTIONS
@@ -57,7 +57,7 @@ def CreateBlankDatabase():
 	makeup   = ExpenseType(description='makeup!')
 	e1 = Expense(user=rhs, expenseType=makeup, amount='15.01', date=date.today(), description='makeup for mah FACE!')
 	e2 = Expense(user=dls, expenseType=clothing, amount='50.25', date = date.today(), description='clothing for mah parts.')
-	#p = Preference()
+	p = Preference()
 	
 	# create version entry
 	version = Version(version_major=dbVer[0], version_minor=dbVer[1])
@@ -278,12 +278,22 @@ class Database():
 			localVersion = (Version.query.all()[0].version_major, Version.query.all()[0].version_minor) 
 			
 			cleanup_all()
+			session.close()
 		else:
 			localVersion = (Version.query.all()[0].version_major, Version.query.all()[0].version_minor)
 		return localVersion
 	
 	def Connect(self):
 		DbConnect(0)
+		
+def versionCheck(storedVersion, schemaVersion, name):
+	# before any data can be used, we must verify version number compatibilities
+	tempStoredVersion = "%s%s" % (storedVersion[0], storedVersion[1])
+	tempSchemaVer = "%s%s" % (schemaVersion[0], schemaVersion[1])
+	
+	string = "python migrate.py %s %s %s" % (tempStoredVersion, tempSchemaVer, name)
+	print "executing command: \n>", string
+	os.system(string)
 	
 #********************************************************************
 # Create SQLAlchemy tables in the form of python classes.
