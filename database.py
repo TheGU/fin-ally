@@ -174,8 +174,8 @@ class Database():
 	def DeleteExpense(self, deleteId):
 		"""Removes an expense with the appropriate ID from the database"""
 		session = SessionObject()
-		expense = session.query(Expense).filter(Expense.id==deleteId)
-		session.delete(expense)
+		e = session.query(Expense).filter(Expense.id==deleteId).one()
+		session.delete(e)
 		session.commit()
 		session.close()
 	
