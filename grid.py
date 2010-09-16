@@ -259,25 +259,28 @@ class CustomDataTable(gridlib.PyGridTableBase):
         
     def SetValue(self, row, col, value):
         # determine the record being modified using the primary key (located in col 5)
-        localExpenseObj = Expense.query.filter_by(id=self.localData[row][5]).one()
+        e = self.database.GetExpense(self.localData[row][5])
         
         # determine which value is being set
         if(0 == col):
-            localUserObj         = User.query.filter_by(name=value).one()
-            localExpenseObj.user = localUserObj
+            e.user_id = self.database.GetUserId(value)
         if(1 == col):
-            localTypeObj         = ExpenseType.query.filter_by(description=value).one()
-            localExpenseObj.expenseType = localTypeObj
+            e.expenseType_id = self.database.GetExpenseTypeId(value)
         if(2 == col):
-            localExpenseObj.amount = float(value)
+            e.amount = float(value)
         if(3 == col):
             # strptime will pull a datetime object out of an explicitly formatting string
             localDate = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
-            localExpenseObj.date = localDate
+            e.date = localDate
         if(4 == col):
-            localExpenseObj.description = value
-            
-        self.database.CreateExpense(localExpenseObj)
+            e.description = value
+        
+        self.database.EditExpense(e.amount, 
+                                  e.description, 
+                                  e.date,
+                                  e.user_id, 
+                                  e.expenseType_id, 
+                                  self.localData[row][5])
         self.localData = self.database.GetAllExpenses()
             
     #***************************
