@@ -145,6 +145,29 @@ class Database():
 		e.expenseType = session.query(ExpenseType).filter(ExpenseType.description==typeDesc).one()
 
 		session.add(e)
+		session.commit()		
+		session.close()
+		
+	def EditExpense(self, amount, desc, date, userId, typeId, inputId):
+		"""Edits an existing object - expects to get arguments corresponding
+		to Expense object members:
+			amount
+			description
+			date
+			user_id
+			expenseType_id
+			id
+		"""
+		#TODO: can we just pass an ExpenseObject?
+		session = SessionObject()
+		
+		e = session.query(Expense).filter(Expense.id==inputId).one()
+		e.amount = amount
+		e.description = desc
+		e.date = date
+		e.user_id = userId
+		e.expenseType_id = typeId
+		
 		session.commit()
 		session.close()
 		
@@ -165,6 +188,22 @@ class Database():
 			list.append(str(i.name))
 		session.close()
 		return list
+	
+	def GetUser(self, userName):
+		"""returns the User object matching the input name"""
+		#TODO: add fault handling here
+		session = SessionObject()
+		u = session.query(User).filter(User.name==userName).one()
+		session.close()
+		return u
+	
+	def GetUserId(self, userName):
+		"""reurns the User object id matching the input name"""
+		#TODO: add fault handling here
+		session = SessionObject()
+		uId = session.query(User).filter(User.name==userName).one().id
+		session.close()
+		return uId
 	
 	def GetAllUsers(self):
 		"""returns all user data in the database in a 2D list in the following format:
@@ -207,6 +246,22 @@ class Database():
 		session.close()
 		return list
 	
+	def GetExpenseType(self, typeName):
+		"""returns an ExpenseType object matching the typeName argument"""
+		#TODO add fault handling here
+		session = SessionObject()
+		t = session.query(ExpenseType).filter(ExpenseType.description == typeName).one()
+		session.close()
+		return t
+	
+	def GetExpenseTypeId(self, typeName):
+		"""returns an ExpenseType id matching the typeName argument"""
+		#TODO add fault handling here
+		session = SessionObject()
+		tId = session.query(ExpenseType).filter(ExpenseType.description==typeName).one().id
+		session.close()
+		return tId
+	
 	def GetAllTypes(self):
 		"""returns all user data in the database in a 2D list in the following format:
 		
@@ -234,6 +289,14 @@ class Database():
 			
 		session.close()
 		return majorList
+	
+	def GetExpense(self, reqId):
+		"""returns the Expense object matching the reqId input"""
+		#TODO: add fault handling here
+		session = SessionObject()
+		e = session.query(Expense).filter(Expense.id==reqId).one()
+		session.close()
+		return e
 	
 	def GetAllExpenses(self):
 		"""returns all data in the database in a 2D list in the following format:
