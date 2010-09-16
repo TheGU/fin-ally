@@ -164,14 +164,8 @@ class NewTypeDialog(wx.Dialog):
         """respond to the user clicking 'enter!' by pushing the local objects into the database 
         layer"""
         
-        # it's critical to create new database objects here
-        localTypeObject    = ExpenseType()
-        
-        # if not evt.GetString() in self.userList:  
-        localTypeObject.description = self.typeEntry.GetValue()
-        
         # create new User in database
-        self.database.CreateType(localTypeObject)
+        self.database.CreateExpenseType(self.typeEntry.GetValue())
         self.parent.typeGrid.RefreshData()
         
         self.Close()
@@ -213,6 +207,13 @@ class NewUserDialog(wx.Dialog):
                                         size = (173,21))
         self.Bind(wx.EVT_TEXT, self.OnNameEntry, self.nameEntry)
         
+        self.shortNameEntry    = wx.TextCtrl(self.buttonPanel, 
+                                        -1, 
+                                        "Short Name", 
+                                        pos = (100,75), 
+                                        size = (173,21))
+        self.Bind(wx.EVT_TEXT, self.OnShortNameEntry, self.shortNameEntry)
+        
         self.sizer.Add(self.buttonPanel, 0, wx.ALIGN_LEFT)    # add panel (no resize vert and aligned left horz)
         self.SetSizer(self.sizer)
         
@@ -220,14 +221,8 @@ class NewUserDialog(wx.Dialog):
         """respond to the user clicking 'enter!' by pushing the local objects into the database 
         layer"""
         
-        # it's critical to create new database objects here
-        localUserObject    = User()
-        
-        # if not evt.GetString() in self.userList:  
-        localUserObject.name = self.nameEntry.GetValue()
-        
         # create new User in database
-        self.database.CreateUser(localUserObject)
+        self.database.CreateUser(self.nameEntry.GetValue(), self.shortNameEntry.GetValue())
         self.parent.userGrid.RefreshData()
         
         self.Close()
@@ -237,6 +232,9 @@ class NewUserDialog(wx.Dialog):
     #***************************
     
     def OnNameEntry(self, evt):
+        pass
+    
+    def OnShortNameEntry(self, evt):
         pass
 
 #********************************************************************

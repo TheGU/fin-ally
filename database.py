@@ -121,18 +121,6 @@ class Database():
 		
 		session.close()
 	
-	def CreateUser(self, user):
-		"""Creates a new user"""
-		session = SessionObject()
-		session.commit()
-		session.close()
-		
-	def CreateType(self, type):
-		"""Creates a new type"""
-		session = SessionObject()
-		session.commit()
-		session.close()
-	
 	def CreateExpense(self, amount, desc, date, userName, typeDesc):
 		"""Creates a new expense"""
 		session = SessionObject()
@@ -236,6 +224,18 @@ class Database():
 			
 		return majorList		
 	
+	def CreateUser(self, name, shortName):
+		"""Creates a new expense"""
+		session = SessionObject()
+
+		u = User()
+		u.name = name
+		u.shortName = shortName
+
+		session.add(u)
+		session.commit()		
+		session.close()
+	
 	def GetTypeList(self):
 		"""Returns a list of expense types - nothing else."""
 		list = []
@@ -289,6 +289,17 @@ class Database():
 			
 		session.close()
 		return majorList
+
+	def CreateExpenseType(self, description):
+		"""Creates a new expense"""
+		session = SessionObject()
+
+		t = ExpenseType()
+		t.description = description
+
+		session.add(t)
+		session.commit()		
+		session.close()
 	
 	def GetExpense(self, reqId):
 		"""returns the Expense object matching the reqId input"""
