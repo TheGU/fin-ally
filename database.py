@@ -30,7 +30,7 @@
 # along with Fin-ally.  If not, see <http://www.gnu.org/licenses/>.
 #********************************************************************
 
-import sqlite3
+#import sqlite3
 import sys, re, os
 from utils import *
 from datetime import date
@@ -133,12 +133,21 @@ class Database():
 		session.commit()
 		session.close()
 	
-	def CreateExpense(self, expense):
+	def CreateExpense(self, amount, desc, date, userName, typeDesc):
 		"""Creates a new expense"""
 		session = SessionObject()
+
+		e = Expense()
+		e.amount = amount
+		e.description = desc
+		e.date = date
+		e.user = session.query(User).filter(User.name==userName).one()
+		e.expenseType = session.query(ExpenseType).filter(ExpenseType.description==typeDesc).one()
+
+		session.add(e)
 		session.commit()
 		session.close()
-	
+		
 	def DeleteExpense(self, deleteId):
 		"""Removes an expense with the appropriate ID from the database"""
 		session = SessionObject()
@@ -245,7 +254,7 @@ class Database():
 		
 		# iterate through expenses - packing into listxlist
 		for i in expenseList:
-			#print "DAN: ", i
+			# print "DAN: ", i
 			# dereference these all the way down to the string
 			minorList.append(i.user.name) 
 			minorList.append(i.expenseType.description)

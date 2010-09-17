@@ -132,21 +132,19 @@ class NewExpenseDialog(wx.Dialog):
 		# TODO: this needs to be smarter: (A) what if the string doesn't match an existing
 		# object? (B) What if the user wants to enter a new object?
 		#
-		localUserObject = User.query.filter_by(name=self.userSelect.GetValue()).one()
-		localTypeObject = ExpenseType.query.filter_by(description=self.typeSelect.GetValue()).one()
+
 		# configure amount, description, and date
 		amount = self.valueEntry.GetValue()
 		# place something here to avoid math errors
 		if(amount == ""):
 			amount = 0.00
-		localExpenseObject.amount=float(amount)
-		localExpenseObject.description=self.descEntry.GetValue()
-		localExpenseObject.date=self.cal.PyGetDate()
 		
 		# consolidate objects into one expense type and push into database
-		localExpenseObject.user 	   = localUserObject
-		localExpenseObject.expenseType = localTypeObject
-		self.database.CreateExpense(localExpenseObject)
+		self.database.CreateExpense(float(amount),
+                                    self.descEntry.GetValue(),
+                                    self.cal.PyGetDate(),
+                                    self.userSelect.GetValue(),
+                                    self.typeSelect.GetValue())
 		
 		# update grid with new row, format new row
 		self.parent.grid.tableBase.AddRow()
