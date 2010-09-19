@@ -417,6 +417,7 @@ if __name__ == '__main__':
 	
 	# create an instance of the Database class and then perform the initial database ID
 	db = Database();
+	db.Create() #TODO: move this into a database __init__ function?
 	
 	# create highest level wx object (wxApp) instance
 	launcher = AppLauncher(redirect=False) 
