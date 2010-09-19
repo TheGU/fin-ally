@@ -373,9 +373,8 @@ class AppLauncher(wx.App):
 	Frame (top level window)."""
 	
 	# static variables go here
-	version = "0.0.1"
-	title   = "FINally v" + version
-	
+	title   = "FINally v%s.%s" % (cfg.VERSION[0], cfg.VERSION[1])
+
 	def OnInit(self):
 		"""Should be used instead of __init__ for Application objects"""
 		

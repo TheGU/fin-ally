@@ -38,3 +38,6 @@ NEW_EXPENSE_PANEL = 0
 #    1 = grid-based context menu active
 #    0 = menu inactive
 GRID_CONTEXT_MENU = 0
+
+# FINally version - used for database migration and version checking
+VERSION = (0,2)
