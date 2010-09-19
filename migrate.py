@@ -58,7 +58,6 @@ class Version(Base):
 def dumpFrom1_0():
     from schema_1_0 import SchemaObject
     global dict, dbName
-    print "dumping ", dbName
     object = SchemaObject(dbName)
     dict = object.dump()
 
@@ -66,7 +65,6 @@ def dumpFrom1_0():
 def loadTo2_0():
     from schema_2_0 import SchemaObject
     global dict, dbName
-    print "loading: ", dbName
     object = SchemaObject(dbName)
     object.load(dict)
     
@@ -122,17 +120,15 @@ if __name__ == '__main__':
         #print "storedVersion: %s.%s" % (storedVersion[0], storedVersion[1])
        
         if(schemaVersion != storedVersion):
-            # perform migration
-            print "mismatch - please upgrade from version", storedVersion, "to version", schemaVersion, "!" 
-            
             #tuple-ize
             schemaVersionT = (schemaVersion[0], schemaVersion[1])
             storedVersionT = (storedVersion[0], storedVersion[1])
             
+            # TODO: replace this with a 'chain' mechanism as per sqlmigratelite
             if(schemaVersionT == (2,0)):
                 # we're moving to version 1.1
                 if(storedVersionT == (1,0)):
-                    print "updating from 1.0 to 2.0"
+                    print "updating from %s to %s" % (storedVersionT, schemaVersionT)
                     dumpFrom1_0()
                     loadTo2_0()
         else:
