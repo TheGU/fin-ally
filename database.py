@@ -33,7 +33,7 @@
 import sys, re, os
 from utils import GenFileList, dPrint
 from datetime import date
-from schema_1_0 import *
+from schema_2_0 import *
 
 def IdentifyDatabase():
 	"""This method will locate a database (.db) file and then load specific pieces of information
