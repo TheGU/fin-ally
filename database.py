@@ -84,7 +84,7 @@ class Database():
 			
 	def Create(self):
 		"""connects to a specific database"""
-		print "creating all tables"
+		# create all tables
 		Base.metadata.create_all(engine)
 		
 		if 1 == self.newDb:
@@ -356,12 +356,8 @@ class Database():
 #					  DATABASE.PY CONTENT
 #********************************************************************
 connString = 'sqlite:///' + IdentifyDatabase()
-dPrint(connString)
-
 engine = create_engine(connString, echo=False)
 SessionObject = sessionmaker(bind=engine)
-
-Database().Create()
 
 #********************************************************************
 #							MAIN
