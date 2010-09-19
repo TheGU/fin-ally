@@ -408,6 +408,13 @@ if __name__ == '__main__':
 	pre-GUI-start must be placed here. The final action in this main fcn should be the launch of
 	the GUI Main."""
 	
+	# perform database migrations if necessary - passing the version the application 
+	# will be working with to the migration script (ie: schemaVersion)
+	schemaVersion = "%s_%s" % (dbVer[0], dbVer[1]) # reformatting needed for passing via CLI
+	string = "python migrate.py %s" % (schemaVersion)
+	print "executing command: \n>", string
+	os.system(string)
+	
 	# create an instance of the Database class and then perform the initial database ID
 	db = Database();
 	
