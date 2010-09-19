@@ -28,6 +28,7 @@
 # import wxPython libraries - including some simplifiers for grid and calendar
 import wx
 import wx.grid     as gridlib
+import cfg
 from datetime import date, datetime
 from database import *
 
