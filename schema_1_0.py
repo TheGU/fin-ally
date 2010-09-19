@@ -25,6 +25,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Fin-ally.  If not, see <http://www.gnu.org/licenses/>.
 #********************************************************************
+from sqlmigratelite.migrate import MigrateObject
 from sqlalchemy import create_engine
 from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
@@ -83,3 +84,21 @@ class Version(Base):
     
     def __repr__(self):
         return "<Version('%s', '%s')>" % (self.minor, self.major)
+    
+#************************************
+class SchemaObject(MigrateObject):
+    """
+    version 1.0 schema object - defines custom dumpContent and loadContent methods
+    """
+    def __init__(self, dbPath):
+        MigrateObject.__init__(self, dbPath, version)
+        
+    def dumpContent(self):
+        """dumps User and Version tables as-is"""
+        self.localDict['User'] = self.session.query(User).all()
+        self.localDict['ExpenseType'] = self.session.query(ExpenseType).all()
+        self.localDict['Expense'] = self.session.query(Expense).all()
+        
+    def loadContent(self):
+        """no support for v1.0 load at this time"""
+        pass
