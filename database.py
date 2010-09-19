@@ -30,16 +30,10 @@
 # along with Fin-ally.  If not, see <http://www.gnu.org/licenses/>.
 #********************************************************************
 
-#import sqlite3
 import sys, re, os
-from utils import *
+from utils import GenFileList, dPrint
 from datetime import date
-from sqlalchemy import create_engine
-from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship, backref
-
-Base = declarative_base()
+from schema_1_0 import *
 
 def IdentifyDatabase():
 	"""This method will locate a database (.db) file and then load specific pieces of information
@@ -357,56 +351,6 @@ class Database():
 		
 	def FlagNewDb(self):
 		self.newDb = True
-	
-#********************************************************************
-# Create SQLAlchemy tables in the form of python classes.
-#********************************************************************
-class User(Base):
-	__tablename__ = 'users'
-	id        = Column(Integer, primary_key=True)
-	name      = Column(String)
-	shortName = Column(String)
-	
-	def __repr__(self):
-		return "<User('%s', '%s')>" % (self.name, self.shortName)
-
-#********************************************************************
-class ExpenseType(Base):
-	__tablename__ = 'expenseTypes'
-	
-	id          = Column(Integer, primary_key=True)
-	description = Column(String)
-	
-	def __repr__(self):
-		return "<ExpenseType('%s')>" % (self.description)
-
-#********************************************************************	
-class Expense(Base):
-	__tablename__ = 'expenses'
-	id      = Column(Integer, primary_key=True)
-	amount  = Column(Integer)
-	date    = Column(String)
-	description = Column(String)
-	
-	# define user_id to support database level link and user for class level link
-	user_id = Column(Integer, ForeignKey('users.id'))
-	user    = relationship(User, backref=backref('expenses', order_by=id))
-	
-	expenseType_id = Column(Integer, ForeignKey('expenseTypes.id'))
-	expenseType    = relationship(ExpenseType, backref=backref('expenseTypes', order_by=id))
-	
-	def __repr__(self):
-		return "<Expense('%s', '%s', '%s')>" % (self.amount, self.date, self.description)
-
-#********************************************************************	
-class Version(Base):
-	__tablename__ = 'versions'
-	id = Column(Integer, primary_key=True)
-	minor = Column(Integer)
-	major = Column(Integer)
-	
-	def __repr__(self):
-		return "<Version('%s', '%s')>" % (self.minor, self.major)
 	
 #********************************************************************
 #					  DATABASE.PY CONTENT
