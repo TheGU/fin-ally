@@ -104,21 +104,20 @@ if __name__ == '__main__':
         # pull argument from argv
         tempArgs = sys.argv[1]
         temp = re.split('_', tempArgs)
-        schemaVersion[0] = temp[0] 
-        schemaVersion[1] = temp[1]
-        print "schemaVersion: %s.%s" % schemaVersion[0], schemaVersion[1]
+        schemaVersion[0] = int(temp[0]) 
+        schemaVersion[1] = int(temp[1])
+        #print "schemaVersion: %s.%s" % (schemaVersion[0], schemaVersion[1])
             
         # remove version from database
         connString = 'sqlite:///' + dbName
-        print "connecting to: ", connString
         engine = create_engine(connString, echo=False)
         SessionObject = sessionmaker(bind=engine)
         session = SessionObject()
         
         v = session.query(Version).one()
-        storedVersion[0] = v.major_version
-        storedVersion[1] = v.minor_version
-        print "storedVersion: %s.%s" % storedVersion[0], storedVersion[1]
+        storedVersion[0] = v.major
+        storedVersion[1] = v.minor
+        #print "storedVersion: %s.%s" % (storedVersion[0], storedVersion[1])
        
         if(schemaVersion != storedVersion):
             # perform migration
@@ -130,5 +129,7 @@ if __name__ == '__main__':
                     print "updating from 1.0 to 1.1"
                     dumpFrom1_0()
                     loadTo1_1()
+        else:
+            print "no migration required"
     else: 
         print "no migration required"
