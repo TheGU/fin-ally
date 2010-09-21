@@ -165,7 +165,7 @@ class Database():
 		"""Returns a list of user names - nothing else."""
 		list = []
 		session = SessionObject()
-		userList = session.query(User).all()
+		userList = session.query(User).order_by(User.name).all()
 		for i in userList:
 			list.append(str(i.name))
 		session.close()
@@ -234,7 +234,7 @@ class Database():
 		"""Returns a list of expense types - nothing else."""
 		list = []
 		session = SessionObject()
-		typeList = session.query(ExpenseType).all()
+		typeList = session.query(ExpenseType).order_by(ExpenseType.description).all()
 		for i in typeList:
 			list.append(str(i.description))
 		session.close()
