@@ -37,12 +37,10 @@ class UserColumnInfo:
     a grid. This keeps all columns definition data together, but adding information here
     does complete the addition of a new column."""
     
-    # TODO: consolidate these into a dict or some other structure
-    colLabels = ('user', 'id')
-    colWidth  = [100, 50]
-    colRO     = [1,1] # 0 = R/W, 1 = R
-    colType   = [gridlib.GRID_VALUE_STRING,
-                 gridlib.GRID_VALUE_STRING]
+    colLabels = ('user')
+    colWidth  = [100]
+    colRO     = [0] # 0 = R/W, 1 = R
+    colType   = [gridlib.GRID_VALUE_STRING]
     
     rowHeight = 20
 
@@ -51,12 +49,10 @@ class TypeColumnInfo:
     a grid. This keeps all columns definition data together, but adding information here
     does complete the addition of a new column."""
     
-    # TODO: consolidate these into a dict or some other structure
     colLabels = ('Expense Type', 'id')
-    colWidth  = [100, 50]
-    colRO     = [1,1] # 0 = R/W, 1 = R
-    colType   = [gridlib.GRID_VALUE_STRING,
-                 gridlib.GRID_VALUE_STRING]
+    colWidth  = [100]
+    colRO     = [0] # 0 = R/W, 1 = R
+    colType   = [gridlib.GRID_VALUE_STRING]
     
     rowHeight = 20
 
@@ -268,11 +264,10 @@ class SimpleTypeGrid(gridlib.Grid):
     """This is a simple grid class - which means most of the methods are automatically
     defined by the wx library"""
     def __init__(self, parent):
-        gridlib.Grid.__init__(self, parent, -1, size=(250,300))
-        self.CreateGrid(100,2)
+        gridlib.Grid.__init__(self, parent, -1, size=(200,300))
+        self.CreateGrid(100,1)
         
-        self.SetColLabelValue(0,"expense type")
-        self.SetColLabelValue(1,"id")        
+        self.SetColLabelValue(0,"expense type")       
         
         # create a Database object and pull some data out of it
         self.database = Database()
@@ -284,10 +279,8 @@ class SimpleTypeGrid(gridlib.Grid):
         # push data into grid, line by line
         for i in range(len(data)):
             self.SetCellValue(i,0,str(data[i][0]))
-            self.SetCellValue(i,1,str(data[i][1]))
             
         self.SetColSize(0,100)
-        self.SetColSize(1,50)
         
     def RefreshData(self):
         data = self.database.GetAllTypes()
@@ -310,11 +303,10 @@ class SimpleUserGrid(gridlib.Grid):
     """This is a simple grid class - which means most of the methods are automatically
     defined by the wx library"""
     def __init__(self, parent):
-        gridlib.Grid.__init__(self, parent, -1, size=(250,300))
-        self.CreateGrid(25,2)
+        gridlib.Grid.__init__(self, parent, -1, size=(200,300))
+        self.CreateGrid(25,1)
         
         self.SetColLabelValue(0,"user")
-        self.SetColLabelValue(1,"id")
         
         # create a Database object and pull some data out of it
         self.database = Database()
@@ -326,10 +318,8 @@ class SimpleUserGrid(gridlib.Grid):
         # push data into grid, line by line
         for i in range(len(data)):
             self.SetCellValue(i,0,str(data[i][0]))
-            self.SetCellValue(i,1,str(data[i][1]))
         
         self.SetColSize(0,100)
-        self.SetColSize(1,50)
         
     def RefreshData(self):
         data = self.database.GetAllUsers()
