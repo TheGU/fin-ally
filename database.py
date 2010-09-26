@@ -185,38 +185,7 @@ class Database():
 		session = SessionObject()
 		uId = session.query(User).filter(User.name==userName).one().id
 		session.close()
-		return uId
-	
-	def GetAllUsers(self):
-		"""returns all user data in the database in a 2D list in the following format:
-		
-		   [ 0  ][5 ]
-		[0][user][id]
-		[1][user][id]
-		
-		user and expenseType are dereferenced down to the underlying string, 
-		and amount and date are cast to string types to appease the grid."""
-		
-		minorList=[]
-		majorList=[]
-		session = SessionObject()
-
-		# grab all expenses
-		userList = session.query(User).all()
-		
-		# iterate through expenses - packing into listxlist
-		for i in userList:
-			# dereference these all the way down to the string
-			minorList.append(i.name) 
-			minorList.append(str(i.id))
-			
-			# push minorList into majorList 
-			majorList.append(minorList)
-			minorList=[]
-			
-		session.close()
-			
-		return majorList		
+		return uId	
 	
 	def CreateUser(self, name, shortName):
 		"""Creates a new expense"""
@@ -255,34 +224,6 @@ class Database():
 		tId = session.query(ExpenseType).filter(ExpenseType.description==typeName).one().id
 		session.close()
 		return tId
-	
-	def GetAllTypes(self):
-		"""returns all user data in the database in a 2D list in the following format:
-		
-		   [     0     ][5 ]
-		[0][description][id]
-		[1][description][id]
-		"""
-		
-		minorList=[]
-		majorList=[]
-		session = SessionObject()
-
-		# grab all expenses
-		typeList= session.query(ExpenseType).all()
-		
-		# iterate through expenses - packing into listxlist
-		for i in typeList:
-			# dereference these all the way down to the string
-			minorList.append(i.description) 
-			minorList.append(str(i.id))
-			
-			# push minorList into majorList 
-			majorList.append(minorList)
-			minorList=[]
-			
-		session.close()
-		return majorList
 
 	def CreateExpenseType(self, description):
 		"""Creates a new expense"""
