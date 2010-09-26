@@ -49,7 +49,7 @@ class TypeColumnInfo:
     a grid. This keeps all columns definition data together, but adding information here
     does complete the addition of a new column."""
     
-    colLabels = ('Expense Type', 'id')
+    colLabels = ('Expense Type')
     colWidth  = [100]
     colRO     = [0] # 0 = R/W, 1 = R
     colType   = [gridlib.GRID_VALUE_STRING]
@@ -271,24 +271,23 @@ class SimpleTypeGrid(gridlib.Grid):
         
         # create a Database object and pull some data out of it
         self.database = Database()
-        data = self.database.GetAllTypes()
+        data = self.database.GetTypeList()
         
         self.rowAttr = gridlib.GridCellAttr()
         self.CreateReadOnlyCols()        
         
         # push data into grid, line by line
         for i in range(len(data)):
-            self.SetCellValue(i,0,str(data[i][0]))
+            self.SetCellValue(i,0,str(data[i]))
             
         self.SetColSize(0,100)
         
     def RefreshData(self):
-        data = self.database.GetAllTypes()
+        data = self.database.GetTypeList()
         
         # push data into grid, line by line
         for i in range(len(data)):
-            self.SetCellValue(i,0,str(data[i][0]))
-            self.SetCellValue(i,1,str(data[i][1]))
+            self.SetCellValue(i,0,str(data[i]))
             
     def CreateReadOnlyCols(self):
         """creates read-only columns"""
@@ -310,24 +309,23 @@ class SimpleUserGrid(gridlib.Grid):
         
         # create a Database object and pull some data out of it
         self.database = Database()
-        data = self.database.GetAllUsers()
+        data = self.database.GetUserList()
         
         self.rowAttr = gridlib.GridCellAttr()
         self.CreateReadOnlyCols()
         
         # push data into grid, line by line
         for i in range(len(data)):
-            self.SetCellValue(i,0,str(data[i][0]))
+            self.SetCellValue(i,0,str(data[i]))
         
         self.SetColSize(0,100)
         
     def RefreshData(self):
-        data = self.database.GetAllUsers()
+        data = self.database.GetUserList()
         
         # push data into grid, line by line
         for i in range(len(data)):
-            self.SetCellValue(i,0,str(data[i][0]))
-            self.SetCellValue(i,1,str(data[i][1]))
+            self.SetCellValue(i,0,str(data[i]))
             
     def CreateReadOnlyCols(self):
         """creates read-only columns"""
