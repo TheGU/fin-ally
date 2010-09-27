@@ -160,81 +160,7 @@ class Database():
 		session.delete(e)
 		session.commit()
 		session.close()
-	
-	def GetUserList(self):
-		"""Returns a list of user names - nothing else."""
-		list = []
-		session = SessionObject()
-		userList = session.query(User).order_by(User.name).all()
-		for i in userList:
-			list.append(str(i.name))
-		session.close()
-		return list
-	
-	def GetUser(self, userName):
-		"""returns the User object matching the input name"""
-		#TODO: add fault handling here
-		session = SessionObject()
-		u = session.query(User).filter(User.name==userName).one()
-		session.close()
-		return u
-	
-	def GetUserId(self, userName):
-		"""reurns the User object id matching the input name"""
-		#TODO: add fault handling here
-		session = SessionObject()
-		uId = session.query(User).filter(User.name==userName).one().id
-		session.close()
-		return uId	
-	
-	def CreateUser(self, name, shortName):
-		"""Creates a new expense"""
-		session = SessionObject()
-
-		u = User()
-		u.name = name
-		u.shortName = shortName
-
-		session.add(u)
-		session.commit()		
-		session.close()
-	
-	def GetTypeList(self):
-		"""Returns a list of expense types - nothing else."""
-		list = []
-		session = SessionObject()
-		typeList = session.query(ExpenseType).order_by(ExpenseType.description).all()
-		for i in typeList:
-			list.append(str(i.description))
-		session.close()
-		return list
-	
-	def GetExpenseType(self, typeName):
-		"""returns an ExpenseType object matching the typeName argument"""
-		#TODO add fault handling here
-		session = SessionObject()
-		t = session.query(ExpenseType).filter(ExpenseType.description == typeName).one()
-		session.close()
-		return t
-	
-	def GetExpenseTypeId(self, typeName):
-		"""returns an ExpenseType id matching the typeName argument"""
-		#TODO add fault handling here
-		session = SessionObject()
-		tId = session.query(ExpenseType).filter(ExpenseType.description==typeName).one().id
-		session.close()
-		return tId
-
-	def CreateExpenseType(self, description):
-		"""Creates a new expense"""
-		session = SessionObject()
-
-		t = ExpenseType()
-		t.description = description
-
-		session.add(t)
-		session.commit()		
-		session.close()
+		
 	
 	def GetExpense(self, reqId):
 		"""returns the Expense object matching the reqId input"""
@@ -285,7 +211,97 @@ class Database():
 			
 		session.close()
 			
-		return majorList
+		return majorList		
+	
+	def GetUserList(self):
+		"""Returns a list of user names - nothing else."""
+		list = []
+		session = SessionObject()
+		userList = session.query(User).order_by(User.name).all()
+		for i in userList:
+			list.append(str(i.name))
+		session.close()
+		return list
+	
+	def GetUser(self, userName):
+		"""returns the User object matching the input name"""
+		#TODO: add fault handling here
+		session = SessionObject()
+		u = session.query(User).filter(User.name==userName).one()
+		session.close()
+		return u
+	
+	def GetUserId(self, userName):
+		"""reurns the User object id matching the input name"""
+		#TODO: add fault handling here
+		session = SessionObject()
+		uId = session.query(User).filter(User.name==userName).one().id
+		session.close()
+		return uId	
+	
+	def CreateUser(self, name, shortName):
+		"""Creates a new expense"""
+		session = SessionObject()
+
+		u = User()
+		u.name = name
+		u.shortName = shortName
+
+		session.add(u)
+		session.commit()		
+		session.close()
+		
+	def EditUser(self, name, shortName, inputId):
+		session = SessionObject()
+		u = session.query(User).filter(User.id == inputId).one()
+		u.name = name
+		u.shortName = shortName
+		session.commit()
+		session.close()		
+	
+	def GetExpenseTypeList(self):
+		"""Returns a list of expense types - nothing else."""
+		list = []
+		session = SessionObject()
+		typeList = session.query(ExpenseType).order_by(ExpenseType.description).all()
+		for i in typeList:
+			list.append(str(i.description))
+		session.close()
+		return list
+	
+	def GetExpenseType(self, desc):
+		"""returns an ExpenseType object matching the typeName argument"""
+		#TODO add fault handling here
+		session = SessionObject()
+		t = session.query(ExpenseType).filter(ExpenseType.description == desc).one()
+		session.close()
+		return t
+	
+	def GetExpenseTypeId(self, desc):
+		"""returns an ExpenseType id matching the typeName argument"""
+		#TODO add fault handling here
+		session = SessionObject()
+		tId = session.query(ExpenseType).filter(ExpenseType.description==desc).one().id
+		session.close()
+		return tId
+
+	def CreateExpenseType(self, desc):
+		"""Creates a new expense"""
+		session = SessionObject()
+
+		t = ExpenseType()
+		t.description = desc
+
+		session.add(t)
+		session.commit()		
+		session.close()
+		
+	def EditExpenseType(self, desc, inputId):
+		session = SessionObject()
+		et = session.query(ExpenseType).filter(ExpenseType.id == inputId).one()
+		et.description = desc
+		session.commit()
+		session.close()		
 	
 	def SetName(self, name):
 		self.fullName = name
