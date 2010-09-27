@@ -35,6 +35,7 @@ from database import *
 from wx._core import WXK_F1, WXK_F2
 from editPage import EditPage
 from grid import GraphicsGrid
+from prefPage import PrefPage
 
 #********************************************************************
 # FINally class definitions
@@ -358,6 +359,9 @@ class AppMainFrame(wx.Frame):
 		self.notebook.AddPage(self.gPage, "Graphics")
 		self.ePage = EditPage(self.notebook)
 		self.notebook.AddPage(self.ePage, "Types + Users")
+		self.pPage = PrefPage(self.notebook)
+		self.notebook.AddPage(self.pPage, "Prefs")
+		
 
 		# arrange notebook windows in a simple box sizer
 		self.sizer = wx.BoxSizer()
