@@ -214,12 +214,22 @@ class Database():
 		return majorList		
 	
 	def GetUserList(self):
-		"""Returns a list of user names - nothing else."""
+		"""Returns a list of the entire User object (name and shortName)"""
 		list = []
 		session = SessionObject()
 		userList = session.query(User).order_by(User.name).all()
 		for i in userList:
-			list.append(str(i.name))
+			list.append(i)
+		session.close()
+		return list
+	
+	def GetSimpleUserList(self):
+		"""Returns a list of just the user name - like the name implies"""
+		list = []
+		session = SessionObject()
+		userList = session.query(User).order_by(User.name).all()
+		for i in userList:
+			list.append(i.name)
 		session.close()
 		return list
 	

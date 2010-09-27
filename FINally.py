@@ -56,7 +56,7 @@ class NewExpenseDialog(wx.Dialog):
 		# NOTE: this must be done after the Database creation above
 		# define local Expense objects for population
 		self.database       = Database()
-		self.userList		= self.database.GetUserList()
+		self.userList		= self.database.GetSimpleUserList()
 		self.typeList		= self.database.GetExpenseTypeList()
 		
 		self.parent = parent
@@ -196,7 +196,7 @@ class GraphicsPage(wx.Panel):
 		# NOTE: this must be done after the Database creation above
 		# define local Expense objects for population
 		self.database       = Database()
-		self.userList		= self.database.GetUserList()
+		self.userList		= self.database.GetSimpleUserList()
 		self.typeList		= self.database.GetExpenseTypeList()
 		
 		# create a panel for the buttons
