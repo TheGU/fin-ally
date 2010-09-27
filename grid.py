@@ -156,7 +156,7 @@ class GraphicsGrid(gridlib.Grid):
             self.comboBox.Bind(wx.EVT_COMBOBOX, self.ComboBoxSelection)
             
             # load combo box with all user types
-            for i in self.database.GetUserList():
+            for i in self.database.GetSimpleUserList():
                 self.comboBox.Append(i)
                 
         # Col 1 is the Expense Type object column
