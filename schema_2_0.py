@@ -139,8 +139,6 @@ class SchemaObject(MigrateObject):
             self.session.commit()
         # update the version number
         # TODO: move this into sqlmigratelite core
-        v = Version()
-        v.minor = dbVer[1]
-        v.major = dbVer[0]
+        v = Version(minor=dbVer[1], major=dbVer[0])
         self.session.add(v)
         self.session.commit()

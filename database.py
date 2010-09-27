@@ -112,6 +112,9 @@ class Database():
 		e2 = Expense(user=dls, expenseType=clothing, amount='50.25', date=date.today(), description='clothing for mah parts.')
 		session.add_all([e1,e2])
 		session.commit()
+		v = Version(minor=dbVer[1], major=dbVer[0])
+		session.add(v)
+		session.commit()
 		
 		session.close()
 	
