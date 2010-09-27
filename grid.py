@@ -163,7 +163,7 @@ class GraphicsGrid(gridlib.Grid):
         elif Col == 1:
             self.comboBox = event.GetControl()
             self.comboBox.Bind(wx.EVT_COMBOBOX, self.ComboBoxSelection)
-            for i in self.database.GetTypeList():
+            for i in self.database.GetExpenseTypeList():
                 self.comboBox.Append(i)
         
     def ComboBoxSelection(self, event):

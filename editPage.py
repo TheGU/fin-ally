@@ -132,7 +132,7 @@ class NewTypeDialog(wx.Dialog):
         # NOTE: this must be done after the Database creation above
         # define local Expense objects for population
         self.database       = Database()
-        self.typeList       = self.database.GetTypeList()
+        self.typeList       = self.database.GetExpenseTypeList()
         
         self.parent = parent
         
@@ -271,7 +271,12 @@ class SimpleTypeGrid(gridlib.Grid):
         
         # create a Database object and pull some data out of it
         self.database = Database()
-        data = self.database.GetTypeList()
+        data = self.database.GetExpenseTypeList()
+        
+        self.currentValue = ""
+        
+        self.Bind(gridlib.EVT_GRID_CELL_CHANGE, self.OnCellChange)
+        self.Bind(gridlib.EVT_GRID_EDITOR_SHOWN, self.OnEditorShown)
         
         self.rowAttr = gridlib.GridCellAttr()
         self.CreateReadOnlyCols()        
@@ -282,8 +287,26 @@ class SimpleTypeGrid(gridlib.Grid):
             
         self.SetColSize(0,100)
         
+    def OnCellChange(self, evt):
+        """Using a class variable that stores the previous ExpenseType description,
+        this method edits the ExpenseType table in the database"""
+        value = self.GetCellValue(evt.GetRow(), evt.GetCol())
+        
+        # pull ID of the ExpenseType of interest and then edit the ExpenseType of that ID
+        etId = self.database.GetExpenseTypeId(self.currentValue)
+        self.database.EditExpenseType(value, etId)
+
+        evt.Skip()
+        
+    def OnEditorShown(self, evt):
+        """This method stores the current value into a class variable before
+        the user attempts to edit. This allows us to look-up ExpenseType id
+        by the 'old description' before the user changes it"""
+        self.currentValue = self.GetCellValue(evt.GetRow(), evt.GetCol())
+        evt.Skip()        
+        
     def RefreshData(self):
-        data = self.database.GetTypeList()
+        data = self.database.GetExpenseTypeList()
         
         # push data into grid, line by line
         for i in range(len(data)):
@@ -311,6 +334,11 @@ class SimpleUserGrid(gridlib.Grid):
         self.database = Database()
         data = self.database.GetUserList()
         
+        self.currentValue = ""
+        
+        self.Bind(gridlib.EVT_GRID_CELL_CHANGE, self.OnCellChange)
+        self.Bind(gridlib.EVT_GRID_EDITOR_SHOWN, self.OnEditorShown)
+        
         self.rowAttr = gridlib.GridCellAttr()
         self.CreateReadOnlyCols()
         
@@ -319,6 +347,24 @@ class SimpleUserGrid(gridlib.Grid):
             self.SetCellValue(i,0,str(data[i]))
         
         self.SetColSize(0,100)
+        
+    def OnCellChange(self, evt):
+        """Using a class variable that stores the previous ExpenseType description,
+        this method edits the ExpenseType table in the database"""
+        value = self.GetCellValue(evt.GetRow(), evt.GetCol())
+        
+        # pull ID of the ExpenseType of interest and then edit the ExpenseType of that ID
+        uId = self.database.GetUserId(self.currentValue)
+        self.database.EditUser(value, "", uId)
+
+        evt.Skip()
+        
+    def OnEditorShown(self, evt):
+        """This method stores the current value into a class variable before
+        the user attempts to edit. This allows us to look-up ExpenseType id
+        by the 'old description' before the user changes it"""
+        self.currentValue = self.GetCellValue(evt.GetRow(), evt.GetCol())
+        evt.Skip()         
         
     def RefreshData(self):
         data = self.database.GetUserList()
