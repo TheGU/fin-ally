@@ -35,7 +35,7 @@ from database import *
 from wx._core import WXK_F1, WXK_F2
 from editPage import EditPage
 from grid import GraphicsGrid
-from prefPage import PrefPage
+from statusBar import CustomStatusBar
 
 #********************************************************************
 # FINally class definitions
@@ -332,19 +332,6 @@ class GraphicsPage(wx.Panel):
 		
 	def OnDescEntry(self, evt):
 		pass
-	
-class CustomStatusBar(wx.StatusBar):
-	def __init__(self, parent):
-		wx.StatusBar.__init__(self, parent, -1)
-
-		# This status bar has three fields
-		self.SetFieldsCount(3)
-		# Sets the three fields to be relative widths to each other.
-		self.SetStatusWidths([-2, -1, -2])
-
-		self.SetStatusText("ONE", 0)
-		self.SetStatusText("TWO", 1)
-		self.SetStatusText("THREE", 2)	
 
 #********************************************************************
 class AppMainFrame(wx.Frame):
@@ -375,9 +362,6 @@ class AppMainFrame(wx.Frame):
 		self.notebook.AddPage(self.gPage, "Graphics")
 		self.ePage = EditPage(self.notebook)
 		self.notebook.AddPage(self.ePage, "Types + Users")
-		self.pPage = PrefPage(self.notebook)
-		self.notebook.AddPage(self.pPage, "Prefs")
-		
 
 		# arrange notebook windows in a simple box sizer
 		self.sizer = wx.BoxSizer()
