@@ -332,6 +332,19 @@ class GraphicsPage(wx.Panel):
 		
 	def OnDescEntry(self, evt):
 		pass
+	
+class CustomStatusBar(wx.StatusBar):
+	def __init__(self, parent):
+		wx.StatusBar.__init__(self, parent, -1)
+
+		# This status bar has three fields
+		self.SetFieldsCount(3)
+		# Sets the three fields to be relative widths to each other.
+		self.SetStatusWidths([-2, -1, -2])
+
+		self.SetStatusText("ONE", 0)
+		self.SetStatusText("TWO", 1)
+		self.SetStatusText("THREE", 2)	
 
 #********************************************************************
 class AppMainFrame(wx.Frame):
@@ -351,6 +364,9 @@ class AppMainFrame(wx.Frame):
 		# add an icon!
 		self.icon = wx.Icon("img/FINally.ico", wx.BITMAP_TYPE_ICO)
 		self.SetIcon(self.icon)
+		
+		self.sb = CustomStatusBar(self)
+		self.SetStatusBar(self.sb)
 
 		self.panel    = wx.Panel(self) # basically just a container for the notebook
 		self.notebook = wx.Notebook(self.panel, size=AppMainFrame.size)
