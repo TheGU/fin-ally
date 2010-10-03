@@ -35,6 +35,7 @@ from database import *
 from wx._core import WXK_F1, WXK_F2
 from editPage import EditPage
 from grid import GraphicsGrid
+from statusBar import CustomStatusBar
 
 #********************************************************************
 # FINally class definitions
@@ -350,6 +351,9 @@ class AppMainFrame(wx.Frame):
 		# add an icon!
 		self.icon = wx.Icon("img/FINally.ico", wx.BITMAP_TYPE_ICO)
 		self.SetIcon(self.icon)
+		
+		self.sb = CustomStatusBar(self)
+		self.SetStatusBar(self.sb)
 
 		self.panel    = wx.Panel(self) # basically just a container for the notebook
 		self.notebook = wx.Notebook(self.panel, size=AppMainFrame.size)
