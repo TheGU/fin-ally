@@ -308,7 +308,7 @@ class AppMainFrame(wx.Frame):
 		self._mgr.SetManagedWindow(self)
 		
 		# add an icon!
-		self.icon = wx.Icon("img/FINally.ico", wx.BITMAP_TYPE_ICO)
+		self.icon = wx.Icon("img/FINally.png", wx.BITMAP_TYPE_PNG)
 		self.SetIcon(self.icon)
 		
 		self.sb = CustomStatusBar(self)

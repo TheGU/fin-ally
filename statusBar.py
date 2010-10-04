@@ -42,8 +42,8 @@ class CustomStatusBar(wx.StatusBar):
         # Sets the three fields to be relative widths to each other.
         self.SetStatusWidths([-2, -2, -1])
 
-        self.SetStatusText("ONE", 0)
-        self.SetStatusText("TWO", 1)
+        self.SetStatusText("", 0)
+        self.SetStatusText("", 1)
         self.versionString = "FINally v%s.%s | database v%s.%s" % (cfg.VERSION[0], 
                                                                                 cfg.VERSION[1],
                                                                                 self.database.GetVersion()[0],
