@@ -61,6 +61,7 @@ MENU_NEW_FOLDER     = 10008
 MENU_COPY           = 10009
 MENU_CUT            = 10010
 MENU_PASTE          = 10011
+MENU_QUIT           = 10012
 
 #********************************************************************
 def switchRGBtoBGR(colour):
@@ -114,13 +115,15 @@ class FM_MyRenderer(RendererBase):
         dc.SetPen(wx.Pen(startColour))
         dc.SetBrush(wx.Brush(startColour))
         dc.DrawRectangle(0, 0, rect.GetWidth(), rect.GetHeight())
-
-#********************************************************************        
+        
 def CreateMenu(self):
-
-    # Create the menubar
-    self.menuBar = FM.FlatMenuBar(self, wx.ID_ANY, 32, 5, options = FM_OPT_SHOW_TOOLBAR | FM_OPT_SHOW_CUSTOMIZE)
-
+    # define the menuBar object
+    self.menuBar = FM.FlatMenuBar(self, 
+                                wx.ID_ANY, 
+                                32, 
+                                5, 
+                                options = FM_OPT_SHOW_TOOLBAR | FM_OPT_SHOW_CUSTOMIZE)
+    
     fileMenu     = FM.FlatMenu()
     styleMenu    = FM.FlatMenu()
     editMenu     = FM.FlatMenu()
@@ -151,6 +154,7 @@ def CreateMenu(self):
     self.menuBar.AddTool(MENU_NEW_FOLDER,   "New Folder",   new_folder_bmp)
     self.menuBar.AddTool(MENU_COPY,         "Copy",         copy_bmp)
     self.menuBar.AddTool(MENU_CUT,          "Cut",          cut_bmp)
+    self.menuBar.AddTool(MENU_QUIT,         "Quit",         cut_bmp)
 
     # 
     # Create File Menu
@@ -171,6 +175,9 @@ def CreateMenu(self):
     fileMenu.AppendItem(item)
     
     item = FM.FlatMenuItem(fileMenu, MENU_CUT, "Cut\tCtrl+X", "Cut", wx.ITEM_NORMAL)
+    fileMenu.AppendItem(item)
+    
+    item = FM.FlatMenuItem(fileMenu, MENU_QUIT, "Quit\tCtrl+Q", "Quit", wx.ITEM_NORMAL)
     fileMenu.AppendItem(item)
 
     # 
@@ -238,17 +245,18 @@ def CreateMenu(self):
     self.menuBar.Append(editMenu,       "&Edit")
     self.menuBar.Append(multipleMenu,   "&Multiple Columns")
     self.menuBar.Append(helpMenu,       "&Help")
-
-def ConnectEvents(self):
-
+    
+    ConnectMenuBar(self)
+    
+def ConnectMenuBar(self):
     # Attach menu events to some handlers
     #            event                     function               menu item ID               seocndary menu item ID
-    self.Bind(FM.EVT_FLAT_MENU_SELECTED, OnQuit,           id=wx.ID_EXIT)
-    self.Bind(FM.EVT_FLAT_MENU_SELECTED, OnStyle,          id=MENU_STYLE_XP,           id2=MENU_STYLE_2007)
-    self.Bind(FM.EVT_FLAT_MENU_SELECTED, OnAbout,          id=MENU_HELP)
-    self.Bind(FM.EVT_FLAT_MENU_SELECTED, OnStyle,          id=MENU_STYLE_MY)
-    self.Bind(FM.EVT_FLAT_MENU_SELECTED, OnTransparency,   id=MENU_TRANSPARENCY)
-    self.Bind(FM.EVT_FLAT_MENU_SELECTED, OnFlatMenuCmd,    id=MENU_NEW_FILE,           id2=20013)
+    self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.OnQuit,           id=MENU_QUIT)
+    self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.OnStyle,          id=MENU_STYLE_XP,           id2=MENU_STYLE_2007)
+    self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.OnAbout,          id=MENU_HELP)
+    self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.OnStyle,          id=MENU_STYLE_MY)
+    self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.OnTransparency,   id=MENU_TRANSPARENCY)
+    self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.OnFlatMenuCmd,    id=MENU_NEW_FILE,           id2=20013)
     
     if "__WXMAC__" in wx.Platform:
         self.Bind(wx.EVT_SIZE, self.OnSize)
@@ -257,71 +265,73 @@ def ConnectEvents(self):
 #         Event Handlers
 #***********************************
 
-def OnSize(self, event):
-    self._mgr.Update()
-    self.Layout()
-    
-def OnQuit(self, event):
-    self._mgr.UnInit()
-    self.Destroy()
-
-def OnStyle(self, event):
-
-    eventId = event.GetId()
-    
-    if eventId == MENU_STYLE_2007:
-        ArtManager.Get().SetMenuTheme(FM.Style2007)
-    elif eventId == MENU_STYLE_XP:
-        ArtManager.Get().SetMenuTheme(FM.StyleXP)
-    elif eventId == MENU_STYLE_MY:
-        ArtManager.Get().SetMenuTheme(self.newMyTheme)
-
-    self.menuBar.Refresh()
-    self.Update()        
-
-def OnTransparency(self, event):
-
-    transparency = ArtManager.Get().GetTransparency()
-    dlg = wx.TextEntryDialog(self, 'Please enter a value for menu transparency',
-                             'FlatMenu Transparency', str(transparency))
-
-    if dlg.ShowModal() != wx.ID_OK:
-        dlg.Destroy()
-        return
-
-    value = dlg.GetValue()
-    dlg.Destroy()
-    
-    try:
-        value = int(value)
-    except:
-        dlg = wx.MessageDialog(self, "Invalid transparency value!", "Error",
-                               wx.OK | wx.ICON_ERROR)
-        dlg.ShowModal()
-        dlg.Destroy()
-
-    if value < 0 or value > 255:
-        dlg = wx.MessageDialog(self, "Invalid transparency value!", "Error",
-                               wx.OK | wx.ICON_ERROR)
-        dlg.ShowModal()
-        dlg.Destroy()
-        
-    ArtManager.Get().SetTransparency(value)
-
-def OnFlatMenuCmd(self, event):
-
-    self.log.write("Received Flat menu command event ID: %d\n"%(event.GetId()))
-
-def OnAbout(self, event):
-
-    msg = "This is the About Dialog of the FlatMenu demo.\n\n" + \
-          "Author: Andrea Gavana @ 03 Nov 2006\n\n" + \
-          "Please report any bug/requests or improvements\n" + \
-          "to Andrea Gavana at the following email addresses:\n\n" + \
-          "andrea.gavana@gmail.com\ngavana@kpo.kz\n\n" + \
-          "Welcome to wxPython " + wx.VERSION_STRING + "!!"
-          
-    dlg = wx.MessageDialog(self, msg, "FlatMenu wxPython Demo",
-                           wx.OK | wx.ICON_INFORMATION)
-    dlg.ShowModal()
-    dlg.Destroy()
+#def OnSize(event):
+#    print "MenuBar OnSize"
+#    self._mgr.Update()
+#    self.Layout()
+#    
+#def OnQuit(self, event):
+#    print "MenuBar OnQuit"
+#    self._mgr.UnInit()
+#    self.Destroy()
+#    
+#def OnStyle(self, event):
+#
+#    eventId = event.GetId()
+#    
+#    if eventId == MENU_STYLE_2007:
+#        ArtManager.Get().SetMenuTheme(FM.Style2007)
+#    elif eventId == MENU_STYLE_XP:
+#        ArtManager.Get().SetMenuTheme(FM.StyleXP)
+#    elif eventId == MENU_STYLE_MY:
+#        ArtManager.Get().SetMenuTheme(self.newMyTheme)
+#
+#    self.menuBar.Refresh()
+#    self.Update()        
+#
+#def OnTransparency(self, event):
+#
+#    transparency = ArtManager.Get().GetTransparency()
+#    dlg = wx.TextEntryDialog(self, 'Please enter a value for menu transparency',
+#                             'FlatMenu Transparency', str(transparency))
+#
+#    if dlg.ShowModal() != wx.ID_OK:
+#        dlg.Destroy()
+#        return
+#
+#    value = dlg.GetValue()
+#    dlg.Destroy()
+#    
+#    try:
+#        value = int(value)
+#    except:
+#        dlg = wx.MessageDialog(self, "Invalid transparency value!", "Error",
+#                               wx.OK | wx.ICON_ERROR)
+#        dlg.ShowModal()
+#        dlg.Destroy()
+#
+#    if value < 0 or value > 255:
+#        dlg = wx.MessageDialog(self, "Invalid transparency value!", "Error",
+#                               wx.OK | wx.ICON_ERROR)
+#        dlg.ShowModal()
+#        dlg.Destroy()
+#        
+#    ArtManager.Get().SetTransparency(value)
+#
+#def OnFlatMenuCmd(self, event):
+#
+#    self.log.write("Received Flat menu command event ID: %d\n"%(event.GetId()))
+#
+#def OnAbout(self, event):
+#
+#    msg = "This is the About Dialog of the FlatMenu demo.\n\n" + \
+#          "Author: Andrea Gavana @ 03 Nov 2006\n\n" + \
+#          "Please report any bug/requests or improvements\n" + \
+#          "to Andrea Gavana at the following email addresses:\n\n" + \
+#          "andrea.gavana@gmail.com\ngavana@kpo.kz\n\n" + \
+#          "Welcome to wxPython " + wx.VERSION_STRING + "!!"
+#          
+#    dlg = wx.MessageDialog(self, msg, "FlatMenu wxPython Demo",
+#                           wx.OK | wx.ICON_INFORMATION)
+#    dlg.ShowModal()
+#    dlg.Destroy()

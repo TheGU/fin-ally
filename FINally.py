@@ -36,7 +36,7 @@ from wx._core import WXK_F1, WXK_F2
 from editPage import EditPage
 from grid import GraphicsGrid
 from statusBar import CustomStatusBar
-from menuBar import ConnectEvents, CreateMenu
+from menuBar import CreateMenu, MENU_STYLE_XP, MENU_STYLE_2007, MENU_STYLE_MY
 
 try:
 	from agw import flatmenu as FM
@@ -372,8 +372,8 @@ class AppMainFrame(wx.Frame):
 		self.icon = wx.Icon("img/FINally.ico", wx.BITMAP_TYPE_ICO)
 		self.SetIcon(self.icon)
 		
+		# populate and connect the menuBar
 		CreateMenu(self)
-		ConnectEvents(self)
 		
 		self.sb = CustomStatusBar(self)
 		self.SetStatusBar(self.sb)
@@ -403,6 +403,78 @@ class AppMainFrame(wx.Frame):
 
 	def SetBackgroundColor(self, colorString):
 		self.SetBackgroundColour(colorString)
+		
+	def OnSize(self, event):
+		print "MenuBar OnSize"
+		self._mgr.Update()
+		self.Layout()
+		
+	def OnQuit(self, event):
+		print "MenuBar OnQuit"
+		self._mgr.UnInit()
+		self.Destroy()
+
+	def OnStyle(self, event):
+		
+		eventId = event.GetId()
+		
+		if eventId == MENU_STYLE_2007:
+			ArtManager.Get().SetMenuTheme(FM.Style2007)
+		elif eventId == MENU_STYLE_XP:
+			ArtManager.Get().SetMenuTheme(FM.StyleXP)
+		elif eventId == MENU_STYLE_MY:
+			ArtManager.Get().SetMenuTheme(self.newMyTheme)
+		
+		self.menuBar.Refresh()
+		self.Update()        
+
+	def OnTransparency(self, event):
+		
+		transparency = ArtManager.Get().GetTransparency()
+		dlg = wx.TextEntryDialog(self, 'Please enter a value for menu transparency',
+		                         'FlatMenu Transparency', str(transparency))
+		
+		if dlg.ShowModal() != wx.ID_OK:
+			dlg.Destroy()
+			return
+		
+		value = dlg.GetValue()
+		dlg.Destroy()
+		
+		try:
+			value = int(value)
+		except:
+			dlg = wx.MessageDialog(self, "Invalid transparency value!", "Error",
+			                       wx.OK | wx.ICON_ERROR)
+			dlg.ShowModal()
+			dlg.Destroy()
+		
+		if value < 0 or value > 255:
+			dlg = wx.MessageDialog(self, "Invalid transparency value!", "Error",
+			                       wx.OK | wx.ICON_ERROR)
+			dlg.ShowModal()
+			dlg.Destroy()
+
+		ArtManager.Get().SetTransparency(value)
+
+	def OnFlatMenuCmd(self, event):
+	
+		print "Received Flat menu command event ID: %d\n"%(event.GetId())
+		event.Skip()
+	
+	def OnAbout(self, event):
+		
+		msg = "This is the About Dialog of the FlatMenu demo.\n\n" + \
+		      "Author: Andrea Gavana @ 03 Nov 2006\n\n" + \
+		      "Please report any bug/requests or improvements\n" + \
+		      "to Andrea Gavana at the following email addresses:\n\n" + \
+		      "andrea.gavana@gmail.com\ngavana@kpo.kz\n\n" + \
+		      "Welcome to wxPython " + wx.VERSION_STRING + "!!"
+
+		dlg = wx.MessageDialog(self, msg, "FlatMenu wxPython Demo",
+		                       wx.OK | wx.ICON_INFORMATION)
+		dlg.ShowModal()
+		dlg.Destroy()
 
 #********************************************************************
 class AppLauncher(wx.App):
