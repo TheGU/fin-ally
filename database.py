@@ -321,6 +321,12 @@ class Database():
 		
 	def FlagNewDb(self):
 		self.newDb = True
+		
+	def GetVersion(self):
+		session = SessionObject()
+		v = session.query(Version).one()
+		session.close()
+		return (v.major, v.minor)
 	
 #********************************************************************
 #					  DATABASE.PY CONTENT
