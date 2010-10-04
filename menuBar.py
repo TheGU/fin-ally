@@ -48,20 +48,12 @@ bitmapDir = 'img/'
 #********************************************************************
 # menu IDs
 #********************************************************************
-MENU_STYLE_XP       = wx.NewId()
-MENU_STYLE_2007     = wx.NewId()
-MENU_STYLE_MY       = wx.NewId()
-MENU_USE_CUSTOM     = wx.NewId()
 MENU_HELP           = wx.NewId()
-MENU_TRANSPARENCY   = wx.NewId()
-MENU_NEW_FILE       = 10005
-MENU_SAVE           = 10006
-MENU_OPEN_FILE      = 10007
-MENU_NEW_FOLDER     = 10008
-MENU_COPY           = 10009
-MENU_CUT            = 10010
-MENU_PASTE          = 10011
-MENU_QUIT           = 10012
+MENU_PREFS          = wx.NewId()
+MENU_NEW_DB         = wx.NewId()
+MENU_OPEN_DB        = wx.NewId()
+MENU_QUIT           = wx.NewId()
+MENU_NEW_EXPENSE    = wx.NewId()
 
 #********************************************************************
 def switchRGBtoBGR(colour):
@@ -125,213 +117,72 @@ def CreateMenu(self):
                                 options = FM_OPT_SHOW_TOOLBAR | FM_OPT_SHOW_CUSTOMIZE)
     
     fileMenu     = FM.FlatMenu()
-    styleMenu    = FM.FlatMenu()
-    editMenu     = FM.FlatMenu()
-    multipleMenu = FM.FlatMenu()
-    subMenu      = FM.FlatMenu()
+    optionMenu   = FM.FlatMenu()
     helpMenu     = FM.FlatMenu()
 
     self.newMyTheme = ArtManager.Get().AddMenuTheme(FM_MyRenderer())
-    ArtManager.Get().SetMenuTheme(self.newMyTheme)
+    
+    # Set the menubar theme - refer to the wxPython demo for more options
+    ArtManager.Get().SetMenuTheme(FM.Style2007)
 
     # Load toolbar icons (32x32)
-    copy_bmp        = wx.Bitmap(os.path.join(bitmapDir, "editcopy.png"),        wx.BITMAP_TYPE_PNG)
-    cut_bmp         = wx.Bitmap(os.path.join(bitmapDir, "editcut.png"),         wx.BITMAP_TYPE_PNG)
-    open_folder_bmp = wx.Bitmap(os.path.join(bitmapDir, "fileopen.png"),        wx.BITMAP_TYPE_PNG)
-    new_file_bmp    = wx.Bitmap(os.path.join(bitmapDir, "filenew.png"),         wx.BITMAP_TYPE_PNG)
-    new_folder_bmp  = wx.Bitmap(os.path.join(bitmapDir, "folder_new.png"),      wx.BITMAP_TYPE_PNG)
-    save_bmp        = wx.Bitmap(os.path.join(bitmapDir, "filesave.png"),        wx.BITMAP_TYPE_PNG)
-    colBmp          = wx.Bitmap(os.path.join(bitmapDir, "month-16.png"),        wx.BITMAP_TYPE_PNG)
-    helpImg         = wx.Bitmap(os.path.join(bitmapDir, "help-16.png"),         wx.BITMAP_TYPE_PNG)
-    ghostBmp        = wx.Bitmap(os.path.join(bitmapDir, "field-16.png"),        wx.BITMAP_TYPE_PNG)
+    new_expense     = wx.Bitmap(os.path.join(bitmapDir, "new_expense.png"),     wx.BITMAP_TYPE_PNG)
+    help_blue       = wx.Bitmap(os.path.join(bitmapDir, "blueHelp_16.png"),     wx.BITMAP_TYPE_PNG)
+    exit_red        = wx.Bitmap(os.path.join(bitmapDir, "exit.png"),            wx.BITMAP_TYPE_PNG)
 
     # Create toolbar icons
     #                        ID              Help Text      image object
-    self.menuBar.AddTool(MENU_NEW_FILE,     "New File",     new_file_bmp)
+    self.menuBar.AddTool(MENU_NEW_EXPENSE,  "New Expense",     new_expense)
     self.menuBar.AddSeparator()
-    self.menuBar.AddTool(MENU_SAVE,         "Save File",    save_bmp)
-    self.menuBar.AddTool(MENU_OPEN_FILE,    "Open File",    open_folder_bmp)
-    self.menuBar.AddTool(MENU_NEW_FOLDER,   "New Folder",   new_folder_bmp)
-    self.menuBar.AddTool(MENU_COPY,         "Copy",         copy_bmp)
-    self.menuBar.AddTool(MENU_CUT,          "Cut",          cut_bmp)
-    self.menuBar.AddTool(MENU_QUIT,         "Quit",         cut_bmp)
+    self.menuBar.AddTool(MENU_QUIT,         "Quit",            exit_red)
 
     # 
     # Create File Menu
     #
-    item = FM.FlatMenuItem(fileMenu, MENU_NEW_FILE, "&New File\tCtrl+N", "New File", wx.ITEM_NORMAL)
-    fileMenu.AppendItem(item)
-
-    item = FM.FlatMenuItem(fileMenu, MENU_SAVE, "&Save File\tCtrl+S", "Save File", wx.ITEM_NORMAL)
+    item = FM.FlatMenuItem(fileMenu, MENU_NEW_DB, "&New Database\tCtrl+N", "New Database", wx.ITEM_NORMAL)
     fileMenu.AppendItem(item)
     
-    item = FM.FlatMenuItem(fileMenu, MENU_OPEN_FILE, "&Open File\tCtrl+O", "Open File", wx.ITEM_NORMAL)
-    fileMenu.AppendItem(item)
-    
-    item = FM.FlatMenuItem(fileMenu, MENU_NEW_FOLDER, "N&ew Folder\tCtrl+E", "New Folder", wx.ITEM_NORMAL)
-    fileMenu.AppendItem(item)
-    
-    item = FM.FlatMenuItem(fileMenu, MENU_COPY, "&Copy\tCtrl+C", "Copy", wx.ITEM_NORMAL)
-    fileMenu.AppendItem(item)
-    
-    item = FM.FlatMenuItem(fileMenu, MENU_CUT, "Cut\tCtrl+X", "Cut", wx.ITEM_NORMAL)
+    item = FM.FlatMenuItem(fileMenu, MENU_OPEN_DB, "&Open Database\tCtrl+O", "Open Database", wx.ITEM_NORMAL)
     fileMenu.AppendItem(item)
     
     item = FM.FlatMenuItem(fileMenu, MENU_QUIT, "Quit\tCtrl+Q", "Quit", wx.ITEM_NORMAL)
     fileMenu.AppendItem(item)
-
-    # 
-    # Create Style Menu
+    
     #
-    item = FM.FlatMenuItem(styleMenu, MENU_STYLE_MY, "Menu style Custom (Default)\tAlt+N", "Menu style Custom (Default)", wx.ITEM_RADIO)
-    styleMenu.AppendItem(item)
-    
-    item = FM.FlatMenuItem(styleMenu, MENU_STYLE_XP, "Menu style XP\tAlt+P", "Menu style XP", wx.ITEM_RADIO)        
-    styleMenu.AppendItem(item)
-
-    item = FM.FlatMenuItem(styleMenu, MENU_STYLE_2007, "Menu style 2007\tAlt+V", "Menu style 2007", wx.ITEM_RADIO)
-    styleMenu.AppendItem(item)
-    
-    item.Check(True) # applying check-mark
-
-    item = FM.FlatMenuItem(styleMenu, MENU_USE_CUSTOM, "Show Customize DropDown", "Shows the customize drop down arrow", wx.ITEM_CHECK)
-    styleMenu.AppendItem(item)
-    
-    # 
-    # Create Edit Menu
+    # Create Options Menu
     #
-
-    # edit menu with icon
-    item = FM.FlatMenuItem(editMenu, MENU_TRANSPARENCY, "Set FlatMenu transparency...", "Sets the FlatMenu transparency",
-                           wx.ITEM_NORMAL, None, ghostBmp)
-    editMenu.AppendItem(item)
-
-    # Add some dummy entries to the sub menu
-    # Add sub-menu to main menu
-    item = FM.FlatMenuItem(editMenu, 9001, "Sub-&menu items", "", wx.ITEM_NORMAL, subMenu)
-    editMenu.AppendItem(item)
-
-    # Create the submenu items and add them 
-    item = FM.FlatMenuItem(subMenu, 9002, "&Sub-menu Item 1", "", wx.ITEM_NORMAL)
-    subMenu.AppendItem(item)
-
-    item = FM.FlatMenuItem(subMenu, 9003, "Su&b-menu Item 2", "", wx.ITEM_NORMAL)
-    subMenu.AppendItem(item)
-
-    # 
-    # Create Multiple Menu
-    #
-    maxItems = 17
-    numCols = 2
-    switch = int(math.ceil(maxItems/float(numCols)))
+    item = FM.FlatMenuItem(optionMenu, MENU_PREFS, "&Preferences\tCtrl+P", "Preferences", wx.ITEM_NORMAL)
+    optionMenu.AppendItem(item)
     
-    for i in xrange(17):
-        row, col = i%switch, i/switch
-        bmp = (random.randint(0, 1) == 1 and [colBmp] or [wx.NullBitmap])[0]
-        item = FM.FlatMenuItem(multipleMenu, wx.ID_ANY, "Row %d, Col %d"%((row+1, col+1)), "", wx.ITEM_NORMAL, None, bmp)
-        multipleMenu.AppendItem(item)
-
-    multipleMenu.SetNumberColumns(2)
-
     # 
     # Create Help Menu
     #
-    item = FM.FlatMenuItem(helpMenu, MENU_HELP, "&About\tCtrl+A", "About...", wx.ITEM_NORMAL, None, helpImg)
+    item = FM.FlatMenuItem(helpMenu, MENU_HELP, "&About\tCtrl+A", "About...", wx.ITEM_NORMAL, None, help_blue)
     helpMenu.AppendItem(item)
 
     # Add menu to the menu bar
     self.menuBar.Append(fileMenu,       "&File")
-    self.menuBar.Append(styleMenu,      "&Style")
-    self.menuBar.Append(editMenu,       "&Edit")
-    self.menuBar.Append(multipleMenu,   "&Multiple Columns")
+    self.menuBar.Append(optionMenu,     "&Options")
     self.menuBar.Append(helpMenu,       "&Help")
     
     ConnectMenuBar(self)
     
 def ConnectMenuBar(self):
     # Attach menu events to some handlers
-    #            event                     function               menu item ID               seocndary menu item ID
-    self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.OnQuit,           id=MENU_QUIT)
-    self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.OnStyle,          id=MENU_STYLE_XP,           id2=MENU_STYLE_2007)
+    #            event                     function               menu item ID
     self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.OnAbout,          id=MENU_HELP)
-    self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.OnStyle,          id=MENU_STYLE_MY)
-    self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.OnTransparency,   id=MENU_TRANSPARENCY)
-    self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.OnFlatMenuCmd,    id=MENU_NEW_FILE,           id2=20013)
+    self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.gPage.ShowNewExpenseDialogue, id=MENU_NEW_EXPENSE) 
+    self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.OnQuit,           id=MENU_QUIT)
     
-    if "__WXMAC__" in wx.Platform:
-        self.Bind(wx.EVT_SIZE, self.OnSize)
+    # unsupported as of right now 
+    self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.OnUnsupported,    id=MENU_PREFS)      # TODO
+    self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.OnUnsupported,    id=MENU_NEW_DB)     # TODO
+    self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.OnUnsupported,    id=MENU_OPEN_DB)    # TODO
     
-#***********************************
-#         Event Handlers
-#***********************************
-
-#def OnSize(event):
-#    print "MenuBar OnSize"
-#    self._mgr.Update()
-#    self.Layout()
-#    
-#def OnQuit(self, event):
-#    print "MenuBar OnQuit"
-#    self._mgr.UnInit()
-#    self.Destroy()
-#    
-#def OnStyle(self, event):
-#
-#    eventId = event.GetId()
-#    
-#    if eventId == MENU_STYLE_2007:
-#        ArtManager.Get().SetMenuTheme(FM.Style2007)
-#    elif eventId == MENU_STYLE_XP:
-#        ArtManager.Get().SetMenuTheme(FM.StyleXP)
-#    elif eventId == MENU_STYLE_MY:
-#        ArtManager.Get().SetMenuTheme(self.newMyTheme)
-#
-#    self.menuBar.Refresh()
-#    self.Update()        
-#
-#def OnTransparency(self, event):
-#
-#    transparency = ArtManager.Get().GetTransparency()
-#    dlg = wx.TextEntryDialog(self, 'Please enter a value for menu transparency',
-#                             'FlatMenu Transparency', str(transparency))
-#
-#    if dlg.ShowModal() != wx.ID_OK:
-#        dlg.Destroy()
-#        return
-#
-#    value = dlg.GetValue()
-#    dlg.Destroy()
-#    
-#    try:
-#        value = int(value)
-#    except:
-#        dlg = wx.MessageDialog(self, "Invalid transparency value!", "Error",
-#                               wx.OK | wx.ICON_ERROR)
-#        dlg.ShowModal()
-#        dlg.Destroy()
-#
-#    if value < 0 or value > 255:
-#        dlg = wx.MessageDialog(self, "Invalid transparency value!", "Error",
-#                               wx.OK | wx.ICON_ERROR)
-#        dlg.ShowModal()
-#        dlg.Destroy()
-#        
-#    ArtManager.Get().SetTransparency(value)
-#
-#def OnFlatMenuCmd(self, event):
-#
-#    self.log.write("Received Flat menu command event ID: %d\n"%(event.GetId()))
-#
-#def OnAbout(self, event):
-#
-#    msg = "This is the About Dialog of the FlatMenu demo.\n\n" + \
-#          "Author: Andrea Gavana @ 03 Nov 2006\n\n" + \
-#          "Please report any bug/requests or improvements\n" + \
-#          "to Andrea Gavana at the following email addresses:\n\n" + \
-#          "andrea.gavana@gmail.com\ngavana@kpo.kz\n\n" + \
-#          "Welcome to wxPython " + wx.VERSION_STRING + "!!"
-#          
-#    dlg = wx.MessageDialog(self, msg, "FlatMenu wxPython Demo",
-#                           wx.OK | wx.ICON_INFORMATION)
-#    dlg.ShowModal()
-#    dlg.Destroy()
+    
+    
+    
+    
+    
+    
+    
