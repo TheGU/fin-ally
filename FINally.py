@@ -35,6 +35,23 @@ from database import *
 from wx._core import WXK_F1, WXK_F2
 from editPage import EditPage
 from grid import GraphicsGrid
+from statusBar import CustomStatusBar
+from menuBar import CreateMenu
+
+try:
+	from agw import flatmenu as FM
+	from agw.artmanager import ArtManager, RendererBase, DCSaver
+	from agw.fmresources import ControlFocus, ControlPressed
+	from agw.fmresources import FM_OPT_SHOW_CUSTOMIZE, FM_OPT_SHOW_TOOLBAR, FM_OPT_MINIBAR
+except ImportError: # if it's not there locally, try the wxPython lib.
+	import wx.lib.agw.flatmenu as FM
+	from wx.lib.agw.artmanager import ArtManager, RendererBase, DCSaver
+	from wx.lib.agw.fmresources import ControlFocus, ControlPressed
+	from wx.lib.agw.fmresources import FM_OPT_SHOW_CUSTOMIZE, FM_OPT_SHOW_TOOLBAR, FM_OPT_MINIBAR
+
+import wx.aui as AUI
+AuiPaneInfo = AUI.AuiPaneInfo
+AuiManager  = AUI.AuiManager
 
 #********************************************************************
 # FINally class definitions
@@ -199,70 +216,9 @@ class GraphicsPage(wx.Panel):
 		self.userList		= self.database.GetSimpleUserList()
 		self.typeList		= self.database.GetExpenseTypeList()
 		
-		# create a panel for the buttons
-		self.buttonPanel  = wx.Panel(self)
-		
-		# configure either a static button panel or a dialogue based on configuration settings
-		if cfg.NEW_EXPENSE_PANEL == 1:		
-			self.entryButton = wx.Button(self.buttonPanel,
-										id = -1,
-										label = "Enter!",
-										pos = (0,0))
-			self.Bind(wx.EVT_BUTTON, self.OnEnterClick, self.entryButton)
-			
-			# create and bind a user selection box
-			self.userSelect   = wx.ComboBox(self.buttonPanel, 
-										    id=-1,
-										    value=self.userList[0],
-										    choices=self.userList,
-							  				pos=(100,0), 
-							  				style=wx.CB_DROPDOWN)
-			self.Bind(wx.EVT_COMBOBOX, self.OnUserSelect, self.userSelect)
-			
-			# create and bind a type selection box
-			self.typeSelect	  = wx.ComboBox(self.buttonPanel, 
-										    id=-1,
-										    value=self.typeList[0],
-										    choices=self.typeList,
-							  				pos=(200,0), 
-							  				style=wx.CB_DROPDOWN)
-			self.Bind(wx.EVT_COMBOBOX, self.OnTypeSelect, self.typeSelect)
-			
-			# create and bind a calendar box
-			self.cal 		  = callib.CalendarCtrl(self.buttonPanel, 
-													-1, 
-													wx.DateTime_Now(), 
-													pos = (600,0),
-							    					style = callib.CAL_SHOW_HOLIDAYS | callib.CAL_SUNDAY_FIRST)
-			self.Bind(callib.EVT_CALENDAR_SEL_CHANGED, self.OnCalSelChanged, self.cal)
-	
-			# create and bind a value entry box
-			self.valueEntry   = wx.TextCtrl(self.buttonPanel, 
-										    -1, 
-										    "0.00", 
-										    pos = (300,0), 
-										    size = (90, 21))
-			self.Bind(wx.EVT_TEXT, self.OnValueEntry, self.valueEntry)
-	
-			# create and bind a description box
-			self.descEntry    = wx.TextCtrl(self.buttonPanel, 
-										    -1, 
-										    "item description", 
-										    pos = (400,0), 
-										    size = (173,21))
-			self.Bind(wx.EVT_TEXT, self.OnDescEntry, self.descEntry)
-		else:
-			# create and bind a new expense button
-			self.newExpenseButton = wx.Button(self.buttonPanel,
-										      id = -1,
-										      label = "New Expense",
-											  pos = (0,0))
-			self.Bind(wx.EVT_BUTTON, self.ShowNewExpenseDialogue, self.newExpenseButton)	
-		
 		# create a sizer for this Panel and add the buttons and the table
 		self.sizer = wx.BoxSizer(wx.VERTICAL)      # define new box sizer	
 		self.sizer.Add(self.grid, 1, wx.GROW)     # add grid (resize vert and horz)
-		self.sizer.Add(self.buttonPanel, 0, wx.ALIGN_LEFT)    # add panel (no resize vert and aligned left horz)
 		self.SetSizer(self.sizer)
 	
 	def ShowNewExpenseDialogue(self, event):
@@ -347,9 +303,16 @@ class AppMainFrame(wx.Frame):
 				  			size=AppMainFrame.size,
 				  			style=wx.DEFAULT_FRAME_STYLE)
 
+		# define AUI manager
+		self._mgr = AuiManager()
+		self._mgr.SetManagedWindow(self)
+		
 		# add an icon!
-		self.icon = wx.Icon("img/FINally.ico", wx.BITMAP_TYPE_ICO)
+		self.icon = wx.Icon("img/FINally.png", wx.BITMAP_TYPE_PNG)
 		self.SetIcon(self.icon)
+		
+		self.sb = CustomStatusBar(self)
+		self.SetStatusBar(self.sb)
 
 		self.panel    = wx.Panel(self) # basically just a container for the notebook
 		self.notebook = wx.Notebook(self.panel, size=AppMainFrame.size)
@@ -359,13 +322,51 @@ class AppMainFrame(wx.Frame):
 		self.ePage = EditPage(self.notebook)
 		self.notebook.AddPage(self.ePage, "Types + Users")
 
+		# populate and connect the menuBar
+		CreateMenu(self)
+
 		# arrange notebook windows in a simple box sizer
 		self.sizer = wx.BoxSizer()
 		self.sizer.Add(self.notebook, 1, wx.EXPAND)
 		self.panel.SetSizer(self.sizer)
+		
+		# support for AUI content
+		self._mgr.AddPane(self.panel, AuiPaneInfo().Name("main_panel").CenterPane())
+		self.menuBar.PositionAUI(self._mgr)
+		self._mgr.Update()
+		
+		ArtManager.Get().SetMBVerticalGradient(True)
+		ArtManager.Get().SetRaiseToolbar(False)
+
+		self.menuBar.Refresh()
 
 	def SetBackgroundColor(self, colorString):
 		self.SetBackgroundColour(colorString)
+		
+	def OnQuit(self, event):
+		self._mgr.UnInit()
+		self.Destroy()      
+
+	def OnAbout(self, event):
+		msg = "Welcome to FINally!\n\n" + \
+		      "Author: Daniel LaBeau Sisco @ 10/10/2010\n\n" + \
+		      "Please report any bug/requests or improvements\n" + \
+		      "to Daniel Sisco at the following email address:\n\n" + \
+		      "daniel.sisco@gmail.com\n\n" + \
+		      "Please visit FINally at http://code.google.com/p/fin-ally/ for more information\n"
+
+		dlg = wx.MessageDialog(self, msg, "About FINally",
+		                       wx.OK | wx.ICON_INFORMATION)
+		dlg.ShowModal()
+		dlg.Destroy()
+		
+	def OnUnsupported(self, event):
+		msg = "...this feature is unsupported!\n You should complain to Daniel Sisco at the following email address:\n\n" + \
+			  "daniel.sisco@gmail.com\n\n"
+		dlg = wx.MessageDialog(self, msg, "Sorry...",
+							wx.OK)
+		dlg.ShowModal()
+		dlg.Destroy()
 
 #********************************************************************
 class AppLauncher(wx.App):
