@@ -36,6 +36,22 @@ from wx._core import WXK_F1, WXK_F2
 from editPage import EditPage
 from grid import GraphicsGrid
 from statusBar import CustomStatusBar
+from menuBar import ConnectEvents, CreateMenu
+
+try:
+	from agw import flatmenu as FM
+	from agw.artmanager import ArtManager, RendererBase, DCSaver
+	from agw.fmresources import ControlFocus, ControlPressed
+	from agw.fmresources import FM_OPT_SHOW_CUSTOMIZE, FM_OPT_SHOW_TOOLBAR, FM_OPT_MINIBAR
+except ImportError: # if it's not there locally, try the wxPython lib.
+	import wx.lib.agw.flatmenu as FM
+	from wx.lib.agw.artmanager import ArtManager, RendererBase, DCSaver
+	from wx.lib.agw.fmresources import ControlFocus, ControlPressed
+	from wx.lib.agw.fmresources import FM_OPT_SHOW_CUSTOMIZE, FM_OPT_SHOW_TOOLBAR, FM_OPT_MINIBAR
+
+import wx.aui as AUI
+AuiPaneInfo = AUI.AuiPaneInfo
+AuiManager  = AUI.AuiManager
 
 #********************************************************************
 # FINally class definitions
@@ -348,9 +364,16 @@ class AppMainFrame(wx.Frame):
 				  			size=AppMainFrame.size,
 				  			style=wx.DEFAULT_FRAME_STYLE)
 
+		# define AUI manager
+		self._mgr = AuiManager()
+		self._mgr.SetManagedWindow(self)
+		
 		# add an icon!
 		self.icon = wx.Icon("img/FINally.ico", wx.BITMAP_TYPE_ICO)
 		self.SetIcon(self.icon)
+		
+		CreateMenu(self)
+		ConnectEvents(self)
 		
 		self.sb = CustomStatusBar(self)
 		self.SetStatusBar(self.sb)
@@ -367,6 +390,16 @@ class AppMainFrame(wx.Frame):
 		self.sizer = wx.BoxSizer()
 		self.sizer.Add(self.notebook, 1, wx.EXPAND)
 		self.panel.SetSizer(self.sizer)
+		
+		# support for AUI content
+		self._mgr.AddPane(self.panel, AuiPaneInfo().Name("main_panel").CenterPane())
+		self.menuBar.PositionAUI(self._mgr)
+		self._mgr.Update()
+		
+		ArtManager.Get().SetMBVerticalGradient(True)
+		ArtManager.Get().SetRaiseToolbar(False)
+
+		self.menuBar.Refresh()
 
 	def SetBackgroundColor(self, colorString):
 		self.SetBackgroundColour(colorString)
