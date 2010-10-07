@@ -322,6 +322,40 @@ class Database():
 	def FlagNewDb(self):
 		self.newDb = True
 		
+	def EditPrefs(self, inputDefUserId, inputDefExpTypeId, inputDefAmount):
+		session = SessionObject()
+		
+		# there should only be one preference entry in the table
+		# otherwise the table is blank - create it
+		try: 
+			p = session.query(Preference).one()
+		except NoResultFound:
+			p = Preference()
+			session.add(p)
+			session.commit()
+			
+		p.defUser_id 		= inputDefUserId
+		p.defExpenseType_id = inputDefExpTypeId
+		p.defAmount         = inputDefAmount
+		session.commit()
+		session.close()
+		
+	def GetPrefs(self):
+		session = SessionObject()
+		
+		# there should only be one preference entry in the table
+		# otherwise the table is blank - create it
+		try: 
+			p = session.query(Preference).options(eagerload('defUser'), eagerload('defExpenseType')).one()
+		except NoResultFound:
+			p = Preference()
+			session.add(p)
+			session.commit()
+			p = session.query(Preference).options(eagerload('defUser'), eagerload('defExpenseType')).one()
+			
+		session.close()
+		return p
+		
 	def GetVersion(self):
 		session = SessionObject()
 		v = session.query(Version).one()
