@@ -29,7 +29,8 @@ from sqlmigratelite.migrate import MigrateObject
 from sqlalchemy import create_engine
 from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship, backref
+from sqlalchemy.orm import sessionmaker, relationship, backref, eagerload
+from sqlalchemy.orm.exc import NoResultFound
 
 Base = declarative_base()
 version = "2.0"

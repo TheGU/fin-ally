@@ -37,6 +37,7 @@ from editPage import EditPage
 from grid import GraphicsGrid
 from statusBar import CustomStatusBar
 from menuBar import CreateMenu
+from prefs import EditPreferences
 
 try:
 	from agw import flatmenu as FM
@@ -74,7 +75,8 @@ class NewExpenseDialog(wx.Dialog):
 		# define local Expense objects for population
 		self.database       = Database()
 		self.userList		= self.database.GetSimpleUserList()
-		self.typeList		= self.database.GetExpenseTypeList()
+		self.typeList		= self.database.GetExpenseTypeList()		
+		self.prefs			= self.database.GetPrefs()
 		
 		self.parent = parent
 		
@@ -90,7 +92,7 @@ class NewExpenseDialog(wx.Dialog):
 		# create and bind a user selection box
 		self.userSelect   = wx.ComboBox(self.buttonPanel, 
 									    id=-1,
-									    value=self.userList[0],
+									    value=str(self.prefs.defUser_id),
 									    choices=self.userList,
 						  				pos=(100,0), 
 						  				style=wx.CB_DROPDOWN)
@@ -99,7 +101,7 @@ class NewExpenseDialog(wx.Dialog):
 		# create and bind a type selection box
 		self.typeSelect	  = wx.ComboBox(self.buttonPanel, 
 									    id=-1,
-									    value=self.typeList[0],
+									    value=str(self.prefs.defExpenseType_id),
 									    choices=self.typeList,
 						  				pos=(200,0), 
 						  				style=wx.CB_DROPDOWN)
@@ -116,7 +118,7 @@ class NewExpenseDialog(wx.Dialog):
 		# create and bind a value entry box
 		self.valueEntry   = wx.TextCtrl(self.buttonPanel, 
 									    -1, 
-									    "0.00", 
+									    str(self.prefs.defAmount), 
 									    pos = (0,25), 
 									    size = (90, 21))
 		self.Bind(wx.EVT_TEXT, self.OnValueEntry, self.valueEntry)
@@ -307,13 +309,15 @@ class AppMainFrame(wx.Frame):
 		self._mgr = AuiManager()
 		self._mgr.SetManagedWindow(self)
 		
+		self.database = Database()
+		
 		# add an icon!
 		self.icon = wx.Icon("img/FINally.png", wx.BITMAP_TYPE_PNG)
 		self.SetIcon(self.icon)
 		
 		self.sb = CustomStatusBar(self)
 		self.SetStatusBar(self.sb)
-
+		
 		self.panel    = wx.Panel(self) # basically just a container for the notebook
 		self.notebook = wx.Notebook(self.panel, size=AppMainFrame.size)
 
@@ -345,7 +349,10 @@ class AppMainFrame(wx.Frame):
 		
 	def OnQuit(self, event):
 		self._mgr.UnInit()
-		self.Destroy()      
+		self.Destroy()  
+		
+	def OnPrefs(self, event):
+		EditPreferences(self, event)  
 
 	def OnAbout(self, event):
 		msg = "Welcome to FINally!\n\n" + \
