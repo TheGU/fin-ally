@@ -175,7 +175,7 @@ def ConnectMenuBar(self):
     self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.OnQuit,           id=MENU_QUIT)
     
     # unsupported as of right now 
-    self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.OnUnsupported,    id=MENU_PREFS)      # TODO
+    self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.OnPrefs,          id=MENU_PREFS)      # TODO
     self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.OnUnsupported,    id=MENU_NEW_DB)     # TODO
     self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.OnUnsupported,    id=MENU_OPEN_DB)    # TODO
     
