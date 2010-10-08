@@ -96,6 +96,16 @@ class GraphicsGrid(gridlib.Grid):
             self.Bind(gridlib.EVT_GRID_CELL_RIGHT_CLICK, self.onGridRightClick)
         
         self.Bind(gridlib.EVT_GRID_CELL_LEFT_CLICK, self.onGridClick)
+        self.Bind(gridlib.EVT_GRID_CMD_LABEL_LEFT_CLICK, self.onColClick)
+        
+    def onColClick(self, event):
+        print "%s, %s" % (event.GetRow(), event.GetCol())
+        if event.GetRow() == -1 and event.GetCol() != -1:
+            print "sorting by %s" % (colInfo.colLabels[event.GetCol()])
+            print self.tableBase.localData
+        else:
+            print "you did not click a column"
+        event.Skip()
         
     def onGridClick(self, event):
         if(event.GetCol() == 6):
