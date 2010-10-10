@@ -69,6 +69,20 @@ def loadTo2_0():
     object.load(dict)
     
 #*****************************************************
+def dumpFrom2_0():
+    from schema_2_0 import SchemaObject
+    global dict, dbName
+    object = SchemaObject(dbName)
+    dict = object.dump()
+    
+#*****************************************************
+def loadTo2_1():
+    from schema_2_1 import SchemaObject
+    global dict, dbName
+    object = SchemaObject(dbName)
+    object.load(dict)    
+    
+#*****************************************************
 def IdentifyDatabase():
     """This method will locate a database (.db) file and then load specific pieces of information
     into the appropriate variables for consumption by other modules"""
@@ -126,11 +140,23 @@ if __name__ == '__main__':
             
             # TODO: replace this with a 'chain' mechanism as per sqlmigratelite
             if(schemaVersionT == (2,0)):
-                # we're moving to version 1.1
+                # we're moving to version 2.0
                 if(storedVersionT == (1,0)):
                     print "updating from %s to %s" % (storedVersionT, schemaVersionT)
                     dumpFrom1_0()
                     loadTo2_0()
+            elif(schemaVersionT == (2,1)):
+                # we've moving to version 2.1
+                if(storedVersionT == (2,0)):
+                    print "updating from %s to %s" % (storedVersionT, schemaVersionT)
+                    dumpFrom2_0()
+                    loadTo2_1()
+                elif(storedVersionT == (1,0)):
+                    print "updating from %s to %s" % (storedVersionT, schemaVersionT)
+                    dumpFrom1_0()
+                    loadTo2_0()
+                    dumpFrom2_0()
+                    loadTo2_1()
         else:
             print "no migration required"
             
