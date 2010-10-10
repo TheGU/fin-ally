@@ -190,12 +190,13 @@ class Database():
 		majorList=[]
 		session = SessionObject()
 
+		localSortTerm = self.GetSortTerm(1)
+		
 		# grab all expenses
-		expenseList = session.query(Expense).all()
+		expenseList = session.query(Expense).order_by(localSortTerm).all()
 		
 		# iterate through expenses - packing into listxlist
 		for i in expenseList:
-			# print "DAN: ", i
 			# dereference these all the way down to the string
 			minorList.append(i.user.name) 
 			minorList.append(i.expenseType.description)
@@ -358,6 +359,32 @@ class Database():
 			
 		session.close()
 		return p
+	
+	def SetSortTerm(self, term, value):
+		session = SessionObject()
+		try:
+			st = session.query(DataSort).one()
+		except NoResultFound:
+			st = DataSort()
+			session.add(st)
+			session.commit()
+			st = session.query(DataSort).one()
+		
+		#TODO: support the other sort terms later
+		if(term == 1):
+			st.sortTerm1 = value
+			session.commit()
+		session.close()
+		
+	def GetSortTerm(self, term):
+		session = SessionObject()
+		try:
+			localTerm = session.query(DataSort).one().sortTerm1
+		except NoResultFound:
+			localTerm = "date"
+			
+		session.close()
+		return localTerm
 		
 	def GetVersion(self):
 		session = SessionObject()
