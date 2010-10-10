@@ -33,7 +33,7 @@
 import sys, re, os
 from utils import GenFileList, dPrint
 from datetime import date
-from schema_2_0 import *
+from schema_2_1 import *
 
 def IdentifyDatabase():
 	"""This method will locate a database (.db) file and then load specific pieces of information
@@ -111,6 +111,9 @@ class Database():
 		e1 = Expense(user=rhs, expenseType=makeup, amount='15.01', date=date.today(), description='makeup for mah FACE!')
 		e2 = Expense(user=dls, expenseType=clothing, amount='50.25', date=date.today(), description='clothing for mah parts.')
 		session.add_all([e1,e2])
+		session.commit()
+		ds = DataSort(sortTerm1='date')
+		session.add(ds)
 		session.commit()
 		v = Version(minor=dbVer[1], major=dbVer[0])
 		session.add(v)
