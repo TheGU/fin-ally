@@ -57,6 +57,8 @@ def dateMatch(dateString):
         localDate = datetime.strptime(dateString, "%m-%d-%Y")
     elif(re.match('\d{1,2}\/\d{1,2}\/\d{4}', dateString)):
         localDate = datetime.strptime(dateString, "%m/%d/%Y")
+    elif(re.match('\d{1,2}\.\d{1,2}\.\d{4}', dateString)):
+        localDate = datetime.strptime(dateString, "%m.%d.%Y")
     else:
         dateString = '1/1/0001'
         localDate = datetime.strptime(dateString, "%m/%d/%Y")
