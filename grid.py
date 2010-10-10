@@ -31,6 +31,7 @@ import wx.grid     as gridlib
 import cfg
 from datetime import date, datetime
 from database import *
+from utils import dateMatch
 
 #********************************************************************    
 class columnInfo:
@@ -296,7 +297,7 @@ class CustomDataTable(gridlib.PyGridTableBase):
             e.amount = float(value)
         if(3 == col):
             # strptime will pull a datetime object out of an explicitly formatting string
-            localDate = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+            localDate = dateMatch(value)
             e.date = localDate
         if(4 == col):
             e.description = value

@@ -28,6 +28,7 @@
 # along with Fn-ally.  If not, see <http://www.gnu.org/licenses/>.
 #********************************************************************
 import glob, os, sys, re, cfg
+from datetime import date, datetime
  
 #********************************************************************
 def GenFileList(searchString):
@@ -45,7 +46,23 @@ def GetCurrentDir():
 def dPrint(string):
     if cfg.DEBUG == 1:
         print string
-
+        
+#********************************************************************
+def dateMatch(dateString):
+    """Parses the dateString looking for a pre-defined date/time format. 
+    Returns a safe datetime object (Jan 1, 1A) if no match is found. 
+    Returns the datetime object corresponding to the dateString if a match
+    is found."""
+    if(re.match('\d{1.2}-\d{1,2}-\d{4}', dateString)):
+        localDate = datetime.strptime(dateString, "%m-%d-%Y")
+    elif(re.match('\d{1,2}\/\d{1,2}\/\d{4}', dateString)):
+        localDate = datetime.strptime(dateString, "%m/%d/%Y")
+    else:
+        dateString = '1/1/0001'
+        localDate = datetime.strptime(dateString, "%m/%d/%Y")
+        print "using default date - no match found"
+    return localDate
+    
 # Test main functionality
 if __name__ == '__main__':
     print "Please run Fin-ally by launching FINally.py!"
