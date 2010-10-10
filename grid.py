@@ -308,6 +308,7 @@ class CustomDataTable(gridlib.PyGridTableBase):
                                   e.expenseType_id, 
                                   self.localData[row][5])
         self.localData = self.database.GetAllExpenses()
+        self.parent.ForceRefresh()
             
     #***************************
     # OPTIONAL METHODS
