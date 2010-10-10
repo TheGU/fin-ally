@@ -99,12 +99,27 @@ class GraphicsGrid(gridlib.Grid):
         self.Bind(gridlib.EVT_GRID_CMD_LABEL_LEFT_CLICK, self.onColClick)
         
     def onColClick(self, event):
-        print "%s, %s" % (event.GetRow(), event.GetCol())
         if event.GetRow() == -1 and event.GetCol() != -1:
-            print "sorting by %s" % (colInfo.colLabels[event.GetCol()])
-            print self.tableBase.localData
+            localSortBy = colInfo.colLabels[event.GetCol()]
+            
+            # some col names match the database sort term, but some do not
+            if localSortBy == 'user':
+                self.database.SetSortTerm(1, 'user_id')
+            elif(localSortBy == 'type'):
+                self.database.SetSortTerm(1, 'expenseType_id')
+            elif(localSortBy == 'amount'):
+                self.database.SetSortTerm(1, 'amount')
+            elif(localSortBy == 'date'):
+                self.database.SetSortTerm(1, 'date')     
+            elif(localSortBy == 'desc'):
+                self.database.SetSortTerm(1, 'description')
+            elif(localSortBy == 'id'):
+                self.database.SetSortTerm(1, 'id')           
         else:
             print "you did not click a column"
+            
+        self.tableBase.localData = self.database.GetAllExpenses()
+        self.ForceRefresh()
         event.Skip()
         
     def onGridClick(self, event):
