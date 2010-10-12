@@ -119,7 +119,7 @@ class GraphicsGrid(gridlib.Grid):
         else:
             print "you did not click a column"
             
-        self.tableBase.localData = self.database.GetAllExpenses()
+        self.tableBase.UpdateData()
         self.ForceRefresh()
         event.Skip()
         
@@ -253,12 +253,12 @@ class CustomDataTable(gridlib.PyGridTableBase):
         # TODO: This needs to be cleaned up so that CustomDataTable does not have to
         # deal with so much data specification. This should be a single fcn call for
         # data
+        self.previousRowCnt = 0
+        self.previousColCnt = 0
+        
         self.localData = data
         self.database = Database()
         self.parent = parent
-        
-        self._rows = self.GetNumberRows()
-        self._cols = self.GetNumberCols()
         
         gridlib.PyGridTableBase.__init__(self)
     
@@ -308,31 +308,71 @@ class CustomDataTable(gridlib.PyGridTableBase):
                                   e.user_id, 
                                   e.expenseType_id, 
                                   self.localData[row][5])
-        self.localData = self.database.GetAllExpenses()
+        self.UpdateData()
         self.parent.ForceRefresh()
             
     #***************************
     # OPTIONAL METHODS
     #***************************
     
+    def UpdateData(self):
+        """This function performs the following actions: (1) pulls data from the 
+        database in the specified order and lying within the specific window criteria.
+        (2) checks to see if a resize attempt is necessary. (3) updates old col/row counts
+        (4) refreshes grid. This function is intended to be the single point of contact 
+        for performing a data refresh."""
+        
+        self.previousColCnt = self.GetNumberCols()
+        self.previousRowCnt = self.GetNumberRows()
+        self.localData = self.database.GetAllExpenses()
+        self.ResetView()
+    
+    def GetPrevNumberRows(self):
+        return self.previousRowCnt
+    
+    def GetPrevNumberCols(self):
+        return self.previousColCnt
+    
     def DeleteRow(self, row):
+        """This function determines the ID of the element being deleted, removed it from the 
+        database, informs the grid that a specific row is being removed, and then removes it from the 
+        localData data collection. This is faster than re-loading all the expenses."""
+        
         # remove from the database
         id = self.localData[row][5]
         self.database.DeleteExpense(id)
-        # inform the grid
-        self.GetView().ProcessTableMessage(gridlib.GridTableMessage(self,
-                                           gridlib.GRIDTABLE_NOTIFY_ROWS_DELETED, 
-                                           row, 1))
-        # remove from the local data   
-        self.localData.pop(row)
+        self.UpdateData()
     
-    def AddRow(self):
-        # reload all expenses
-        self.localData = self.database.GetAllExpenses()
-        #inform the grid
-        self.GetView().ProcessTableMessage(gridlib.GridTableMessage(self,
-                                           gridlib.GRIDTABLE_NOTIFY_ROWS_APPENDED,
-                                           1))
+    def ResetView(self):
+        """This function can be found at: http://wiki.wxpython.org/wxGrid 
+        It implements a generic resize mechanism that uses the previous and current
+        row and col count to determine if the grid should be trimmed or extended. It
+        refreshes grid data and resizes the scroll bars using a 'jiggle trick'"""
         
-    def GetColLabelValue(self, col):
-        return colInfo.colLabels[col]
+        self.GetView().BeginBatch()
+        for current, new, delmsg, addmsg in [(self.previousRowCnt, self.GetNumberRows(), gridlib.GRIDTABLE_NOTIFY_ROWS_DELETED, gridlib.GRIDTABLE_NOTIFY_ROWS_APPENDED),
+                                             (self.previousColCnt, self.GetNumberCols(), gridlib.GRIDTABLE_NOTIFY_COLS_DELETED, gridlib.GRIDTABLE_NOTIFY_COLS_APPENDED)]:
+            # determine if we've added or removed a row or col...
+            if new < current:
+                msg = gridlib.GridTableMessage(self,
+                                               delmsg,
+                                               new,    # position
+                                               current-new)
+                self.GetView().ProcessTableMessage(msg)
+            elif new > current:
+                msg = gridlib.GridTableMessage(self,
+                                               addmsg,
+                                               new-current)
+                self.GetView().ProcessTableMessage(msg)
+                        
+        # refresh all data
+        msg = gridlib.GridTableMessage(self, gridlib.GRIDTABLE_REQUEST_VIEW_GET_VALUES)
+        self.GetView().ProcessTableMessage(msg)
+        self.GetView().EndBatch()
+
+        # The scroll bars aren't resized (at least on windows)
+        # Jiggling the size of the window rescales the scrollbars
+        h,w = self.parent.GetSize()
+        self.parent.SetSize((h+1, w))
+        self.parent.SetSize((h, w))
+        self.parent.ForceRefresh()
