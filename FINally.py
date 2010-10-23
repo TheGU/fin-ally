@@ -285,8 +285,6 @@ class AppMainFrame(wx.Frame):
 		self.sb = CustomStatusBar(self)
 		self.SetStatusBar(self.sb)
 		
-		self.filterPanel = CustomFilterPanel(self)
-		
 		self.panel    = wx.Panel(self) # basically just a container for the notebook
 		self.notebook = wx.Notebook(self.panel, size=AppMainFrame.size)
 
@@ -297,11 +295,14 @@ class AppMainFrame(wx.Frame):
 
 		# populate and connect the menuBar
 		CreateMenu(self)
+		
+		# Create the filter panel
+		self.filterPanel = CustomFilterPanel(self.panel)
 
 		# arrange notebook windows in a simple box sizer
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		self.sizer.Add(self.notebook, 1, wx.EXPAND)
-		self.sizer.Add(self.filterPanel, 0)
+		self.sizer.Add(self.filterPanel, 0, wx.ALIGN_BOTTOM)
 		self.panel.SetSizer(self.sizer)
 		
 		# support for AUI content
