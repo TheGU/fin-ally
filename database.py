@@ -193,7 +193,6 @@ class Database():
 		localSortTerm = self.GetSortTerm(1)
 		
 		# grab all expenses
-		#expenseList = session.query(Expense).order_by(localSortTerm).all()
 		expenseList = session.query(Expense).filter(Expense.date >= date(2010,10,1)).order_by(localSortTerm).all()
 		
 		# iterate through expenses - packing into listxlist
