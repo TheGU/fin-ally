@@ -169,7 +169,6 @@ class NewExpenseDialog(wx.Dialog):
 		
 		# update grid with new row, format new row
 		self.parent.grid.tableBase.UpdateData()
-		self.parent.grid.FormatTableRow(self.parent.grid.tableBase.GetNumberRows()-1)
 		
 		self.Close()
 		

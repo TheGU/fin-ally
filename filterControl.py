@@ -27,12 +27,21 @@
 
 import wx
 import wx.calendar as callib
+from utils import monthDict
 
 class CustomFilterPanel(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent, -1)
         
         self.bufferSize = (15,15)
+        self.parent = parent
+        
+        # values populated by controls in this panel - consumed by the application
+        self.startMonth = "January"
+        self.monthRange = 1
+        self.searchTerm = ""
+        
+        self.filterTerms = FilterTerms()
         
         # create the month range static text
         self.monthRangeTextPanel = wx.Panel(self, -1)
@@ -64,12 +73,10 @@ class CustomFilterPanel(wx.Panel):
         self.startMonthPanel = wx.Panel(self, -1)
         self.startMonthControl = wx.ComboBox(self.startMonthPanel, 
                                              -1, 
-                                             "jan",     # default
+                                             list(monthDict.keys())[0],     # default
                                              (0, 30),   # pos 
                                              (160, -1), # size
-                                             ["jan", "feb", "mar", "apr",
-                                              "may", "jun", "jul", "aug",
-                                              "sep", "oct", "nov", "dec"],
+                                             list(monthDict.keys()),
                                              wx.CB_DROPDOWN)
         self.Bind(wx.EVT_COMBOBOX, self.OnMonthStart, self.startMonthControl)
         
@@ -118,9 +125,35 @@ class CustomFilterPanel(wx.Panel):
         event.Skip()
         
     def OnMonthStart(self, event):
-        print "selected month %s" % (self.startMonthControl.GetValue())
+        self.filterTerms.SetStartMonth(monthDict[self.startMonthControl.GetValue()])
         event.Skip()
         
     def OnMonthRange(self, event):
-        print "selected month range of %s months" % (self.slider.GetValue())
+        self.filterTerms.SetMonthRange(self.slider.GetValue())
         event.Skip()
+    
+class FilterTerms():
+    """Class containing filter terms for global use. Methods 
+    include getters and setters for all filter methods."""
+    
+    startMonth = 1
+    monthRange = 1
+    searchTerms = ""
+    
+    def SetStartMonth(self, month):
+        FilterTerms.startMonth = month
+
+    def GetStartMonth(self):
+        return FilterTerms.startMonth
+    
+    def SetMonthRange(self, range):
+        FilterTerms.monthRange = range
+        
+    def GetMonthRange(self):
+        return FilterTerms.monthRange
+
+    def SetSearchTerms(self, terms):
+        FilterTerms.searchTerms = terms
+        
+    def GetSearchTerms(self):
+        return FilterTerms.searchTerms

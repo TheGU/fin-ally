@@ -33,6 +33,7 @@
 import sys, re, os
 from utils import GenFileList, dPrint
 from datetime import date
+from filterControl import FilterTerms
 from schema_2_1 import *
 
 def IdentifyDatabase():
@@ -191,9 +192,18 @@ class Database():
 		session = SessionObject()
 
 		localSortTerm = self.GetSortTerm(1)
+		filters = FilterTerms()
+		
+		# generate date objects for start and end dates
+		startDate = date(2010, filters.GetStartMonth(), 1)
+		temp = filters.GetStartMonth() + filters.GetMonthRange()
+		endDate   = date(2010, temp, 1)
 		
 		# grab all expenses
-		expenseList = session.query(Expense).filter(Expense.date >= date(2010,10,1)).order_by(localSortTerm).all()
+		expenseList = session.query(Expense).filter(Expense.date >= startDate). \
+											 filter(Expense.date < endDate).    \
+											 order_by(localSortTerm).all()
+		print expenseList
 		
 		# iterate through expenses - packing into listxlist
 		for i in expenseList:
