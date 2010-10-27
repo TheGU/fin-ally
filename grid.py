@@ -82,11 +82,9 @@ class GraphicsGrid(gridlib.Grid):
         self.SetTable(self.tableBase)         # set the grid table
         self.SetColFormatFloat(2,-1,2)        # formats the monetary entries correctly
         self.AutoSize()         # auto-sizing here ensures that scrollbars will always be present
-                                # during window resizing
-        
-        # Make certain cols read only
-        self.rowAttr = gridlib.GridCellAttr()
-        self.InitialTableFormat()
+                                # during window resizing     
+                                
+        self.FormatTableRows()                         
 
         # bind editor creation to an event so we can 'catch' unique editors
         self.Bind(gridlib.EVT_GRID_EDITOR_CREATED,
@@ -200,28 +198,12 @@ class GraphicsGrid(gridlib.Grid):
         value       = self.comboBox.GetValue()
         selection = self.comboBox.GetSelection()
         pass
-        
-    def InitialTableFormat(self):
-        """Performs initial table configuration, """
-
-        # create read-only columns        
-        self.rowAttr.SetReadOnly(1)
-        for i in range(len(colInfo.colRO)):
-            if colInfo.colRO[i] == 1: 
-                self.SetColAttr(i,self.rowAttr) 
-        self.rowAttr.IncRef() 
-        
-        # apply editors and row height to each row
-        for i in range(self.GetNumberRows()):
-            self.FormatTableRow(i)
+    
+    def FormatTableRows(self):
+        for i in range(self.tableBase.GetNumberRows()):
+            self._FormatTableRow(i)
             
-        # format column width
-#        tmp = 0
-#        for i in colInfo.colWidth:
-#            self.SetColSize(tmp,i)
-#            tmp += 1
-            
-    def FormatTableRow(self, row):
+    def _FormatTableRow(self, row):
         """Formats a single row entry - editor types, height, color, etc..."""
         # create 'drop down' style choice editors for two columns
         userChoiceEditor = gridlib.GridCellChoiceEditor([], allowOthers = False)
@@ -250,6 +232,8 @@ class CustomDataTable(gridlib.PyGridTableBase):
     dataTypes = colInfo.colType # used for custom renderers
     
     def __init__(self, parent, data):
+        gridlib.PyGridTableBase.__init__(self)
+        
         # TODO: This needs to be cleaned up so that CustomDataTable does not have to
         # deal with so much data specification. This should be a single fcn call for
         # data
@@ -259,8 +243,7 @@ class CustomDataTable(gridlib.PyGridTableBase):
         self.localData = data
         self.database = Database()
         self.parent = parent
-        
-        gridlib.PyGridTableBase.__init__(self)
+        self.rowAttr = gridlib.GridCellAttr()
     
     #***************************
     # REQUIRED METHODS
@@ -374,8 +357,21 @@ class CustomDataTable(gridlib.PyGridTableBase):
         self.GetView().EndBatch()
         
         # apply correct formatting to each row after update
-        for i in range(self.GetNumberRows()):
-            self.parent.FormatTableRow(i)
+        self.parent.FormatTableRows()
+            
+        if self.GetNumberRows():
+            # create read-only columns        
+            self.rowAttr.SetReadOnly(1)
+            for i in range(len(colInfo.colRO)):
+                if colInfo.colRO[i] == 1: 
+                    self.SetColAttr(i,self.rowAttr) 
+            self.rowAttr.IncRef() 
+                
+            # format column width
+            tmp = 0
+            for i in colInfo.colWidth:
+                self.SetColSize(tmp,i)
+                tmp += 1
 
         # The scroll bars aren't resized (at least on windows)
         # Jiggling the size of the window rescales the scrollbars
