@@ -216,10 +216,10 @@ class GraphicsGrid(gridlib.Grid):
             self.FormatTableRow(i)
             
         # format column width
-        tmp = 0
-        for i in colInfo.colWidth:
-            self.SetColSize(tmp,i)
-            tmp += 1
+#        tmp = 0
+#        for i in colInfo.colWidth:
+#            self.SetColSize(tmp,i)
+#            tmp += 1
             
     def FormatTableRow(self, row):
         """Formats a single row entry - editor types, height, color, etc..."""
@@ -270,7 +270,10 @@ class CustomDataTable(gridlib.PyGridTableBase):
         return len(self.localData)
     
     def GetNumberCols(self):
-        return len(self.localData[0])
+        if self.GetNumberRows():
+            return len(self.localData[0])
+        else:
+            return 0
     
     def GetValue(self, row, col):
         return self.localData[row][col]
@@ -325,7 +328,7 @@ class CustomDataTable(gridlib.PyGridTableBase):
         self.previousColCnt = self.GetNumberCols()
         self.previousRowCnt = self.GetNumberRows()
         self.localData = self.database.GetAllExpenses()
-        self.ResetView()
+        self.__ResetView()
     
     def GetPrevNumberRows(self):
         return self.previousRowCnt
@@ -343,7 +346,7 @@ class CustomDataTable(gridlib.PyGridTableBase):
         self.database.DeleteExpense(id)
         self.UpdateData()
     
-    def ResetView(self):
+    def __ResetView(self):
         """This function can be found at: http://wiki.wxpython.org/wxGrid 
         It implements a generic resize mechanism that uses the previous and current
         row and col count to determine if the grid should be trimmed or extended. It
@@ -369,6 +372,10 @@ class CustomDataTable(gridlib.PyGridTableBase):
         msg = gridlib.GridTableMessage(self, gridlib.GRIDTABLE_REQUEST_VIEW_GET_VALUES)
         self.GetView().ProcessTableMessage(msg)
         self.GetView().EndBatch()
+        
+        # apply correct formatting to each row after update
+        for i in range(self.GetNumberRows()):
+            self.parent.FormatTableRow(i)
 
         # The scroll bars aren't resized (at least on windows)
         # Jiggling the size of the window rescales the scrollbars
