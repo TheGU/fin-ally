@@ -83,8 +83,10 @@ class GraphicsGrid(gridlib.Grid):
         self.SetColFormatFloat(2,-1,2)        # formats the monetary entries correctly
         self.AutoSize()         # auto-sizing here ensures that scrollbars will always be present
                                 # during window resizing     
-                                
-        self.FormatTableRows()                         
+                             
+        self.rowAttr = gridlib.GridCellAttr()                               
+        self.FormatTableRows()  
+        self.FormatTableCols()                       
 
         # bind editor creation to an event so we can 'catch' unique editors
         self.Bind(gridlib.EVT_GRID_EDITOR_CREATED,
@@ -199,6 +201,21 @@ class GraphicsGrid(gridlib.Grid):
         selection = self.comboBox.GetSelection()
         pass
     
+    def FormatTableCols(self):
+        if self.tableBase.GetNumberRows():
+            # create read-only columns        
+            self.rowAttr.SetReadOnly(1)
+            for i in range(len(colInfo.colRO)):
+                if colInfo.colRO[i] == 1: 
+                    self.SetColAttr(i,self.rowAttr) 
+            self.rowAttr.IncRef() 
+                
+            # format column width
+            tmp = 0
+            for i in colInfo.colWidth:
+                self.SetColSize(tmp,i)
+                tmp += 1
+    
     def FormatTableRows(self):
         for i in range(self.tableBase.GetNumberRows()):
             self._FormatTableRow(i)
@@ -243,7 +260,6 @@ class CustomDataTable(gridlib.PyGridTableBase):
         self.localData = data
         self.database = Database()
         self.parent = parent
-        self.rowAttr = gridlib.GridCellAttr()
     
     #***************************
     # REQUIRED METHODS
@@ -358,20 +374,7 @@ class CustomDataTable(gridlib.PyGridTableBase):
         
         # apply correct formatting to each row after update
         self.parent.FormatTableRows()
-            
-        if self.GetNumberRows():
-            # create read-only columns        
-            self.rowAttr.SetReadOnly(1)
-            for i in range(len(colInfo.colRO)):
-                if colInfo.colRO[i] == 1: 
-                    self.SetColAttr(i,self.rowAttr) 
-            self.rowAttr.IncRef() 
-                
-            # format column width
-            tmp = 0
-            for i in colInfo.colWidth:
-                self.SetColSize(tmp,i)
-                tmp += 1
+        self.parent.FormatTableCols()
 
         # The scroll bars aren't resized (at least on windows)
         # Jiggling the size of the window rescales the scrollbars
@@ -379,3 +382,6 @@ class CustomDataTable(gridlib.PyGridTableBase):
         self.parent.SetSize((h+1, w))
         self.parent.SetSize((h, w))
         self.parent.ForceRefresh()
+        
+    def GetColLabelValue(self, col):
+        return colInfo.colLabels[col]
