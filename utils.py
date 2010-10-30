@@ -30,6 +30,8 @@
 import glob, os, sys, re, cfg
 from datetime import date, datetime
 
+BLANK_TERM = "[BLANK]"
+
 # global month dictionary
 monthDict = {"January": 1,
              "February": 2,

@@ -28,7 +28,7 @@
 import wx
 import wx.calendar as callib
 import wx.grid     as gridlib
-from utils import monthDict
+from utils import monthDict, BLANK_TERM
 from grid import CustomDataTable
 from database import FilterTerms, Database
 from datetime import datetime
@@ -131,11 +131,20 @@ class CustomFilterPanel(wx.Panel):
         self.SetSizer(self.hSizer)
         
     def OnSearch(self, event):
-        print "searched on %s" % (self.search.GetValue())
+        localSearch = self.search.GetValue()
+        
+        # replace null match with "match anything"
+        if(localSearch == ""):
+            localSearch = BLANK_TERM
+            
+        self.filterTerms.SetSearchTerms(localSearch)
+        self.dataTable.UpdateData()
         event.Skip()
         
     def OnCancel(self, event):
         self.search.SetValue("")
+        self.filterTerms.SetSearchTerms(BLANK_TERM)
+        self.dataTable.UpdateData()
         event.Skip()
         
     def OnMonthStart(self, event):

@@ -31,7 +31,7 @@
 #********************************************************************
 
 import sys, re, os
-from utils import GenFileList, dPrint
+from utils import GenFileList, dPrint, BLANK_TERM
 from datetime import date
 from schema_2_1 import *
 
@@ -79,25 +79,56 @@ class FilterTerms():
 	
 	startMonth = 1
 	monthRange = 1
-	searchTerms = ""
+	searchTerms = "[BLANK]"
 	
 	def SetStartMonth(self, month):
-		FilterTerms.startMonth = month
+		self.__class__.startMonth = month
 	
 	def GetStartMonth(self):
-		return FilterTerms.startMonth
+		return self.__class__.startMonth
 	
 	def SetMonthRange(self, range):
-		FilterTerms.monthRange = range
+		self.__class__.monthRange = range
 
 	def GetMonthRange(self):
-		return FilterTerms.monthRange
+		return self.__class__.monthRange
 	
 	def SetSearchTerms(self, terms):
-		FilterTerms.searchTerms = terms
+		self.__class__.searchTerms = terms
 
 	def GetSearchTerms(self):
-		return FilterTerms.searchTerms
+		return self.__class__.searchTerms
+
+def RegexMatch():
+	""""""
+	searchString = FilterTerms().GetSearchTerms()
+	
+	if(searchString != BLANK_TERM):
+		# replace + with literal version
+		pattern = re.compile('\+')
+		searchString = pattern.sub('\+', searchString)
+		
+		pattern = re.compile('\(')
+		searchString = pattern.sub('\(', searchString)
+		
+		pattern = re.compile('\)')
+		searchString = pattern.sub('\)', searchString)
+		
+		pattern = re.compile('\/')
+		searchString = pattern.sub('\/', searchString)
+		
+		pattern = re.compile('\!')
+		searchString = pattern.sub('\!', searchString)
+		
+		pattern = re.compile('\?')
+		searchString = pattern.sub('\?', searchString)
+		
+		pattern = re.compile('\.')
+		searchString = pattern.sub('\.', searchString)
+	else:
+		searchString = "."
+
+	return searchString
 
 class Database():
 	"""The Database object contains database meta data such as name, size, and location, 
@@ -233,30 +264,24 @@ class Database():
 		expenseList = session.query(Expense).filter(Expense.date >= startDate). \
 											 filter(Expense.date <= endDate).    \
 											 order_by(localSortTerm).all()
+			
+		# compile regex match terms
+		matchString = RegexMatch()
 											 
 		# iterate through expenses - packing into listxlist
 		for i in expenseList:
-			# dereference these all the way down to the string
-			minorList.append(i.user.name) 
-			minorList.append(i.expenseType.description)
-			
-			# convert these into strings
-			minorList.append(str(i.amount))
-			minorList.append(str(i.date))
-			
-			# this is just normal
-			minorList.append(i.description)
-			minorList.append(i.id)
-			
-			# append the 'delete' column
-			minorList.append("delete")
-			
-			# push minorList into majorList 
-			majorList.append(minorList)
-			minorList=[]
+			if(re.search(matchString, i.description)):
+				minorList = [i.user.name, 
+							i.expenseType.description, 
+							str(i.amount), 
+							str(i.date), 
+							i.description, 
+							i.id, 
+							"delete"]
+				majorList.append(minorList)
 			
 		session.close()
-			
+		
 		return majorList		
 	
 	def GetUserList(self):
