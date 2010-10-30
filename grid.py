@@ -30,7 +30,7 @@ import wx
 import wx.grid     as gridlib
 import cfg
 from datetime import date, datetime
-from database import *
+from database import Database
 from utils import dateMatch
 
 #********************************************************************    
@@ -77,7 +77,7 @@ class GraphicsGrid(gridlib.Grid):
         
         # pull some data out of the database and push it into the tableBase
         self.database = Database()
-        self.tableBase = CustomDataTable(self,self.database.GetAllExpenses())    # define the base
+        self.tableBase = CustomDataTable(self, self.database.GetAllExpenses())    # define the base
         
         self.SetTable(self.tableBase)         # set the grid table
         self.SetColFormatFloat(2,-1,2)        # formats the monetary entries correctly
@@ -248,16 +248,20 @@ class CustomDataTable(gridlib.PyGridTableBase):
     
     dataTypes = colInfo.colType # used for custom renderers
     
+    previousRowCnt = 0
+    previousColCnt = 0
+    localData = []
+    
     def __init__(self, parent, data):
         gridlib.PyGridTableBase.__init__(self)
         
         # TODO: This needs to be cleaned up so that CustomDataTable does not have to
         # deal with so much data specification. This should be a single fcn call for
         # data
-        self.previousRowCnt = 0
-        self.previousColCnt = 0
+        self.__class__.previousRowCnt = 0
+        self.__class__.previousColCnt = 0
         
-        self.localData = data
+        self.__class__.localData = data
         self.database = Database()
         self.parent = parent
     
@@ -266,20 +270,20 @@ class CustomDataTable(gridlib.PyGridTableBase):
     #***************************
         
     def GetNumberRows(self):
-        return len(self.localData)
+        return len(self.__class__.localData)
     
     def GetNumberCols(self):
         if self.GetNumberRows():
-            return len(self.localData[0])
+            return len(self.__class__.localData[0])
         else:
             return 0
     
     def GetValue(self, row, col):
-        return self.localData[row][col]
+        return self.__class__.localData[row][col]
     
     def IsEmptyCell(self, row, col):
         try:
-            if self.localData[row][col] != "":
+            if self.__class__.localData[row][col] != "":
                 return True
             else:
                 return False
@@ -288,7 +292,7 @@ class CustomDataTable(gridlib.PyGridTableBase):
         
     def SetValue(self, row, col, value):
         # determine the record being modified using the primary key (located in col 5)
-        e = self.database.GetExpense(self.localData[row][5])
+        e = self.database.GetExpense(self.__class__.localData[row][5])
         
         # determine which value is being set
         if(0 == col):
@@ -309,9 +313,8 @@ class CustomDataTable(gridlib.PyGridTableBase):
                                   e.date,
                                   e.user_id, 
                                   e.expenseType_id, 
-                                  self.localData[row][5])
+                                  self.__class__.localData[row][5])
         self.UpdateData()
-        self.parent.ForceRefresh()
             
     #***************************
     # OPTIONAL METHODS
@@ -324,16 +327,16 @@ class CustomDataTable(gridlib.PyGridTableBase):
         (4) refreshes grid. This function is intended to be the single point of contact 
         for performing a data refresh."""
         
-        self.previousColCnt = self.GetNumberCols()
-        self.previousRowCnt = self.GetNumberRows()
-        self.localData = self.database.GetAllExpenses()
+        self.__class__.previousColCnt = self.GetNumberCols()
+        self.__class__.previousRowCnt = self.GetNumberRows()
+        self.__class__.localData = self.database.GetAllExpenses()
         self.__ResetView()
     
     def GetPrevNumberRows(self):
-        return self.previousRowCnt
+        return self.__class__.previousRowCnt
     
     def GetPrevNumberCols(self):
-        return self.previousColCnt
+        return self.__class__.previousColCnt
     
     def DeleteRow(self, row):
         """This function determines the ID of the element being deleted, removed it from the 
@@ -341,7 +344,7 @@ class CustomDataTable(gridlib.PyGridTableBase):
         localData data collection. This is faster than re-loading all the expenses."""
         
         # remove from the database
-        id = self.localData[row][5]
+        id = self.__class__.localData[row][5]
         self.database.DeleteExpense(id)
         self.UpdateData()
     
@@ -351,9 +354,10 @@ class CustomDataTable(gridlib.PyGridTableBase):
         row and col count to determine if the grid should be trimmed or extended. It
         refreshes grid data and resizes the scroll bars using a 'jiggle trick'"""
         
+        print self.GetView()
         self.GetView().BeginBatch()
-        for current, new, delmsg, addmsg in [(self.previousRowCnt, self.GetNumberRows(), gridlib.GRIDTABLE_NOTIFY_ROWS_DELETED, gridlib.GRIDTABLE_NOTIFY_ROWS_APPENDED),
-                                             (self.previousColCnt, self.GetNumberCols(), gridlib.GRIDTABLE_NOTIFY_COLS_DELETED, gridlib.GRIDTABLE_NOTIFY_COLS_APPENDED)]:
+        for current, new, delmsg, addmsg in [(self.__class__.previousRowCnt, self.GetNumberRows(), gridlib.GRIDTABLE_NOTIFY_ROWS_DELETED, gridlib.GRIDTABLE_NOTIFY_ROWS_APPENDED),
+                                             (self.__class__.previousColCnt, self.GetNumberCols(), gridlib.GRIDTABLE_NOTIFY_COLS_DELETED, gridlib.GRIDTABLE_NOTIFY_COLS_APPENDED)]:
             # determine if we've added or removed a row or col...
             if new < current:
                 msg = gridlib.GridTableMessage(self,
