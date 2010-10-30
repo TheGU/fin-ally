@@ -33,7 +33,6 @@
 import sys, re, os
 from utils import GenFileList, dPrint
 from datetime import date
-from filterControl import FilterTerms
 from schema_2_1 import *
 
 def IdentifyDatabase():
@@ -74,6 +73,32 @@ def IdentifyDatabase():
 #********************************************************************
 #							CLASSES
 #********************************************************************
+class FilterTerms():
+    """Class containing filter terms for global use. Methods 
+    include getters and setters for all filter methods."""
+    
+    startMonth = 1
+    monthRange = 1
+    searchTerms = ""
+    
+    def SetStartMonth(self, month):
+        FilterTerms.startMonth = month
+
+    def GetStartMonth(self):
+        return FilterTerms.startMonth
+    
+    def SetMonthRange(self, range):
+        FilterTerms.monthRange = range
+        
+    def GetMonthRange(self):
+        return FilterTerms.monthRange
+
+    def SetSearchTerms(self, terms):
+        FilterTerms.searchTerms = terms
+        
+    def GetSearchTerms(self):
+        return FilterTerms.searchTerms
+
 class Database():
 	"""The Database object contains database meta data such as name, size, and location, 
 	as well as methods for locating a database, arbitrating between several databases, 

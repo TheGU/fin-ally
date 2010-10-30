@@ -27,14 +27,19 @@
 
 import wx
 import wx.calendar as callib
+import wx.grid     as gridlib
 from utils import monthDict
+from grid import CustomDataTable
+from database import FilterTerms, Database
 
 class CustomFilterPanel(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent, -1)
         
+        self.database = Database()
         self.bufferSize = (15,15)
         self.parent = parent
+        self.dataTable = CustomDataTable(gridlib.Grid, self.database.GetAllExpenses())
         
         # values populated by controls in this panel - consumed by the application
         self.startMonth = "January"
@@ -126,34 +131,10 @@ class CustomFilterPanel(wx.Panel):
         
     def OnMonthStart(self, event):
         self.filterTerms.SetStartMonth(monthDict[self.startMonthControl.GetValue()])
+        self.dataTable.UpdateData()
         event.Skip()
         
     def OnMonthRange(self, event):
         self.filterTerms.SetMonthRange(self.slider.GetValue())
+        self.dataTable.UpdateData()
         event.Skip()
-    
-class FilterTerms():
-    """Class containing filter terms for global use. Methods 
-    include getters and setters for all filter methods."""
-    
-    startMonth = 1
-    monthRange = 1
-    searchTerms = ""
-    
-    def SetStartMonth(self, month):
-        FilterTerms.startMonth = month
-
-    def GetStartMonth(self):
-        return FilterTerms.startMonth
-    
-    def SetMonthRange(self, range):
-        FilterTerms.monthRange = range
-        
-    def GetMonthRange(self):
-        return FilterTerms.monthRange
-
-    def SetSearchTerms(self, terms):
-        FilterTerms.searchTerms = terms
-        
-    def GetSearchTerms(self):
-        return FilterTerms.searchTerms

@@ -30,6 +30,7 @@ import wx
 import wx.grid     as gridlib
 import wx.calendar as callib
 import cfg
+import os
 from datetime import date, datetime
 from database import *
 from wx._core import WXK_F1, WXK_F2
