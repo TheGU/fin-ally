@@ -31,6 +31,7 @@ import wx.grid     as gridlib
 from utils import monthDict
 from grid import CustomDataTable
 from database import FilterTerms, Database
+from datetime import datetime
 
 class CustomFilterPanel(wx.Panel):
     def __init__(self, parent):
@@ -76,9 +77,17 @@ class CustomFilterPanel(wx.Panel):
         
         # create the start month control
         self.startMonthPanel = wx.Panel(self, -1)
+        
+        # this comboBox is based on monthDict, so find the current month key
+        # in monthDict and use as default
+        now = datetime.now()
+        for key in monthDict:
+            if(now.month == monthDict[key]):
+                defaultMonth = key
+        
         self.startMonthControl = wx.ComboBox(self.startMonthPanel, 
                                              -1, 
-                                             list(monthDict.keys())[0],     # default
+                                             defaultMonth,     # default
                                              (0, 30),   # pos 
                                              (160, -1), # size
                                              list(monthDict.keys()),
