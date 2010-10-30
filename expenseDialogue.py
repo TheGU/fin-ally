@@ -34,21 +34,35 @@ from datetime import date, datetime
 from database import *
     
 class NewExpenseDialog(wx.Dialog):
-    def __init__(self, *args, **kwds):
+    def __init__(self, parent, *args, **kwds):       
         # begin wxGlade: NewExpenseDialog.__init__
         kwds["style"] = wx.DEFAULT_DIALOG_STYLE
-        wx.Dialog.__init__(self, *args, **kwds)
+        wx.Dialog.__init__(self, parent, *args, **kwds)
+        
+        #**** ADDED ****
+        self.database       = Database()
+        self.userList        = self.database.GetSimpleUserList()
+        self.typeList        = self.database.GetExpenseTypeList()        
+        self.prefs            = self.database.GetPrefs()
+        self.parent         = parent
+        #**** END ADD ****
+        
         self.CalSizer_staticbox = wx.StaticBox(self, -1, "Expense Date")
         self.ExpenseStaticSizer_staticbox = wx.StaticBox(self, -1, "Expense Info")
         self.UserSizer_staticbox = wx.StaticBox(self, -1, "User")
-        self.userControl = wx.ComboBox(self, -1, choices=[], style=wx.CB_DROPDOWN|wx.CB_DROPDOWN)
-        self.calendarControl = callib.CalendarCtrl(self, -1)
+        #**** MOD ****
+        self.userControl = wx.ComboBox(self, -1, value=str(self.prefs.defUser_id), choices=self.userList, style=wx.CB_DROPDOWN|wx.CB_DROPDOWN)
+        #**** MOD ****
+        self.calendarControl = callib.CalendarCtrl(self, -1, wx.DateTime_Now())
         self.amountText = wx.StaticText(self, -1, "amount")
-        self.amountControl = wx.TextCtrl(self, -1, "")
+        #**** MOD ****
+        self.amountControl = wx.TextCtrl(self, -1, str(self.prefs.defAmount))
         self.expenseTypeText = wx.StaticText(self, -1, "expense type")
-        self.expenseTypeControl = wx.ComboBox(self, -1, choices=[], style=wx.CB_DROPDOWN|wx.CB_DROPDOWN)
+        #**** MOD ****
+        self.expenseTypeControl = wx.ComboBox(self, -1, value=str(self.prefs.defExpenseType_id), choices=self.typeList, style=wx.CB_DROPDOWN|wx.CB_DROPDOWN)
         self.descriptionText = wx.StaticText(self, -1, "description")
-        self.descriptionControl = wx.TextCtrl(self, -1, "")
+        #**** MOD ****
+        self.descriptionControl = wx.TextCtrl(self, -1, "item description")
         self.okButton = wx.Button(self, wx.ID_OK, "")
         self.cancelButton = wx.Button(self, wx.ID_CANCEL, "")
     
@@ -65,12 +79,12 @@ class NewExpenseDialog(wx.Dialog):
     
     def __set_properties(self):
         # begin wxGlade: NewExpenseDialog.__set_properties
-        self.SetTitle("dialog_2")
-        self.amountText.SetMinSize((50, -1))
+        self.SetTitle("New Expense Dialog")
+        self.amountText.SetMinSize((60, -1))
         self.amountControl.SetMinSize((150, -1))
-        self.expenseTypeText.SetMinSize((50, -1))
+        self.expenseTypeText.SetMinSize((60, -1))
         self.expenseTypeControl.SetMinSize((150, -1))
-        self.descriptionText.SetMinSize((50, -1))
+        self.descriptionText.SetMinSize((60, -1))
         self.descriptionControl.SetMinSize((150, -1))
         self.okButton.SetDefault()
         # end wxGlade
@@ -108,29 +122,58 @@ class NewExpenseDialog(wx.Dialog):
         # end wxGlade
     
     def OnUserSelect(self, event): # wxGlade: NewExpenseDialog.<event_handler>
-        print "Event handler `OnUserSelect' not implemented"
         event.Skip()
     
     def OnCalSelChanged(self, event): # wxGlade: NewExpenseDialog.<event_handler>
-        print "Event handler `OnCalSelChanged' not implemented"
         event.Skip()
     
     def OnValueEntry(self, event): # wxGlade: NewExpenseDialog.<event_handler>
-        print "Event handler `OnValueEntry' not implemented"
         event.Skip()
     
     def OnTypeSelect(self, event): # wxGlade: NewExpenseDialog.<event_handler>
-        print "Event handler `OnTypeSelect' not implemented"
         event.Skip()
     
     def OnDescEntry(self, event): # wxGlade: NewExpenseDialog.<event_handler>
-        print "Event handler `OnDescEntry' not implemented"
         event.Skip()
     
     def OnOkButton(self, event): # wxGlade: NewExpenseDialog.<event_handler>
-        print "Event handler `OnOkButton' not implemented"
-        event.Skip()
+        """respond to the user clicking 'enter!' by pushing the local objects into the database 
+        layer"""
+        
+        # it's critical to create a new expense object here to avoid overwriting
+        # an existing expense object. However, we will *not* create user
+        # or expenseType because calls below create a new expense
+        localExpenseObject = Expense()
+        
+        #
+        # NOTE: operator selects both User and ExpenseType by selecting a string.
+        # This string is used to look up the existing database objects, which are
+        # fed to the overall Expense object for creation. These calls also create
+        # new User and ExpenseType objects as well as populate them.
+        # 
+        # TODO: this needs to be smarter: (A) what if the string doesn't match an existing
+        # object? (B) What if the user wants to enter a new object?
+        #
+
+        # configure amount, description, and date
+        amount = self.amountControl.GetValue()
+        # place something here to avoid math errors
+        if(amount == ""):
+            amount = 0.00
+        
+        # consolidate objects into one expense type and push into database
+        self.database.CreateExpense(float(amount),
+                                    self.descriptionControl.GetValue(),
+                                    self.calendarControl.PyGetDate(),
+                                    self.userControl.GetValue(),
+                                    self.expenseTypeControl.GetValue())
+        
+        # update grid with new row, format new row
+        self.parent.grid.tableBase.UpdateData()
+        
+        self.Close()
     
     def onCancelButton(self, event): # wxGlade: NewExpenseDialog.<event_handler>
-        print "Event handler `onCancelButton' not implemented"
+        #**** MOD ****
+        self.Destroy()
         event.Skip()
