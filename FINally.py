@@ -30,6 +30,7 @@ import wx
 import wx.grid     as gridlib
 import wx.calendar as callib
 import cfg
+import os
 from datetime import date, datetime
 from database import *
 from wx._core import WXK_F1, WXK_F2
@@ -38,6 +39,7 @@ from grid import GraphicsGrid
 from statusBar import CustomStatusBar
 from menuBar import CreateMenu
 from prefs import EditPreferences
+from filterControl import CustomFilterPanel
 
 try:
 	from agw import flatmenu as FM
@@ -167,8 +169,7 @@ class NewExpenseDialog(wx.Dialog):
                                     self.typeSelect.GetValue())
 		
 		# update grid with new row, format new row
-		self.parent.grid.tableBase.AddRow()
-		self.parent.grid.FormatTableRow(self.parent.grid.tableBase.GetNumberRows()-1)
+		self.parent.grid.tableBase.UpdateData()
 		
 		self.Close()
 		
@@ -235,40 +236,6 @@ class GraphicsPage(wx.Panel):
 			dia.ShowModal()
 			dia.Destroy()
 		event.Skip()
-		
-	def OnEnterClick(self, evt):
-		"""respond to the user clicking 'enter!' by pushing the local objects into the database 
-		layer"""
-		
-		# it's critical to create new database objects here
-		localUserObject    = User()
-		localTypeObject    = ExpenseType()
-		localExpenseObject = Expense()
-		
-		#
-		# NOTE: operator selects both User and ExpenseType by selecting a string.
-		# This string is used to look up the existing database objects, which are
-		# fed to the overall Expense object for creation. 
-		# 
-		# TODO: this needs to be smarter: (A) what if the string doesn't match an existing
-		# object? (B) What if the user wants to enter a new object?
-		#
-		localUserObject = User.query.filter_by(name=self.userSelect.GetValue()).one()
-		localTypeObject = ExpenseType.query.filter_by(description=self.typeSelect.GetValue()).one()
-		# configure amount, description, and date
-		amount = self.valueEntry.GetValue()
-		# place something here to avoid math errors
-		if(amount == ""):
-			amount = 0.00
-		localExpenseObject.amount=float(amount)
-		localExpenseObject.description=self.descEntry.GetValue()
-		localExpenseObject.date=self.cal.PyGetDate()
-		
-		# consolidate objects into one expense type
-		localExpenseObject.user 	   = localUserObject
-		localExpenseObject.expenseType = localTypeObject
-		self.database.CreateExpense(localExpenseObject)
-		self.grid.tableBase.AddRow()
 	
     #***************************
 	# NOT REQUIRED AT THIS TIME
@@ -328,10 +295,14 @@ class AppMainFrame(wx.Frame):
 
 		# populate and connect the menuBar
 		CreateMenu(self)
+		
+		# Create the filter panel
+		self.filterPanel = CustomFilterPanel(self.panel)
 
 		# arrange notebook windows in a simple box sizer
-		self.sizer = wx.BoxSizer()
+		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		self.sizer.Add(self.notebook, 1, wx.EXPAND)
+		self.sizer.Add(self.filterPanel, 0, wx.ALIGN_BOTTOM)
 		self.panel.SetSizer(self.sizer)
 		
 		# support for AUI content
