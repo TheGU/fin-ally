@@ -39,7 +39,7 @@ class CustomFilterPanel(wx.Panel):
         self.database = Database()
         self.bufferSize = (15,15)
         self.parent = parent
-        self.dataTable = CustomDataTable(gridlib.Grid, self.database.GetAllExpenses())
+        self.dataTable = CustomDataTable(gridlib.Grid)
         
         # values populated by controls in this panel - consumed by the application
         self.startMonth = "January"
