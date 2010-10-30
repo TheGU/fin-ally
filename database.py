@@ -73,6 +73,32 @@ def IdentifyDatabase():
 #********************************************************************
 #							CLASSES
 #********************************************************************
+class FilterTerms():
+	"""Class containing filter terms for global use. Methods 
+	include getters and setters for all filter methods."""
+	
+	startMonth = 1
+	monthRange = 1
+	searchTerms = ""
+	
+	def SetStartMonth(self, month):
+		FilterTerms.startMonth = month
+	
+	def GetStartMonth(self):
+		return FilterTerms.startMonth
+	
+	def SetMonthRange(self, range):
+		FilterTerms.monthRange = range
+
+	def GetMonthRange(self):
+		return FilterTerms.monthRange
+	
+	def SetSearchTerms(self, terms):
+		FilterTerms.searchTerms = terms
+
+	def GetSearchTerms(self):
+		return FilterTerms.searchTerms
+
 class Database():
 	"""The Database object contains database meta data such as name, size, and location, 
 	as well as methods for locating a database, arbitrating between several databases, 
@@ -191,10 +217,23 @@ class Database():
 		session = SessionObject()
 
 		localSortTerm = self.GetSortTerm(1)
+		filters = FilterTerms()
+		
+		# generate date objects for start and end dates
+		startDate = date(2010, filters.GetStartMonth(), 1)
+		temp = filters.GetStartMonth() + filters.GetMonthRange()
+		
+		# TODO: update this to work correctly with years
+		if (temp <= 12):
+			endDate = date(2010, temp, 1)
+		else:
+			endDate = date(2010, 12, 31)
 		
 		# grab all expenses
-		expenseList = session.query(Expense).order_by(localSortTerm).all()
-		
+		expenseList = session.query(Expense).filter(Expense.date >= startDate). \
+											 filter(Expense.date <= endDate).    \
+											 order_by(localSortTerm).all()
+											 
 		# iterate through expenses - packing into listxlist
 		for i in expenseList:
 			# dereference these all the way down to the string

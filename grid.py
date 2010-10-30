@@ -30,7 +30,7 @@ import wx
 import wx.grid     as gridlib
 import cfg
 from datetime import date, datetime
-from database import *
+from database import Database
 from utils import dateMatch
 
 #********************************************************************    
@@ -77,16 +77,16 @@ class GraphicsGrid(gridlib.Grid):
         
         # pull some data out of the database and push it into the tableBase
         self.database = Database()
-        self.tableBase = CustomDataTable(self,self.database.GetAllExpenses())    # define the base
+        self.tableBase = CustomDataTable(self, self.database.GetAllExpenses(),1)    # define the base
         
         self.SetTable(self.tableBase)         # set the grid table
         self.SetColFormatFloat(2,-1,2)        # formats the monetary entries correctly
         self.AutoSize()         # auto-sizing here ensures that scrollbars will always be present
-                                # during window resizing
-        
-        # Make certain cols read only
-        self.rowAttr = gridlib.GridCellAttr()
-        self.InitialTableFormat()
+                                # during window resizing     
+                             
+        self.rowAttr = gridlib.GridCellAttr()                               
+        self.FormatTableRows()  
+        self.FormatTableCols()                       
 
         # bind editor creation to an event so we can 'catch' unique editors
         self.Bind(gridlib.EVT_GRID_EDITOR_CREATED,
@@ -119,7 +119,7 @@ class GraphicsGrid(gridlib.Grid):
         else:
             print "you did not click a column"
             
-        self.tableBase.localData = self.database.GetAllExpenses()
+        self.tableBase.UpdateData()
         self.ForceRefresh()
         event.Skip()
         
@@ -200,28 +200,27 @@ class GraphicsGrid(gridlib.Grid):
         value       = self.comboBox.GetValue()
         selection = self.comboBox.GetSelection()
         pass
-        
-    def InitialTableFormat(self):
-        """Performs initial table configuration, """
-
-        # create read-only columns        
-        self.rowAttr.SetReadOnly(1)
-        for i in range(len(colInfo.colRO)):
-            if colInfo.colRO[i] == 1: 
-                self.SetColAttr(i,self.rowAttr) 
-        self.rowAttr.IncRef() 
-        
-        # apply editors and row height to each row
-        for i in range(self.GetNumberRows()):
-            self.FormatTableRow(i)
+    
+    def FormatTableCols(self):
+        if self.tableBase.GetNumberRows():
+            # create read-only columns        
+            self.rowAttr.SetReadOnly(1)
+            for i in range(len(colInfo.colRO)):
+                if colInfo.colRO[i] == 1: 
+                    self.SetColAttr(i,self.rowAttr) 
+            self.rowAttr.IncRef() 
+                
+            # format column width
+            tmp = 0
+            for i in colInfo.colWidth:
+                self.SetColSize(tmp,i)
+                tmp += 1
+    
+    def FormatTableRows(self):
+        for i in range(self.tableBase.GetNumberRows()):
+            self._FormatTableRow(i)
             
-        # format column width
-        tmp = 0
-        for i in colInfo.colWidth:
-            self.SetColSize(tmp,i)
-            tmp += 1
-            
-    def FormatTableRow(self, row):
+    def _FormatTableRow(self, row):
         """Formats a single row entry - editor types, height, color, etc..."""
         # create 'drop down' style choice editors for two columns
         userChoiceEditor = gridlib.GridCellChoiceEditor([], allowOthers = False)
@@ -249,35 +248,51 @@ class CustomDataTable(gridlib.PyGridTableBase):
     
     dataTypes = colInfo.colType # used for custom renderers
     
-    def __init__(self, parent, data):
+    previousRowCnt = 0
+    previousColCnt = 0
+    localData = []
+    parent = 0
+    
+    # used to turn this class into a Borg class 
+    __shared_state = {}
+
+    def __init__(self, parent, data = Database().GetAllExpenses(), first=0):
+        # bind the underlyng Python dictionary to a class variable
+        self.__dict__ = self.__shared_state
+        
+        gridlib.PyGridTableBase.__init__(self)
+        
         # TODO: This needs to be cleaned up so that CustomDataTable does not have to
         # deal with so much data specification. This should be a single fcn call for
         # data
-        self.localData = data
+        self.__class__.previousRowCnt = 0
+        self.__class__.previousColCnt = 0
+        
+        self.__class__.localData = data
         self.database = Database()
-        self.parent = parent
         
-        self._rows = self.GetNumberRows()
-        self._cols = self.GetNumberCols()
-        
-        gridlib.PyGridTableBase.__init__(self)
+        if(first):
+            self.__class__.parent = parent
     
     #***************************
     # REQUIRED METHODS
     #***************************
         
     def GetNumberRows(self):
-        return len(self.localData)
+        return len(self.__class__.localData)
     
     def GetNumberCols(self):
-        return len(self.localData[0])
+        if self.GetNumberRows():
+            return len(self.__class__.localData[0])
+        else:
+            return 0
     
     def GetValue(self, row, col):
-        return self.localData[row][col]
+        return self.__class__.localData[row][col]
     
     def IsEmptyCell(self, row, col):
         try:
-            if self.localData[row][col] != "":
+            if self.__class__.localData[row][col] != "":
                 return True
             else:
                 return False
@@ -286,7 +301,7 @@ class CustomDataTable(gridlib.PyGridTableBase):
         
     def SetValue(self, row, col, value):
         # determine the record being modified using the primary key (located in col 5)
-        e = self.database.GetExpense(self.localData[row][5])
+        e = self.database.GetExpense(self.__class__.localData[row][5])
         
         # determine which value is being set
         if(0 == col):
@@ -307,32 +322,78 @@ class CustomDataTable(gridlib.PyGridTableBase):
                                   e.date,
                                   e.user_id, 
                                   e.expenseType_id, 
-                                  self.localData[row][5])
-        self.localData = self.database.GetAllExpenses()
-        self.parent.ForceRefresh()
+                                  self.__class__.localData[row][5])
+        self.UpdateData()
             
     #***************************
     # OPTIONAL METHODS
     #***************************
     
-    def DeleteRow(self, row):
-        # remove from the database
-        id = self.localData[row][5]
-        self.database.DeleteExpense(id)
-        # inform the grid
-        self.GetView().ProcessTableMessage(gridlib.GridTableMessage(self,
-                                           gridlib.GRIDTABLE_NOTIFY_ROWS_DELETED, 
-                                           row, 1))
-        # remove from the local data   
-        self.localData.pop(row)
+    def UpdateData(self):
+        """This function performs the following actions: (1) pulls data from the 
+        database in the specified order and lying within the specific window criteria.
+        (2) checks to see if a resize attempt is necessary. (3) updates old col/row counts
+        (4) refreshes grid. This function is intended to be the single point of contact 
+        for performing a data refresh."""
+        
+        self.__class__.previousColCnt = self.GetNumberCols()
+        self.__class__.previousRowCnt = self.GetNumberRows()
+        self.__class__.localData = self.database.GetAllExpenses()
+        self.__ResetView()
     
-    def AddRow(self):
-        # reload all expenses
-        self.localData = self.database.GetAllExpenses()
-        #inform the grid
-        self.GetView().ProcessTableMessage(gridlib.GridTableMessage(self,
-                                           gridlib.GRIDTABLE_NOTIFY_ROWS_APPENDED,
-                                           1))
+    def GetPrevNumberRows(self):
+        return self.__class__.previousRowCnt
+    
+    def GetPrevNumberCols(self):
+        return self.__class__.previousColCnt
+    
+    def DeleteRow(self, row):
+        """This function determines the ID of the element being deleted, removed it from the 
+        database, informs the grid that a specific row is being removed, and then removes it from the 
+        localData data collection. This is faster than re-loading all the expenses."""
+        
+        # remove from the database
+        id = self.__class__.localData[row][5]
+        self.database.DeleteExpense(id)
+        self.UpdateData()
+    
+    def __ResetView(self):
+        """This function can be found at: http://wiki.wxpython.org/wxGrid 
+        It implements a generic resize mechanism that uses the previous and current
+        row and col count to determine if the grid should be trimmed or extended. It
+        refreshes grid data and resizes the scroll bars using a 'jiggle trick'"""
+        
+        self.GetView().BeginBatch()
+        for current, new, delmsg, addmsg in [(self.__class__.previousRowCnt, self.GetNumberRows(), gridlib.GRIDTABLE_NOTIFY_ROWS_DELETED, gridlib.GRIDTABLE_NOTIFY_ROWS_APPENDED),
+                                             (self.__class__.previousColCnt, self.GetNumberCols(), gridlib.GRIDTABLE_NOTIFY_COLS_DELETED, gridlib.GRIDTABLE_NOTIFY_COLS_APPENDED)]:
+            # determine if we've added or removed a row or col...
+            if new < current:
+                msg = gridlib.GridTableMessage(self,
+                                               delmsg,
+                                               new,    # position
+                                               current-new)
+                self.GetView().ProcessTableMessage(msg)
+            elif new > current:
+                msg = gridlib.GridTableMessage(self,
+                                               addmsg,
+                                               new-current)
+                self.GetView().ProcessTableMessage(msg)
+                        
+        # refresh all data
+        msg = gridlib.GridTableMessage(self, gridlib.GRIDTABLE_REQUEST_VIEW_GET_VALUES)
+        self.GetView().ProcessTableMessage(msg)
+        self.GetView().EndBatch()
+        
+        # apply correct formatting to each row after update
+        self.__class__.parent.FormatTableRows()
+        self.__class__.parent.FormatTableCols()
+
+        # The scroll bars aren't resized (at least on windows)
+        # Jiggling the size of the window rescales the scrollbars
+        h,w = self.__class__.parent.GetSize()
+        self.__class__.parent.SetSize((h+1, w))
+        self.__class__.parent.SetSize((h, w))
+        self.__class__.parent.ForceRefresh()
         
     def GetColLabelValue(self, col):
         return colInfo.colLabels[col]
