@@ -40,6 +40,7 @@ from statusBar import CustomStatusBar
 from menuBar import CreateMenu
 from prefs import EditPreferences
 from filterControl import CustomFilterPanel
+from expenseDialogue import NewExpenseDialog
 
 try:
 	from agw import flatmenu as FM
@@ -61,178 +62,178 @@ AuiManager  = AUI.AuiManager
 #********************************************************************
 
 #********************************************************************
-class NewExpenseDialog(wx.Dialog):
-	"""
-	Class Name: 	NewExpenseDialog
-	Extends: 		wx.Dialog
-	Description:	Dialog to support the addition of a new Expense to the database.
-	This dialog should trigger both a database update, and a grid update.
-	"""
-	
-	def __init__(self, parent, id, title):
-		wx.Dialog.__init__(self, parent, id, title, size = (185,370))
-		
-		# create a userlist and type list for the menus
-		# NOTE: this must be done after the Database creation above
-		# define local Expense objects for population
-		self.database       = Database()
-		self.userList		= self.database.GetSimpleUserList()
-		self.typeList		= self.database.GetExpenseTypeList()		
-		self.prefs			= self.database.GetPrefs()
-		
-		self.parent 		= parent
-		
-		self.sizer        	= wx.BoxSizer(wx.VERTICAL)  # define new box sizer	
-		self.buttonPanel  	= wx.Panel(self)		      # create a panel for the buttons
-		
-		VERT_GAP = 5
-		
-		#****************************************************
-		box = wx.BoxSizer(wx.HORIZONTAL) 
-		label = wx.StaticText(self, -1, "Purchased by:")
-		box.Add(label, 0, wx.ALIGN_CENTRE|wx.ALL, VERT_GAP)
-		
-		self.userSelect   = wx.ComboBox(self, 
-									    id=-1,
-									    value=str(self.prefs.defUser_id),
-									    choices=self.userList,
-									    pos=(-1,-1),
-									    size=(-1,-1),
-						  				style=wx.CB_DROPDOWN)
-		self.Bind(wx.EVT_COMBOBOX, self.OnUserSelect, self.userSelect)
-		box.Add(self.userSelect, 0, wx.ALIGN_CENTRE|wx.ALL|wx.EXPAND)
-		self.sizer.Add(box, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
-		
-		#****************************************************
-		box = wx.BoxSizer(wx.HORIZONTAL) 
-		label = wx.StaticText(self, -1, "Expense type:")
-		box.Add(label, 0, wx.ALIGN_CENTRE|wx.ALL, VERT_GAP)
-		self.typeSelect	  = wx.ComboBox(self, 
-									    id=-1,
-									    value=str(self.prefs.defExpenseType_id),
-									    choices=self.typeList,
-						  				pos=(-1,-1), 
-						  				size=(-1,-1),
-						  				style=wx.CB_DROPDOWN)
-		self.Bind(wx.EVT_COMBOBOX, self.OnTypeSelect, self.typeSelect)
-		box.Add(self.typeSelect, 0, wx.ALIGN_CENTRE|wx.ALL|wx.EXPAND)
-		self.sizer.Add(box, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
-		
-		#****************************************************
-		box = wx.BoxSizer(wx.HORIZONTAL) 
-		label = wx.StaticText(self, -1, "Amount:")
-		box.Add(label, 0, wx.ALIGN_CENTRE|wx.ALL, VERT_GAP)
-		self.valueEntry   = wx.TextCtrl(self, 
-									    -1, 
-									    str(self.prefs.defAmount), 
-									    pos = (-1,-1), 
-									    size = (-1, -1))
-		self.Bind(wx.EVT_TEXT, self.OnValueEntry, self.valueEntry)
-		box.Add(self.valueEntry, 0, wx.ALIGN_CENTRE|wx.ALL|wx.EXPAND)
-		self.sizer.Add(box, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
-		
-		#****************************************************
-		box = wx.BoxSizer(wx.HORIZONTAL) 
-		label = wx.StaticText(self, -1, "Description:")
-		box.Add(label, 0, wx.ALIGN_CENTRE|wx.ALL, VERT_GAP)
-		self.descEntry    = wx.TextCtrl(self, 
-									    -1, 
-									    "item description", 
-									    pos = (-1,-1), 
-									    size = (-1,-1))
-		self.Bind(wx.EVT_TEXT, self.OnDescEntry, self.descEntry)
-		box.Add(self.descEntry, 0, wx.ALIGN_CENTRE|wx.ALL|wx.EXPAND)
-		self.sizer.Add(box, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
-		
-		self.sizer.Add(wx.Panel(self, -1, size = (-1,20)))
-		
-		#****************************************************
-		box = wx.BoxSizer(wx.HORIZONTAL) 
-		self.cal 		  = callib.CalendarCtrl(self, 
-												-1, 
-												wx.DateTime_Now(), 
-												pos = (-1,-1),
-						    					style = callib.CAL_SHOW_HOLIDAYS | callib.CAL_SUNDAY_FIRST)
-		self.Bind(callib.EVT_CALENDAR_SEL_CHANGED, self.OnCalSelChanged, self.cal)
-		box.Add(self.cal, 0, wx.ALIGN_CENTRE|wx.ALL)
-		self.sizer.Add(box, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
-		
-		#****************************************************
-		btnsizer = wx.StdDialogButtonSizer()
-		
-		okBtn = wx.Button(self, wx.ID_OK)
-		self.Bind(wx.EVT_BUTTON, self.OnEnterClick, okBtn)
-		okBtn.SetDefault()
-		btnsizer.AddButton(okBtn)
-
-		cancelBtn = wx.Button(self, wx.ID_CANCEL)
-		self.Bind(wx.EVT_BUTTON, self.OnCancelClick, cancelBtn)
-		btnsizer.AddButton(cancelBtn)
-		btnsizer.Realize()
-
-		self.sizer.Add(btnsizer, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)		
-		self.SetSizer(self.sizer)
-		
-		self.CenterOnParent()
-		
-	def OnEnterClick(self, evt):
-		"""respond to the user clicking 'enter!' by pushing the local objects into the database 
-		layer"""
-		
-		# it's critical to create a new expense object here to avoid overwriting
-		# an existing expense object. However, we will *not* create user
-		# or expenseType because calls below create a new expense
-		localExpenseObject = Expense()
-		
-		#
-		# NOTE: operator selects both User and ExpenseType by selecting a string.
-		# This string is used to look up the existing database objects, which are
-		# fed to the overall Expense object for creation. These calls also create
-		# new User and ExpenseType objects as well as populate them.
-		# 
-		# TODO: this needs to be smarter: (A) what if the string doesn't match an existing
-		# object? (B) What if the user wants to enter a new object?
-		#
-
-		# configure amount, description, and date
-		amount = self.valueEntry.GetValue()
-		# place something here to avoid math errors
-		if(amount == ""):
-			amount = 0.00
-		
-		# consolidate objects into one expense type and push into database
-		self.database.CreateExpense(float(amount),
-                                    self.descEntry.GetValue(),
-                                    self.cal.PyGetDate(),
-                                    self.userSelect.GetValue(),
-                                    self.typeSelect.GetValue())
-		
-		# update grid with new row, format new row
-		self.parent.grid.tableBase.UpdateData()
-		
-		self.Close()
-		
-	def OnCancelClick(self, evt):
-		self.Destroy()
-		
-	#***************************
-	# NOT REQUIRED AT THIS TIME
-	#***************************
-	
-	def OnUserSelect(self, evt):
-		pass
-		
-	def OnTypeSelect(self, evt):
-		pass
-		
-	def OnCalSelChanged(self, evt):
-		pass
-		
-	def OnValueEntry(self, evt):
-		pass
-		
-	def OnDescEntry(self, evt):
-		pass
+#class NewExpenseDialog(wx.Dialog):
+#	"""
+#	Class Name: 	NewExpenseDialog
+#	Extends: 		wx.Dialog
+#	Description:	Dialog to support the addition of a new Expense to the database.
+#	This dialog should trigger both a database update, and a grid update.
+#	"""
+#	
+#	def __init__(self, parent, id, title):
+#		wx.Dialog.__init__(self, parent, id, title, size = (185,370))
+#		
+#		# create a userlist and type list for the menus
+#		# NOTE: this must be done after the Database creation above
+#		# define local Expense objects for population
+#		self.database       = Database()
+#		self.userList		= self.database.GetSimpleUserList()
+#		self.typeList		= self.database.GetExpenseTypeList()		
+#		self.prefs			= self.database.GetPrefs()
+#		
+#		self.parent 		= parent
+#		
+#		self.sizer        	= wx.BoxSizer(wx.VERTICAL)  # define new box sizer	
+#		self.buttonPanel  	= wx.Panel(self)		      # create a panel for the buttons
+#		
+#		VERT_GAP = 5
+#		
+#		#****************************************************
+#		box = wx.BoxSizer(wx.HORIZONTAL) 
+#		label = wx.StaticText(self, -1, "Purchased by:")
+#		box.Add(label, 0, wx.ALIGN_CENTRE|wx.ALL, VERT_GAP)
+#		
+#		self.userSelect   = wx.ComboBox(self, 
+#									    id=-1,
+#									    value=str(self.prefs.defUser_id),
+#									    choices=self.userList,
+#									    pos=(-1,-1),
+#									    size=(-1,-1),
+#						  				style=wx.CB_DROPDOWN)
+#		self.Bind(wx.EVT_COMBOBOX, self.OnUserSelect, self.userSelect)
+#		box.Add(self.userSelect, 0, wx.ALIGN_CENTRE|wx.ALL|wx.EXPAND)
+#		self.sizer.Add(box, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
+#		
+#		#****************************************************
+#		box = wx.BoxSizer(wx.HORIZONTAL) 
+#		label = wx.StaticText(self, -1, "Expense type:")
+#		box.Add(label, 0, wx.ALIGN_CENTRE|wx.ALL, VERT_GAP)
+#		self.typeSelect	  = wx.ComboBox(self, 
+#									    id=-1,
+#									    value=str(self.prefs.defExpenseType_id),
+#									    choices=self.typeList,
+#						  				pos=(-1,-1), 
+#						  				size=(-1,-1),
+#						  				style=wx.CB_DROPDOWN)
+#		self.Bind(wx.EVT_COMBOBOX, self.OnTypeSelect, self.typeSelect)
+#		box.Add(self.typeSelect, 0, wx.ALIGN_CENTRE|wx.ALL|wx.EXPAND)
+#		self.sizer.Add(box, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
+#		
+#		#****************************************************
+#		box = wx.BoxSizer(wx.HORIZONTAL) 
+#		label = wx.StaticText(self, -1, "Amount:")
+#		box.Add(label, 0, wx.ALIGN_CENTRE|wx.ALL, VERT_GAP)
+#		self.valueEntry   = wx.TextCtrl(self, 
+#									    -1, 
+#									    str(self.prefs.defAmount), 
+#									    pos = (-1,-1), 
+#									    size = (-1, -1))
+#		self.Bind(wx.EVT_TEXT, self.OnValueEntry, self.valueEntry)
+#		box.Add(self.valueEntry, 0, wx.ALIGN_CENTRE|wx.ALL|wx.EXPAND)
+#		self.sizer.Add(box, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
+#		
+#		#****************************************************
+#		box = wx.BoxSizer(wx.HORIZONTAL) 
+#		label = wx.StaticText(self, -1, "Description:")
+#		box.Add(label, 0, wx.ALIGN_CENTRE|wx.ALL, VERT_GAP)
+#		self.descEntry    = wx.TextCtrl(self, 
+#									    -1, 
+#									    "item description", 
+#									    pos = (-1,-1), 
+#									    size = (-1,-1))
+#		self.Bind(wx.EVT_TEXT, self.OnDescEntry, self.descEntry)
+#		box.Add(self.descEntry, 0, wx.ALIGN_CENTRE|wx.ALL|wx.EXPAND)
+#		self.sizer.Add(box, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
+#		
+#		self.sizer.Add(wx.Panel(self, -1, size = (-1,20)))
+#		
+#		#****************************************************
+#		box = wx.BoxSizer(wx.HORIZONTAL) 
+#		self.cal 		  = callib.CalendarCtrl(self, 
+#												-1, 
+#												wx.DateTime_Now(), 
+#												pos = (-1,-1),
+#						    					style = callib.CAL_SHOW_HOLIDAYS | callib.CAL_SUNDAY_FIRST)
+#		self.Bind(callib.EVT_CALENDAR_SEL_CHANGED, self.OnCalSelChanged, self.cal)
+#		box.Add(self.cal, 0, wx.ALIGN_CENTRE|wx.ALL)
+#		self.sizer.Add(box, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
+#		
+#		#****************************************************
+#		btnsizer = wx.StdDialogButtonSizer()
+#		
+#		okBtn = wx.Button(self, wx.ID_OK)
+#		self.Bind(wx.EVT_BUTTON, self.OnEnterClick, okBtn)
+#		okBtn.SetDefault()
+#		btnsizer.AddButton(okBtn)
+#
+#		cancelBtn = wx.Button(self, wx.ID_CANCEL)
+#		self.Bind(wx.EVT_BUTTON, self.OnCancelClick, cancelBtn)
+#		btnsizer.AddButton(cancelBtn)
+#		btnsizer.Realize()
+#
+#		self.sizer.Add(btnsizer, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)		
+#		self.SetSizer(self.sizer)
+#		
+#		self.CenterOnParent()
+#		
+#	def OnEnterClick(self, evt):
+#		"""respond to the user clicking 'enter!' by pushing the local objects into the database 
+#		layer"""
+#		
+#		# it's critical to create a new expense object here to avoid overwriting
+#		# an existing expense object. However, we will *not* create user
+#		# or expenseType because calls below create a new expense
+#		localExpenseObject = Expense()
+#		
+#		#
+#		# NOTE: operator selects both User and ExpenseType by selecting a string.
+#		# This string is used to look up the existing database objects, which are
+#		# fed to the overall Expense object for creation. These calls also create
+#		# new User and ExpenseType objects as well as populate them.
+#		# 
+#		# TODO: this needs to be smarter: (A) what if the string doesn't match an existing
+#		# object? (B) What if the user wants to enter a new object?
+#		#
+#
+#		# configure amount, description, and date
+#		amount = self.valueEntry.GetValue()
+#		# place something here to avoid math errors
+#		if(amount == ""):
+#			amount = 0.00
+#		
+#		# consolidate objects into one expense type and push into database
+#		self.database.CreateExpense(float(amount),
+#                                    self.descEntry.GetValue(),
+#                                    self.cal.PyGetDate(),
+#                                    self.userSelect.GetValue(),
+#                                    self.typeSelect.GetValue())
+#		
+#		# update grid with new row, format new row
+#		self.parent.grid.tableBase.UpdateData()
+#		
+#		self.Close()
+#		
+#	def OnCancelClick(self, evt):
+#		self.Destroy()
+#		
+#	#***************************
+#	# NOT REQUIRED AT THIS TIME
+#	#***************************
+#	
+#	def OnUserSelect(self, evt):
+#		pass
+#		
+#	def OnTypeSelect(self, evt):
+#		pass
+#		
+#	def OnCalSelChanged(self, evt):
+#		pass
+#		
+#	def OnValueEntry(self, evt):
+#		pass
+#		
+#	def OnDescEntry(self, evt):
+#		pass
 
 #********************************************************************
 class GraphicsPage(wx.Panel):

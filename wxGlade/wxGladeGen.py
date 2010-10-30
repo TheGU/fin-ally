@@ -42,12 +42,12 @@ class NewExpenseDialog(wx.Dialog):
 
     def __set_properties(self):
         # begin wxGlade: NewExpenseDialog.__set_properties
-        self.SetTitle("dialog_2")
-        self.amountText.SetMinSize((50, -1))
+        self.SetTitle("New Expense Dialog")
+        self.amountText.SetMinSize((60, -1))
         self.amountControl.SetMinSize((150, -1))
-        self.expenseTypeText.SetMinSize((50, -1))
+        self.expenseTypeText.SetMinSize((60, -1))
         self.expenseTypeControl.SetMinSize((150, -1))
-        self.descriptionText.SetMinSize((50, -1))
+        self.descriptionText.SetMinSize((60, -1))
         self.descriptionControl.SetMinSize((150, -1))
         self.okButton.SetDefault()
         # end wxGlade
