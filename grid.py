@@ -77,7 +77,7 @@ class GraphicsGrid(gridlib.Grid):
         
         # pull some data out of the database and push it into the tableBase
         self.database = Database()
-        self.tableBase = CustomDataTable(self, self.database.GetAllExpenses())    # define the base
+        self.tableBase = CustomDataTable(self, self.database.GetAllExpenses(),1)    # define the base
         
         self.SetTable(self.tableBase)         # set the grid table
         self.SetColFormatFloat(2,-1,2)        # formats the monetary entries correctly
@@ -251,8 +251,15 @@ class CustomDataTable(gridlib.PyGridTableBase):
     previousRowCnt = 0
     previousColCnt = 0
     localData = []
+    parent = 0
     
-    def __init__(self, parent, data):
+    # used to turn this class into a Borg class 
+    __shared_state = {}
+
+    def __init__(self, parent, data = Database().GetAllExpenses(), first=0):
+        # bind the underlyng Python dictionary to a class variable
+        self.__dict__ = self.__shared_state
+        
         gridlib.PyGridTableBase.__init__(self)
         
         # TODO: This needs to be cleaned up so that CustomDataTable does not have to
@@ -263,7 +270,9 @@ class CustomDataTable(gridlib.PyGridTableBase):
         
         self.__class__.localData = data
         self.database = Database()
-        self.parent = parent
+        
+        if(first):
+            self.__class__.parent = parent
     
     #***************************
     # REQUIRED METHODS
@@ -354,7 +363,6 @@ class CustomDataTable(gridlib.PyGridTableBase):
         row and col count to determine if the grid should be trimmed or extended. It
         refreshes grid data and resizes the scroll bars using a 'jiggle trick'"""
         
-        print self.GetView()
         self.GetView().BeginBatch()
         for current, new, delmsg, addmsg in [(self.__class__.previousRowCnt, self.GetNumberRows(), gridlib.GRIDTABLE_NOTIFY_ROWS_DELETED, gridlib.GRIDTABLE_NOTIFY_ROWS_APPENDED),
                                              (self.__class__.previousColCnt, self.GetNumberCols(), gridlib.GRIDTABLE_NOTIFY_COLS_DELETED, gridlib.GRIDTABLE_NOTIFY_COLS_APPENDED)]:
@@ -377,15 +385,15 @@ class CustomDataTable(gridlib.PyGridTableBase):
         self.GetView().EndBatch()
         
         # apply correct formatting to each row after update
-        self.parent.FormatTableRows()
-        self.parent.FormatTableCols()
+        self.__class__.parent.FormatTableRows()
+        self.__class__.parent.FormatTableCols()
 
         # The scroll bars aren't resized (at least on windows)
         # Jiggling the size of the window rescales the scrollbars
-        h,w = self.parent.GetSize()
-        self.parent.SetSize((h+1, w))
-        self.parent.SetSize((h, w))
-        self.parent.ForceRefresh()
+        h,w = self.__class__.parent.GetSize()
+        self.__class__.parent.SetSize((h+1, w))
+        self.__class__.parent.SetSize((h, w))
+        self.__class__.parent.ForceRefresh()
         
     def GetColLabelValue(self, col):
         return colInfo.colLabels[col]
