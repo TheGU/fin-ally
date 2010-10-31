@@ -1,0 +1,8 @@
+(1) create new PyDev project with a default src folder
+	* make sure the path doesn't collide with a SVN repo or anything
+(2) create a new folder under the 'src' folder and using the Advanced tab, add a link to your SVN checkout
+(3) Add the newly linked SVN folder to the PYTHONPATH for the new project.
+
+To checkout from SVN:
+
+svn co https://fin-ally.googlecode.com/svn/trunk/ workspaces/FA_dev --username Daniel.Sisco
