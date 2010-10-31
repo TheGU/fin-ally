@@ -70,7 +70,7 @@ class NewExpenseDialog(wx.Dialog):
 	"""
 	
 	def __init__(self, parent, id, title):
-		wx.Dialog.__init__(self, parent, id, title, size=(350,300))
+		wx.Dialog.__init__(self, parent, id, title, size = (185,370))
 		
 		# create a userlist and type list for the menus
 		# NOTE: this must be done after the Database creation above
@@ -80,61 +80,100 @@ class NewExpenseDialog(wx.Dialog):
 		self.typeList		= self.database.GetExpenseTypeList()		
 		self.prefs			= self.database.GetPrefs()
 		
-		self.parent = parent
+		self.parent 		= parent
 		
-		self.sizer        = wx.BoxSizer(wx.VERTICAL)  # define new box sizer	
-		self.buttonPanel  = wx.Panel(self)		      # create a panel for the buttons
+		self.sizer        	= wx.BoxSizer(wx.VERTICAL)  # define new box sizer	
+		self.buttonPanel  	= wx.Panel(self)		      # create a panel for the buttons
 		
-		self.entryButton = wx.Button(self.buttonPanel,
-									id = -1,
-									label = "Enter!",
-									pos = (0,0))
-		self.Bind(wx.EVT_BUTTON, self.OnEnterClick, self.entryButton)
+		VERT_GAP = 5
 		
-		# create and bind a user selection box
-		self.userSelect   = wx.ComboBox(self.buttonPanel, 
+		#****************************************************
+		box = wx.BoxSizer(wx.HORIZONTAL) 
+		label = wx.StaticText(self, -1, "Purchased by:")
+		box.Add(label, 0, wx.ALIGN_CENTRE|wx.ALL, VERT_GAP)
+		
+		self.userSelect   = wx.ComboBox(self, 
 									    id=-1,
 									    value=str(self.prefs.defUser_id),
 									    choices=self.userList,
-						  				pos=(100,0), 
+									    pos=(-1,-1),
+									    size=(-1,-1),
 						  				style=wx.CB_DROPDOWN)
 		self.Bind(wx.EVT_COMBOBOX, self.OnUserSelect, self.userSelect)
+		box.Add(self.userSelect, 0, wx.ALIGN_CENTRE|wx.ALL|wx.EXPAND)
+		self.sizer.Add(box, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
 		
-		# create and bind a type selection box
-		self.typeSelect	  = wx.ComboBox(self.buttonPanel, 
+		#****************************************************
+		box = wx.BoxSizer(wx.HORIZONTAL) 
+		label = wx.StaticText(self, -1, "Expense type:")
+		box.Add(label, 0, wx.ALIGN_CENTRE|wx.ALL, VERT_GAP)
+		self.typeSelect	  = wx.ComboBox(self, 
 									    id=-1,
 									    value=str(self.prefs.defExpenseType_id),
 									    choices=self.typeList,
-						  				pos=(200,0), 
+						  				pos=(-1,-1), 
+						  				size=(-1,-1),
 						  				style=wx.CB_DROPDOWN)
 		self.Bind(wx.EVT_COMBOBOX, self.OnTypeSelect, self.typeSelect)
+		box.Add(self.typeSelect, 0, wx.ALIGN_CENTRE|wx.ALL|wx.EXPAND)
+		self.sizer.Add(box, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
 		
-		# create and bind a calendar box
-		self.cal 		  = callib.CalendarCtrl(self.buttonPanel, 
-												-1, 
-												wx.DateTime_Now(), 
-												pos = (0,50),
-						    					style = callib.CAL_SHOW_HOLIDAYS | callib.CAL_SUNDAY_FIRST)
-		self.Bind(callib.EVT_CALENDAR_SEL_CHANGED, self.OnCalSelChanged, self.cal)
-	
-		# create and bind a value entry box
-		self.valueEntry   = wx.TextCtrl(self.buttonPanel, 
+		#****************************************************
+		box = wx.BoxSizer(wx.HORIZONTAL) 
+		label = wx.StaticText(self, -1, "Amount:")
+		box.Add(label, 0, wx.ALIGN_CENTRE|wx.ALL, VERT_GAP)
+		self.valueEntry   = wx.TextCtrl(self, 
 									    -1, 
 									    str(self.prefs.defAmount), 
-									    pos = (0,25), 
-									    size = (90, 21))
+									    pos = (-1,-1), 
+									    size = (-1, -1))
 		self.Bind(wx.EVT_TEXT, self.OnValueEntry, self.valueEntry)
-	
-		# create and bind a description box
-		self.descEntry    = wx.TextCtrl(self.buttonPanel, 
+		box.Add(self.valueEntry, 0, wx.ALIGN_CENTRE|wx.ALL|wx.EXPAND)
+		self.sizer.Add(box, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
+		
+		#****************************************************
+		box = wx.BoxSizer(wx.HORIZONTAL) 
+		label = wx.StaticText(self, -1, "Description:")
+		box.Add(label, 0, wx.ALIGN_CENTRE|wx.ALL, VERT_GAP)
+		self.descEntry    = wx.TextCtrl(self, 
 									    -1, 
 									    "item description", 
-									    pos = (100,25), 
-									    size = (173,21))
+									    pos = (-1,-1), 
+									    size = (-1,-1))
 		self.Bind(wx.EVT_TEXT, self.OnDescEntry, self.descEntry)
+		box.Add(self.descEntry, 0, wx.ALIGN_CENTRE|wx.ALL|wx.EXPAND)
+		self.sizer.Add(box, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
 		
-		self.sizer.Add(self.buttonPanel, 0, wx.ALIGN_LEFT)    # add panel (no resize vert and aligned left horz)
+		self.sizer.Add(wx.Panel(self, -1, size = (-1,20)))
+		
+		#****************************************************
+		box = wx.BoxSizer(wx.HORIZONTAL) 
+		self.cal 		  = callib.CalendarCtrl(self, 
+												-1, 
+												wx.DateTime_Now(), 
+												pos = (-1,-1),
+						    					style = callib.CAL_SHOW_HOLIDAYS | callib.CAL_SUNDAY_FIRST)
+		self.Bind(callib.EVT_CALENDAR_SEL_CHANGED, self.OnCalSelChanged, self.cal)
+		box.Add(self.cal, 0, wx.ALIGN_CENTRE|wx.ALL)
+		self.sizer.Add(box, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
+		
+		#****************************************************
+		btnsizer = wx.StdDialogButtonSizer()
+		
+		okBtn = wx.Button(self, wx.ID_OK)
+		self.Bind(wx.EVT_BUTTON, self.OnEnterClick, okBtn)
+		okBtn.SetDefault()
+		btnsizer.AddButton(okBtn)
+
+		cancelBtn = wx.Button(self, wx.ID_CANCEL)
+		self.Bind(wx.EVT_BUTTON, self.OnCancelClick, cancelBtn)
+		btnsizer.AddButton(cancelBtn)
+		btnsizer.Realize()
+
+		self.sizer.Add(btnsizer, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)		
 		self.SetSizer(self.sizer)
+		
+		self.CenterOnParent()
 		
 	def OnEnterClick(self, evt):
 		"""respond to the user clicking 'enter!' by pushing the local objects into the database 
@@ -172,6 +211,9 @@ class NewExpenseDialog(wx.Dialog):
 		self.parent.grid.tableBase.UpdateData()
 		
 		self.Close()
+		
+	def OnCancelClick(self, evt):
+		self.Destroy()
 		
 	#***************************
 	# NOT REQUIRED AT THIS TIME
