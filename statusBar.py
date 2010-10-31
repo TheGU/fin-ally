@@ -44,8 +44,9 @@ class CustomStatusBar(wx.StatusBar):
 
         self.SetStatusText("", 0)
         self.SetStatusText("", 1)
-        self.versionString = "FINally v%s.%s | database v%s.%s" % (cfg.VERSION[0], 
-                                                                                cfg.VERSION[1],
-                                                                                self.database.GetVersion()[0],
-                                                                                self.database.GetVersion()[1])
+        self.versionString = "FINally v%s.%s.%s | database v%s.%s" % (cfg.VERSION[0], 
+                                                                      cfg.VERSION[1],
+                                                                      cfg.VERSION[2],
+                                                                      self.database.GetVersion()[0],
+                                                                      self.database.GetVersion()[1])
         self.SetStatusText(self.versionString, 2)    
