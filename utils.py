@@ -79,7 +79,9 @@ def dateMatch(dateString):
         dateString = '1/1/0001'
         localDate = datetime.strptime(dateString, "%m/%d/%Y")
         print "using default date - no match found"
-    return localDate
+        
+    # return just the date portion of the datetime object
+    return localDate.date()
     
 # Test main functionality
 if __name__ == '__main__':
