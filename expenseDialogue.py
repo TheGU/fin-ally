@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 #********************************************************************
-# Filename:            FINally.py
-# Authors:         Daniel Sisco
-# Date Created:       4-20-2007
+# Filename:            expenseDialogue.py
+# Authors:             Daniel Sisco
+# Date Created:        10/31/2010
 # 
 # Abstract: This is the primary file for the FINally expense analysis tool. It is responsible for
 # handling read/write access to the SQLite database as well as providing a GUI interface for the user.
