@@ -32,7 +32,7 @@
 
 import sys, re, os
 from utils import GenFileList, dPrint, BLANK_TERM
-from datetime import date
+from datetime import date, datetime
 from schema_2_1 import *
 
 def IdentifyDatabase():
@@ -77,7 +77,7 @@ class FilterTerms():
 	"""Class containing filter terms for global use. Methods 
 	include getters and setters for all filter methods."""
 	
-	startMonth = 1
+	startMonth = datetime.now().month
 	monthRange = 1
 	searchTerms = "[BLANK]"
 	
