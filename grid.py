@@ -195,11 +195,7 @@ class GraphicsGrid(gridlib.Grid):
     def ComboBoxSelection(self, event):
         """This method fires when the underlying ComboBox object is done with
         it's selection"""
-
-        # DAN: is this code useless? It seems like it is...
-        value       = self.comboBox.GetValue()
-        selection = self.comboBox.GetSelection()
-        pass
+        event.Skip()
     
     def FormatTableCols(self):
         if self.tableBase.GetNumberRows():
@@ -216,19 +212,20 @@ class GraphicsGrid(gridlib.Grid):
                 self.SetColSize(tmp,i)
                 tmp += 1
     
-    def FormatTableRows(self):
+    def FormatTableRows(self, skipEditorRefresh=0):
         for i in range(self.tableBase.GetNumberRows()):
-            self._FormatTableRow(i)
+            self._FormatTableRow(i, skipEditorRefresh)
             
-    def _FormatTableRow(self, row):
+    def _FormatTableRow(self, row, skipEditorRefresh):
         """Formats a single row entry - editor types, height, color, etc..."""
-        # create 'drop down' style choice editors for two columns
-        userChoiceEditor = gridlib.GridCellChoiceEditor([], allowOthers = False)
-        typeChoiceEditor = gridlib.GridCellChoiceEditor([], allowOthers = False)
-        
-        self.SetCellEditor(row,0,userChoiceEditor)
-        self.SetCellEditor(row,1,typeChoiceEditor)
-        self.SetCellEditor(row,2,gridlib.GridCellFloatEditor(-1,2))
+        if skipEditorRefresh == 0:
+            # create 'drop down' style choice editors for two columns
+            userChoiceEditor = gridlib.GridCellChoiceEditor([], allowOthers = False)
+            typeChoiceEditor = gridlib.GridCellChoiceEditor([], allowOthers = False)
+            
+            self.SetCellEditor(row,0,userChoiceEditor)
+            self.SetCellEditor(row,1,typeChoiceEditor)
+            self.SetCellEditor(row,2,gridlib.GridCellFloatEditor(-1,2))
         
         self.SetRowSize(row, colInfo.rowHeight)
         
@@ -300,14 +297,18 @@ class CustomDataTable(gridlib.PyGridTableBase):
             return False    
         
     def SetValue(self, row, col, value):
+        comboBoxEdit = 0
+        
         # determine the record being modified using the primary key (located in col 5)
         e = self.database.GetExpense(self.__class__.localData[row][5])
         
         # determine which value is being set
         if(0 == col):
             e.user_id = self.database.GetUserId(value)
+            comboBoxEdit = 1
         if(1 == col):
             e.expenseType_id = self.database.GetExpenseTypeId(value)
+            comboBoxEdit = 1
         if(2 == col):
             e.amount = float(value)
         if(3 == col):
@@ -323,13 +324,16 @@ class CustomDataTable(gridlib.PyGridTableBase):
                                   e.user_id, 
                                   e.expenseType_id, 
                                   self.__class__.localData[row][5])
-        self.UpdateData()
+        
+        # we want to avoid trying to modify the editor property if we've 
+        # just finished working with an editor.
+        self.UpdateData(comboBoxEdit)
             
     #***************************
     # OPTIONAL METHODS
     #***************************
     
-    def UpdateData(self):
+    def UpdateData(self, skipEditorRefresh=0):
         """This function performs the following actions: (1) pulls data from the 
         database in the specified order and lying within the specific window criteria.
         (2) checks to see if a resize attempt is necessary. (3) updates old col/row counts
@@ -339,7 +343,7 @@ class CustomDataTable(gridlib.PyGridTableBase):
         self.__class__.previousColCnt = self.GetNumberCols()
         self.__class__.previousRowCnt = self.GetNumberRows()
         self.__class__.localData = self.database.GetAllExpenses()
-        self.__ResetView()
+        self.__ResetView(skipEditorRefresh)
     
     def GetPrevNumberRows(self):
         return self.__class__.previousRowCnt
@@ -357,7 +361,7 @@ class CustomDataTable(gridlib.PyGridTableBase):
         self.database.DeleteExpense(id)
         self.UpdateData()
     
-    def __ResetView(self):
+    def __ResetView(self, skipEditorRefresh):
         """This function can be found at: http://wiki.wxpython.org/wxGrid 
         It implements a generic resize mechanism that uses the previous and current
         row and col count to determine if the grid should be trimmed or extended. It
@@ -385,7 +389,7 @@ class CustomDataTable(gridlib.PyGridTableBase):
         self.GetView().EndBatch()
         
         # apply correct formatting to each row after update
-        self.__class__.parent.FormatTableRows()
+        self.__class__.parent.FormatTableRows(skipEditorRefresh)
         self.__class__.parent.FormatTableCols()
 
         # The scroll bars aren't resized (at least on windows)

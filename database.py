@@ -206,12 +206,16 @@ class Database():
 		#TODO: can we just pass an ExpenseObject?
 		session = SessionObject()
 		
-		e = session.query(Expense).filter(Expense.id==inputId).one()
-		e.amount = amount
-		e.description = desc
-		e.date = date
-		e.user_id = userId
-		e.expenseType_id = typeId
+		try:
+			e = session.query(Expense).filter(Expense.id==inputId).one()
+			e.amount = amount
+			e.description = desc
+			e.date = date
+			e.user_id = userId
+			e.expenseType_id = typeId
+		except NoResultFound:
+			print "edit error"
+			e = -1 
 		
 		session.commit()
 		session.close()
