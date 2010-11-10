@@ -66,7 +66,7 @@ def IdentifyDatabase():
 		fullName = os.path.abspath(databaseName)
 		d = Database()
 		d.SetName(fullName)
-		d.__class__.newDb = True
+		d.FlagNewDb()
 	
 	return fullName
 
@@ -147,7 +147,7 @@ class Database():
 		if 1 == self.newDb:
 			print "creating blank database"
 			self.InitBlankDb()
-			self.newDb = False
+			self.__class__.newDb = False
 		
 	def InitBlankDb(self):
 		"""This function is called during powerup to ensure that a database
@@ -156,7 +156,7 @@ class Database():
 		
 		session = SessionObject()
 		
-		print "Creating database: \n\t", Database.fullName, "\n\n"
+		print "Creating database: \n\t", Database().fullName, "\n\n"
 		rhs = User(name='Rachel Sisco', shortName='Rachel')
 		dls = User(name='Daniel Sisco', shortName='Dan')
 		session.add_all([rhs, dls])
@@ -226,8 +226,7 @@ class Database():
 		e = session.query(Expense).filter(Expense.id==deleteId).one()
 		session.delete(e)
 		session.commit()
-		session.close()
-		
+		session.close()	
 	
 	def GetExpense(self, reqId):
 		"""returns the Expense object matching the reqId input"""
@@ -325,16 +324,23 @@ class Database():
 		return uId	
 	
 	def CreateUser(self, name, shortName):
-		"""Creates a new expense"""
+		"""Creates a new user"""
 		session = SessionObject()
+		success = 0
 
-		u = User()
-		u.name = name
-		u.shortName = shortName
-
-		session.add(u)
-		session.commit()		
+		# ensure that type with this description does not already exist
+		try:
+			session.query(User).filter(User.name== name).one()
+		except NoResultFound:
+			u = User()
+			u.name = name
+			u.shortName = shortName
+			session.add(u)
+			session.commit()	
+			success = 1
+				
 		session.close()
+		return success
 		
 	def EditUser(self, name, shortName, inputId):
 		session = SessionObject()
@@ -342,7 +348,24 @@ class Database():
 		u.name = name
 		u.shortName = shortName
 		session.commit()
-		session.close()		
+		session.close()	
+		
+	def DeleteUser(self, inputId):
+		session = SessionObject()
+		try:
+			u = session.query(User).filter(User.id == inputId).one()
+			session.delete(u)
+			session.commit()
+		except NoResultFound:
+			print "record with id %s does not exist!" % inputId
+		session.close			
+		
+	def UserInUse(self, typeId):
+		"""returns the number of expenses using the user with the input ID"""
+		session = SessionObject()
+		cnt = len(session.query(Expense).filter(Expense.user_id == typeId).all())
+		session.close
+		return cnt	
 	
 	def GetExpenseTypeList(self):
 		"""Returns a list of expense types - nothing else."""
@@ -373,26 +396,55 @@ class Database():
 	def CreateExpenseType(self, desc):
 		"""Creates a new expense"""
 		session = SessionObject()
+		success = 0
 
-		t = ExpenseType()
-		t.description = desc
-
-		session.add(t)
-		session.commit()		
+		# ensure that type with this description does not already exist
+		try:
+			session.query(ExpenseType).filter(ExpenseType.description == desc).one()
+		except NoResultFound:
+			t = ExpenseType()
+			t.description = desc
+			session.add(t)
+			session.commit()	
+			success = 1
+				
 		session.close()
+		return success
 		
 	def EditExpenseType(self, desc, inputId):
 		session = SessionObject()
 		et = session.query(ExpenseType).filter(ExpenseType.id == inputId).one()
 		et.description = desc
 		session.commit()
-		session.close()		
+		session.close()	
+		
+	def DeleteExpenseType(self, inputId):
+		session = SessionObject()
+		try:
+			et = session.query(ExpenseType).filter(ExpenseType.id == inputId).one()
+			session.delete(et)
+			session.commit()
+		except NoResultFound:
+			print "record with id %s does not exist!" % inputId
+		session.close	
+	
+	def MigrateExpenseType(self, fromId, toId):
+		"""migrates any expenses using expense type with ID 'fromId' to expense type 
+		with ID 'toId'. Does nothing if no expenses are using expense type with Id
+		'fromId'."""
+		
+	def ExpenseTypeInUse(self, typeId):
+		"""returns the number of expenses using the expense type with the input ID"""
+		session = SessionObject()
+		cnt = len(session.query(Expense).filter(Expense.expenseType_id == typeId).all())
+		session.close
+		return cnt
 	
 	def SetName(self, name):
-		self.fullName = name
+		self.__class__.fullName = name
 		
 	def FlagNewDb(self):
-		self.newDb = True
+		self.__class__.newDb = True
 		
 	def EditPrefs(self, inputDefUserId, inputDefExpTypeId, inputDefAmount):
 		session = SessionObject()

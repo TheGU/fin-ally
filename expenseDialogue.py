@@ -28,11 +28,13 @@
 # import wxPython libraries - including some simplifiers for grid and calendar
 import wx
 import wx.calendar as callib
+import wx.grid     as gridlib
 import cfg
 import os
 from datetime import date, datetime
 from database import *
-    
+        
+#********************************************************************
 class NewExpenseDialog(wx.Dialog):
     def __init__(self, parent, *args, **kwds):       
         # begin wxGlade: NewExpenseDialog.__init__

@@ -77,7 +77,7 @@ class GraphicsGrid(gridlib.Grid):
         
         # pull some data out of the database and push it into the tableBase
         self.database = Database()
-        self.tableBase = CustomDataTable(self, self.database.GetAllExpenses(),1)    # define the base
+        self.tableBase = CustomDataTable(self,1)    # define the base
         
         self.SetTable(self.tableBase)         # set the grid table
         self.SetColFormatFloat(2,-1,2)        # formats the monetary entries correctly
@@ -253,7 +253,7 @@ class CustomDataTable(gridlib.PyGridTableBase):
     # used to turn this class into a Borg class 
     __shared_state = {}
 
-    def __init__(self, parent, data = Database().GetAllExpenses(), first=0):
+    def __init__(self, parent, first=0):
         # bind the underlyng Python dictionary to a class variable
         self.__dict__ = self.__shared_state
         
@@ -265,8 +265,8 @@ class CustomDataTable(gridlib.PyGridTableBase):
         self.__class__.previousRowCnt = 0
         self.__class__.previousColCnt = 0
         
-        self.__class__.localData = data
         self.database = Database()
+        self.__class__.localData = self.database.GetAllExpenses()
         
         if(first):
             self.__class__.parent = parent

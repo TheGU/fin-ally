@@ -41,6 +41,8 @@ from menuBar import CreateMenu
 from prefs import EditPreferences
 from filterControl import CustomFilterPanel
 from expenseDialogue import NewExpenseDialog
+from expenseTypeDialog import expenseTypeDialog
+from userDialog import userDialog
 
 try:
 	from agw import flatmenu as FM
@@ -210,6 +212,16 @@ class AppMainFrame(wx.Frame):
 			  "daniel.sisco@gmail.com\n\n"
 		dlg = wx.MessageDialog(self, msg, "Sorry...",
 							wx.OK)
+		dlg.ShowModal()
+		dlg.Destroy()
+		
+	def OnEditExpenseType(self, event):
+		dlg = expenseTypeDialog(self, -1, 'Edit Expense Types')
+		dlg.ShowModal()
+		dlg.Destroy()
+		
+	def OnEditUser(self, event):
+		dlg = userDialog(self, -1, 'Edit Users')
 		dlg.ShowModal()
 		dlg.Destroy()
 
