@@ -156,11 +156,11 @@ def CreateMenu(self):
     item = FM.FlatMenuItem(optionMenu, MENU_PREFS, "&Preferences\tCtrl+P", "Preferences", wx.ITEM_NORMAL)
     optionMenu.AppendItem(item)
     
-    item = FM.FlatMenuItem(optionMenu, MENU_EDIT_EXPENSE_TYPE, "New Expense &Type\tCtrl+T", 
+    item = FM.FlatMenuItem(optionMenu, MENU_EDIT_EXPENSE_TYPE, "Edit Expense &Type\tCtrl+T", 
                            "Edit Expense Type", wx.ITEM_NORMAL)
     optionMenu.AppendItem(item)
     
-    item = FM.FlatMenuItem(optionMenu, MENU_NEW_USER, "New &User\tCtrl+U", 
+    item = FM.FlatMenuItem(optionMenu, MENU_NEW_USER, "Edit &User\tCtrl+U", 
                            "Edit User", wx.ITEM_NORMAL)
     optionMenu.AppendItem(item)
     

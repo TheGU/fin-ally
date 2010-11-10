@@ -158,9 +158,7 @@ class AppMainFrame(wx.Frame):
 		self.notebook = wx.Notebook(self.panel, size=AppMainFrame.size)
 
 		self.gPage = GraphicsPage(self.notebook)
-		self.notebook.AddPage(self.gPage, "Graphics")
-		self.ePage = EditPage(self.notebook)
-		self.notebook.AddPage(self.ePage, "Types + Users")
+		self.notebook.AddPage(self.gPage, "Grid")
 
 		# populate and connect the menuBar
 		CreateMenu(self)
