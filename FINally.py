@@ -34,13 +34,14 @@ import os
 from datetime import date, datetime
 from database import *
 from wx._core import WXK_F1, WXK_F2
-from editPage import EditPage
 from grid import GraphicsGrid
 from statusBar import CustomStatusBar
 from menuBar import CreateMenu
 from prefs import EditPreferences
 from filterControl import CustomFilterPanel
 from expenseDialogue import NewExpenseDialog
+from expenseTypeDialog import expenseTypeDialog
+from userDialog import userDialog
 
 try:
 	from agw import flatmenu as FM
@@ -156,9 +157,7 @@ class AppMainFrame(wx.Frame):
 		self.notebook = wx.Notebook(self.panel, size=AppMainFrame.size)
 
 		self.gPage = GraphicsPage(self.notebook)
-		self.notebook.AddPage(self.gPage, "Graphics")
-		self.ePage = EditPage(self.notebook)
-		self.notebook.AddPage(self.ePage, "Types + Users")
+		self.notebook.AddPage(self.gPage, "Grid")
 
 		# populate and connect the menuBar
 		CreateMenu(self)
@@ -210,6 +209,16 @@ class AppMainFrame(wx.Frame):
 			  "daniel.sisco@gmail.com\n\n"
 		dlg = wx.MessageDialog(self, msg, "Sorry...",
 							wx.OK)
+		dlg.ShowModal()
+		dlg.Destroy()
+		
+	def OnEditExpenseType(self, event):
+		dlg = expenseTypeDialog(self, -1, 'Edit Expense Types')
+		dlg.ShowModal()
+		dlg.Destroy()
+		
+	def OnEditUser(self, event):
+		dlg = userDialog(self, -1, 'Edit Users')
 		dlg.ShowModal()
 		dlg.Destroy()
 

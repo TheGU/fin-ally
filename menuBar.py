@@ -54,6 +54,8 @@ MENU_NEW_DB         = wx.NewId()
 MENU_OPEN_DB        = wx.NewId()
 MENU_QUIT           = wx.NewId()
 MENU_NEW_EXPENSE    = wx.NewId()
+MENU_EDIT_EXPENSE_TYPE = wx.NewId()
+MENU_NEW_USER       = wx.NewId()
 
 #********************************************************************
 def switchRGBtoBGR(colour):
@@ -154,6 +156,14 @@ def CreateMenu(self):
     item = FM.FlatMenuItem(optionMenu, MENU_PREFS, "&Preferences\tCtrl+P", "Preferences", wx.ITEM_NORMAL)
     optionMenu.AppendItem(item)
     
+    item = FM.FlatMenuItem(optionMenu, MENU_EDIT_EXPENSE_TYPE, "Edit Expense &Type\tCtrl+T", 
+                           "Edit Expense Type", wx.ITEM_NORMAL)
+    optionMenu.AppendItem(item)
+    
+    item = FM.FlatMenuItem(optionMenu, MENU_NEW_USER, "Edit &User\tCtrl+U", 
+                           "Edit User", wx.ITEM_NORMAL)
+    optionMenu.AppendItem(item)
+    
     # 
     # Create Help Menu
     #
@@ -173,9 +183,11 @@ def ConnectMenuBar(self):
     self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.OnAbout,          id=MENU_HELP)
     self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.gPage.ShowNewExpenseDialogue, id=MENU_NEW_EXPENSE) 
     self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.OnQuit,           id=MENU_QUIT)
+    self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.OnPrefs,          id=MENU_PREFS)
+    self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.OnEditExpenseType,id=MENU_EDIT_EXPENSE_TYPE)
+    self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.OnEditUser,       id=MENU_NEW_USER)
     
     # unsupported as of right now 
-    self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.OnPrefs,          id=MENU_PREFS)      # TODO
     self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.OnUnsupported,    id=MENU_NEW_DB)     # TODO
     self.Bind(FM.EVT_FLAT_MENU_SELECTED, self.OnUnsupported,    id=MENU_OPEN_DB)    # TODO
     
