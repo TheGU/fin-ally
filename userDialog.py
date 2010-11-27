@@ -244,21 +244,24 @@ class userDialog(wx.Dialog):
             IdxToDelete  = self.deleteComboBox.GetSelection()
             localId      = self.database.GetUserId(typeToDelete)
             
-            if(self.database.UserInUse(localId)):
-                # TODO: prompt user for new expenseType to apply using MigrateExpenseType
-                print "there are %s expenses using this user!" % (self.database.UserInUse(localId)) 
+            if localId != -1:
+                if(self.database.UserInUse(localId)):
+                    # TODO: prompt user for new expenseType to apply using MigrateExpenseType
+                    print "there are %s expenses using this user!" % (self.database.UserInUse(localId)) 
+                else:
+                    # look up type via description, get ID, delete from db
+                    print "deleting %s at position %s" % (typeToDelete, IdxToDelete)
+                    
+                    # remove from ComboBox
+                    self.deleteComboBox.Delete(IdxToDelete)
+                    
+                    localId = self.database.GetUserId(typeToDelete)
+                    self.database.DeleteUser(localId)
+                    
+                    # refresh Grid with delete option activated
+                    self.userGrid.RefreshData(delete=1)
             else:
-                # look up type via description, get ID, delete from db
-                print "deleting %s at position %s" % (typeToDelete, IdxToDelete)
-                
-                # remove from ComboBox
-                self.deleteComboBox.Delete(IdxToDelete)
-                
-                localId = self.database.GetUserId(typeToDelete)
-                self.database.DeleteUser(localId)
-                
-                # refresh Grid with delete option activated
-                self.userGrid.RefreshData(delete=1)
+                print "user %s doesn't seem to exist anymore, close dialog and try again" % (typeToDelete)      
         else:
             #TODO: open a dialoge to say this
             print "you must unlock the grid before deleting"
