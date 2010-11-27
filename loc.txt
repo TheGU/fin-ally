@@ -1,0 +1,16 @@
+     43 ./cfg.py
+    407 ./database.py
+    393 ./editPage.py
+    125 ./filterControl.py
+    403 ./FINally.py
+    377 ./grid.py
+    187 ./menuBar.py
+    165 ./migrate.py
+     82 ./prefs.py
+    103 ./schema_1_0.py
+    144 ./schema_2_0.py
+    170 ./schema_2_1.py
+    101 ./SQLiteCommands.py
+     50 ./statusBar.py
+     69 ./utils.py
+   2819 total
