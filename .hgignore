@@ -1,3 +1,4 @@
 relre:.pyc
 glob:.project
 glob:.pydevproject
+glob:*.db

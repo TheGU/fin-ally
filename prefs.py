@@ -6,7 +6,11 @@ def EditPreferences(self, event):
     dia = PreferenceDialog(self, -1, 'Edit Preferences')
     dia.ShowModal()
     dia.Destroy()
-    event.Skip() 
+    event.Skip()
+    
+def SaveWindowPreferences(frameWidth, frameHeight):
+    """called when we want to write window-based preferences into the database"""
+    print "size of the main frame is: %s by %s" % (frameWidth, frameHeight)
     
 #********************************************************************
 class PreferenceDialog(wx.Dialog):

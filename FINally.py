@@ -37,7 +37,7 @@ from wx._core import WXK_F1, WXK_F2
 from grid import GraphicsGrid
 from statusBar import CustomStatusBar
 from menuBar import CreateMenu
-from prefs import EditPreferences
+from prefs import EditPreferences, SaveWindowPreferences
 from filterControl import CustomFilterPanel
 from expenseDialogue import NewExpenseDialog
 from expenseTypeDialog import expenseTypeDialog
@@ -185,6 +185,8 @@ class AppMainFrame(wx.Frame):
 		self.SetBackgroundColour(colorString)
 		
 	def OnQuit(self, event):
+		localSize = self.GetSize()
+		SaveWindowPreferences(localSize[0], localSize[1])
 		self._mgr.UnInit()
 		self.Destroy()  
 		
