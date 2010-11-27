@@ -81,9 +81,119 @@ def loadTo2_1():
     global dict, dbName
     object = SchemaObject(dbName)
     object.load(dict)    
+    
+#*****************************************************
+def dumpFrom2_1():
+    from schema_2_1 import SchemaObject
+    global dict, dbName
+    object = SchemaObject(dbName)
+    dict = object.dump()
+    
+#*****************************************************
+def loadTo2_2():
+    from schema_2_2 import SchemaObject
+    global dict, dbName
+    object = SchemaObject(dbName)
+    object.load(dict) 
+     
+#*****************************************************
+def IdentifyDatabase():
+    """This method will locate a database (.db) file and then load specific pieces of information
+    into the appropriate variables for consumption by other modules"""
+    global dbName
+    dbFiles = list(GenFileList('*.db'))
+
+    # if any files were present...
+    if dbFiles:
+        #TODO: search for appropriate .db setup in each of these files
+        for tempFileName in dbFiles:
+            dbNameMatch = re.search('\w+\.db$', tempFileName)
+            if dbNameMatch:                
+                # remove the database name from the regex match
+                databaseName = dbNameMatch.group(0)
+                
+                # store name for global access
+                dbName = os.path.abspath(databaseName)
+                cont = True
+                break #ensures we load the first valid database
+            
+    else: # if no database files present, prompt user to create a new database file...
+        cont = False
+    
+    return cont
      
 #*******************************************************************************************************
 #                                                 MAIN 
 #*******************************************************************************************************
 if __name__ == '__main__':   
-    print "Please run Fin-ally by launching FINally.py!"
+    # identify database file
+    if(True == IdentifyDatabase()):
+        
+        # pull argument from argv
+        tempArgs = sys.argv[1]
+        temp = re.split('_', tempArgs)
+        schemaVersion[0] = int(temp[0]) 
+        schemaVersion[1] = int(temp[1])
+        #print "schemaVersion: %s.%s" % (schemaVersion[0], schemaVersion[1])
+            
+        # remove version from database
+        connString = 'sqlite:///' + dbName
+        engine = create_engine(connString, echo=False)
+        SessionObject = sessionmaker(bind=engine)
+        session = SessionObject()
+        
+        v = session.query(Version).one()
+        storedVersion[0] = v.major
+        storedVersion[1] = v.minor
+        #print "storedVersion: %s.%s" % (storedVersion[0], storedVersion[1])
+       
+        if(schemaVersion != storedVersion):
+            #tuple-ize
+            schemaVersionT = (schemaVersion[0], schemaVersion[1])
+            storedVersionT = (storedVersion[0], storedVersion[1])
+            
+            # TODO: replace this with a 'chain' mechanism as per sqlmigratelite
+            if(schemaVersionT == (2,0)):
+                # we're moving to version 2.0
+                if(storedVersionT == (1,0)):
+                    print "updating from %s to %s" % (storedVersionT, schemaVersionT)
+                    dumpFrom1_0()
+                    loadTo2_0()
+            elif(schemaVersionT == (2,1)):
+                # we've moving to version 2.1
+                if(storedVersionT == (2,0)):
+                    print "updating from %s to %s" % (storedVersionT, schemaVersionT)
+                    dumpFrom2_0()
+                    loadTo2_1()
+                elif(storedVersionT == (1,0)):
+                    print "updating from %s to %s" % (storedVersionT, schemaVersionT)
+                    dumpFrom1_0()
+                    loadTo2_0()
+                    dumpFrom2_0()
+                    loadTo2_1()
+            elif(schemaVersionT == (2,2)):
+                # we're moving to version 2.2
+                if(storedVersionT == (2,1)):
+                    print "updating from %s to %s" % (storedVersionT, schemaVersionT)
+                    dumpFrom2_1()
+                    loadTo2_2()
+                elif(storedVersionT == (2,0)):
+                    print "updating from %s to %s" % (storedVersionT, schemaVersionT)
+                    dumpFrom2_0()
+                    loadTo2_1()
+                    dumpFrom2_1()
+                    loadTo2_2()
+                elif(storedVersionT == (1,0)):
+                    print "updating from %s to %s" % (storedVersionT, schemaVersionT)
+                    dumpFrom1_0()
+                    loadTo2_0()
+                    dumpFrom2_0()
+                    loadTo2_1() 
+                    dumpFrom2_1()
+                    loadTo2_2()                   
+        else:
+            print "no migration required"
+            
+        session.close()
+    else: 
+        print "no migration required"
