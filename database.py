@@ -319,7 +319,10 @@ class Database():
 		"""reurns the User object id matching the input name"""
 		#TODO: add fault handling here
 		session = SessionObject()
-		uId = session.query(User).filter(User.name==userName).one().id
+		try:
+			uId = session.query(User).filter(User.name==userName).one().id
+		except NoResultFound:
+			uId = -1
 		session.close()
 		return uId	
 	
@@ -389,7 +392,10 @@ class Database():
 		"""returns an ExpenseType id matching the typeName argument"""
 		#TODO add fault handling here
 		session = SessionObject()
-		tId = session.query(ExpenseType).filter(ExpenseType.description==desc).one().id
+		try: 
+			tId = session.query(ExpenseType).filter(ExpenseType.description==desc).one().id
+		except NoResultFound:
+			tId = -1
 		session.close()
 		return tId
 

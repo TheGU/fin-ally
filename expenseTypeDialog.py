@@ -218,21 +218,25 @@ class expenseTypeDialog(wx.Dialog):
             IdxToDelete  = self.deleteComboBox.GetSelection()
             localId      = self.database.GetExpenseTypeId(typeToDelete)
             
-            if(self.database.ExpenseTypeInUse(localId)):
-                # TODO: prompt user for new expenseType to apply using MigrateExpenseType
-                print "there are %s expenses using this type!" % (self.database.ExpenseTypeInUse(localId)) 
+            # verify that the expense actually exists
+            if localId != -1:
+                if(self.database.ExpenseTypeInUse(localId)):
+                    # TODO: prompt user for new expenseType to apply using MigrateExpenseType
+                    print "there are %s expenses using this type!" % (self.database.ExpenseTypeInUse(localId)) 
+                else:
+                    # look up type via description, get ID, delete from db
+                    print "deleting %s at position %s" % (typeToDelete, IdxToDelete)
+                    
+                    # remove from ComboBox
+                    self.deleteComboBox.Delete(self.deleteComboBox.GetSelection())
+                    
+                    localId = self.database.GetExpenseTypeId(typeToDelete)
+                    self.database.DeleteExpenseType(localId)
+                    
+                    # refresh Grid with delete option activated
+                    self.expenseTypeGrid.RefreshData(delete=1)
             else:
-                # look up type via description, get ID, delete from db
-                print "deleting %s at position %s" % (typeToDelete, IdxToDelete)
-                
-                # remove from ComboBox
-                self.deleteComboBox.Delete(self.deleteComboBox.GetSelection())
-                
-                localId = self.database.GetExpenseTypeId(typeToDelete)
-                self.database.DeleteExpenseType(localId)
-                
-                # refresh Grid with delete option activated
-                self.expenseTypeGrid.RefreshData(delete=1)
+                print "expense %s doesn't seem to exist anymore, close dialog and try again" % (typeToDelete)
         else:
             #TODO: open a dialoge to say this
             print "you must unlock the grid before deleting"

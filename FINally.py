@@ -34,7 +34,6 @@ import os
 from datetime import date, datetime
 from database import *
 from wx._core import WXK_F1, WXK_F2
-from editPage import EditPage
 from grid import GraphicsGrid
 from statusBar import CustomStatusBar
 from menuBar import CreateMenu
