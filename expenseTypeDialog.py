@@ -32,6 +32,7 @@ import cfg
 import os
 from datetime import date, datetime
 from database import *
+from grid import CustomDataTable
 
 #********************************************************************
 class TypeColumnInfo:
@@ -60,6 +61,9 @@ class SimpleTypeGrid(gridlib.Grid):
         self.database = Database()
         data = self.database.GetExpenseTypeList()
         
+        # used for refreshing the grid if an expenseType is edited
+        self.dataTable = CustomDataTable(gridlib.Grid)
+        
         self.currentValue = ""
         
         self.Bind(gridlib.EVT_GRID_CELL_CHANGE, self.OnCellChange)
@@ -82,6 +86,7 @@ class SimpleTypeGrid(gridlib.Grid):
         # pull ID of the ExpenseType of interest and then edit the ExpenseType of that ID
         etId = self.database.GetExpenseTypeId(self.currentValue)
         self.database.EditExpenseType(value, etId)
+        self.dataTable.UpdateData()
 
         evt.Skip()
         
@@ -122,6 +127,7 @@ class expenseTypeDialog(wx.Dialog):
         
         #**** BEGIN ADD ****
         self.database = Database()
+        self.dataTable = CustomDataTable(gridlib.Grid)
         self.expenseTypeChoices = self.database.GetExpenseTypeList()
         self.newTypeText = "new type description..."
         
@@ -197,6 +203,7 @@ class expenseTypeDialog(wx.Dialog):
             self.newExpenseTypeEntry.SetValue(self.newTypeText)
             # refresh Grid
             self.expenseTypeGrid.RefreshData()
+            self.dataTable.UpdateData()
             
             if success:
                 # refresh comboBox choices and add new entry
@@ -235,6 +242,7 @@ class expenseTypeDialog(wx.Dialog):
                     
                     # refresh Grid with delete option activated
                     self.expenseTypeGrid.RefreshData(delete=1)
+                    self.dataTable.UpdateData()
             else:
                 print "expense %s doesn't seem to exist anymore, close dialog and try again" % (typeToDelete)
         else:
