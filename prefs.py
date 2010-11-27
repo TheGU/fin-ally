@@ -8,9 +8,15 @@ def EditPreferences(self, event):
     dia.Destroy()
     event.Skip()
     
+#********************************************************************
 def SaveWindowPreferences(frameWidth, frameHeight):
     """called when we want to write window-based preferences into the database"""
     print "size of the main frame is: %s by %s" % (frameWidth, frameHeight)
+
+#********************************************************************    
+def SaveColumnPreferences(colId, colWidth):
+    """called when we want to write column preferences into the database"""
+    print "size of column %s changed to %s" % (colId, colWidth)
     
 #********************************************************************
 class PreferenceDialog(wx.Dialog):

@@ -32,6 +32,7 @@ import cfg
 from datetime import date, datetime
 from database import Database
 from utils import dateMatch
+from prefs import SaveColumnPreferences
 
 #********************************************************************    
 class columnInfo:
@@ -91,6 +92,7 @@ class GraphicsGrid(gridlib.Grid):
         # bind editor creation to an event so we can 'catch' unique editors
         self.Bind(gridlib.EVT_GRID_EDITOR_CREATED,
                   self.OnGrid1GridEditorCreated)
+        self.Bind(gridlib.EVT_GRID_COL_SIZE, self.OnGridColSize)
         
         # bind grid-based context menu if active
         if cfg.GRID_CONTEXT_MENU == 1:
@@ -164,6 +166,11 @@ class GraphicsGrid(gridlib.Grid):
             self.tableBase.DeleteRow(row)
         else:
             event.Skip()
+            
+    def OnGridColSize(self, event):
+        """called when a column is resized in the grid"""
+        SaveColumnPreferences(event.GetRowOrCol(), self.GetColSize(event.GetRowOrCol()))
+        event.Skip()
 
     def OnGrid1GridEditorCreated(self, event):
         """This function will fire when a cell editor is created, which seems to be 
