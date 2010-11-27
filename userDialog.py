@@ -32,6 +32,7 @@ import cfg
 import os
 from   datetime import date, datetime
 from   database import *
+from   grid import CustomDataTable
 
 #********************************************************************
 class UserColumnInfo:
@@ -66,6 +67,9 @@ class SimpleUserGrid(gridlib.Grid):
         self.database = Database()
         data = self.database.GetUserList()
         
+        # used for refreshing the grid if users are edited
+        self.dataTable = CustomDataTable(gridlib.Grid)
+        
         self.oldNameValue = ""
         
         self.Bind(gridlib.EVT_GRID_CELL_CHANGE, self.OnCellChange)
@@ -91,6 +95,9 @@ class SimpleUserGrid(gridlib.Grid):
             self.database.EditUser(newValue, self.GetCellValue(evt.GetRow(), evt.GetCol()+1), uId)
         else:
             self.database.EditUser(self.GetCellValue(evt.GetRow(), evt.GetCol()-1), newValue, uId)
+        
+        # refresh grid
+        self.dataTable.UpdateData()
             
         evt.Skip()
         
@@ -135,6 +142,7 @@ class userDialog(wx.Dialog):
         
         #**** BEGIN ADD ****
         self.database = Database()
+        self.dataTable = CustomDataTable(gridlib.Grid)
         self.userChoices = self.database.GetSimpleUserList()
         self.newUserFullName  = "new user full name..."
         self.newUserShortName = "new user short name..."
@@ -223,6 +231,7 @@ class userDialog(wx.Dialog):
             self.shortNameEntry.SetValue(self.newUserShortName)
             # refresh Grid
             self.userGrid.RefreshData()
+            self.dataTable.UpdateData()
             
             if success:
                 # refresh comboBox choices and add new entry
@@ -260,6 +269,7 @@ class userDialog(wx.Dialog):
                     
                     # refresh Grid with delete option activated
                     self.userGrid.RefreshData(delete=1)
+                    self.dataTable.UpdateData()
             else:
                 print "user %s doesn't seem to exist anymore, close dialog and try again" % (typeToDelete)      
         else:
