@@ -502,6 +502,18 @@ class Database():
 		session.close()
 		return p
 	
+	def SetColWidthPref(self, locColWidths):
+		session = SessionObject()
+		try:
+			p = session.query(Preference).one()
+		except NoResultFound:
+			print "failure"
+	
+		p.colWidths = locColWidths
+		session.commit()
+		
+		session.close()
+	
 	def SetSortTerm(self, term, value):
 		session = SessionObject()
 		try:
