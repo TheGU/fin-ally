@@ -40,4 +40,4 @@ NEW_EXPENSE_PANEL = 0
 GRID_CONTEXT_MENU = 0
 
 # FINally version - used for database migration and version checking
-VERSION = (1,4,1)
+VERSION = (1,5,0)
