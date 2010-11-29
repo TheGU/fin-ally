@@ -18,6 +18,21 @@ def SaveColumnPreferences(colId, colWidth):
     """called when we want to write column preferences into the database"""
     print "size of column %s changed to %s" % (colId, colWidth)
     
+    # pull current column widths out of database - split into array
+    database = Database()
+    locColWidths = database.GetPrefs().colWidths.split(',')
+    locColWidths[colId] = str(colWidth)
+    
+    # re-load string with desired col width
+    locString = ""
+    for i in locColWidths:
+        locString += i
+        locString +=","
+    locString = locString.rstrip(",")
+    
+    # push back into database
+    database.SetColWidthPref(locString)
+    
 #********************************************************************
 class PreferenceDialog(wx.Dialog):
     def __init__(self, parent, id, title):
