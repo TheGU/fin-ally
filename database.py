@@ -33,7 +33,8 @@
 import sys, re, os
 from utils import GenFileList, dPrint, BLANK_TERM
 from datetime import date, datetime
-from schema_2_1 import *
+from schema_2_2 import *
+from colInfo import colInfo
 
 def IdentifyDatabase():
 	"""This method will locate a database (.db) file and then load specific pieces of information
@@ -155,25 +156,40 @@ class Database():
 		but the database will remain."""
 		
 		session = SessionObject()
-		
 		print "Creating database: \n\t", Database().fullName, "\n\n"
+		
+		# create User table
 		rhs = User(name='Rachel Sisco', shortName='Rachel')
 		dls = User(name='Daniel Sisco', shortName='Dan')
 		session.add_all([rhs, dls])
 		session.commit()
+		
+		# create expenseType table
 		clothing = ExpenseType(description='clothing!')
 		makeup   = ExpenseType(description='makeup!')
 		session.add_all([clothing, makeup])
 		session.commit()
+		
+		# create demo expense table
 		e1 = Expense(user=rhs, expenseType=makeup, amount='15.01', date=date.today(), description='makeup for mah FACE!')
 		e2 = Expense(user=dls, expenseType=clothing, amount='50.25', date=date.today(), description='clothing for mah parts.')
 		session.add_all([e1,e2])
 		session.commit()
+		
+		# create dataSort table
 		ds = DataSort(sortTerm1='date')
 		session.add(ds)
 		session.commit()
+		
+		# create version table
 		v = Version(minor=dbVer[1], major=dbVer[0])
 		session.add(v)
+		session.commit()
+		
+		# create preference table
+		colString = colInfo.defColWidth # pull default from grid.py
+		p = Preference(frameHeight=300, frameWidth=900, colWidths=colString)
+		session.add(p)
 		session.commit()
 		
 		session.close()
