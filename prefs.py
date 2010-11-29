@@ -11,7 +11,7 @@ def EditPreferences(self, event):
 #********************************************************************
 def SaveWindowPreferences(frameWidth, frameHeight):
     """called when we want to write window-based preferences into the database"""
-    print "size of the main frame is: %s by %s" % (frameWidth, frameHeight)
+    #print "size of the main frame is: %s by %s" % (frameWidth, frameHeight)
 
 #********************************************************************    
 def SaveColumnPreferences(colId, colWidth):
