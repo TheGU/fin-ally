@@ -458,7 +458,13 @@ class Database():
 	def ExpenseTypeInUse(self, typeId):
 		"""returns the number of expenses using the expense type with the input ID"""
 		session = SessionObject()
-		cnt = len(session.query(Expense).filter(Expense.expenseType_id == typeId).all())
+		
+		try:
+			et = session.query(Expense).filter(Expense.expenseType_id == typeId).all()
+			cnt = len(et)
+		except NoResultFound:
+			cnt = 0
+			
 		session.close
 		return cnt
 	
@@ -486,6 +492,39 @@ class Database():
 		session.commit()
 		session.close()
 		
+	def SetDefUserPref(self, inputId=-1):
+		"""input should be the id of a user."""
+		session = SessionObject()
+		try:
+			p = session.query(Preference).one()
+			p.defUser_id = inputId
+			session.commit()
+		except NoResultFound:
+			print "failure"
+		
+		session.close()
+		
+	def SetDefExpTypePref(self, inputId=-1):
+		"""input should be the id of an expenseType."""
+		session = SessionObject()
+		try:
+			p = session.query(Preference).one()
+			p.defExpenseType_id = inputId
+			session.commit()
+		except NoResultFound:
+			print "failure"
+		
+		session.close()
+		
+	def SetDefAmountPref(self, inputAmount):
+		session = SessionObject()
+		try:
+			p = session.query(Preference).one()
+			p.defAmount = inputAmount
+			session.commit()
+		except NoResultFound:
+			print "failure"
+				
 	def GetPrefs(self):
 		session = SessionObject()
 		
@@ -506,11 +545,10 @@ class Database():
 		session = SessionObject()
 		try:
 			p = session.query(Preference).one()
+			p.colWidths = locColWidths
+			session.commit()
 		except NoResultFound:
 			print "failure"
-	
-		p.colWidths = locColWidths
-		session.commit()
 		
 		session.close()
 	
