@@ -233,6 +233,11 @@ class expenseTypeDialog(wx.Dialog):
                 else:
                     # look up type via description, get ID, delete from db
                     print "deleting %s at position %s" % (typeToDelete, IdxToDelete)
+                    print "default is %s" % (self.database.GetPrefs().defExpenseType_id)
+                    
+                    # remove from Preferences
+                    if(self.database.GetPrefs().defExpenseType_id == typeToDelete):
+                        self.database.SetDefExpTypePref("")
                     
                     # remove from ComboBox
                     self.deleteComboBox.Delete(self.deleteComboBox.GetSelection())
