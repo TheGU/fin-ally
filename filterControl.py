@@ -33,6 +33,74 @@ from grid import CustomDataTable
 from database import FilterTerms, Database
 from datetime import datetime
 
+class CustomFilterPanel(wx.Frame):
+    def __init__(self, parent, *args, **kwds):
+        # begin wxGlade: CustomFilterPanel.__init__
+        kwds["style"] = wx.DEFAULT_FRAME_STYLE
+        wx.Frame.__init__(self, parent, *args, **kwds)
+        self.searchSizer_staticbox = wx.StaticBox(self, -1, "search")
+        self.reservedSizer_staticbox = wx.StaticBox(self, -1, " reserved")
+        self.filterSizer_staticbox = wx.StaticBox(self, -1, "date filter")
+        self.startMonthText = wx.StaticText(self, -1, "start date", style=wx.ALIGN_CENTRE)
+        self.startDateCombo = wx.ComboBox(self, -1, choices=[], style=wx.CB_DROPDOWN|wx.CB_DROPDOWN)
+        self.dateRangeText = wx.StaticText(self, -1, "date range", style=wx.ALIGN_CENTRE)
+        self.searchText = wx.StaticText(self, -1, "search expenses", style=wx.ALIGN_CENTRE)
+        self.searchTypeText = wx.StaticText(self, -1, "search type", style=wx.ALIGN_CENTRE)
+        
+        #**** ADDED ****
+        self.database = Database()
+        self.bufferSize = (15,15)
+        self.parent = parent
+        self.dataTable = CustomDataTable(gridlib.Grid)
+        
+        # values populated by controls in this panel - consumed by the application
+        self.startMonth = "January"
+        self.monthRange = 1
+        self.searchTerm = ""
+        
+        self.filterTerms = FilterTerms()
+        #**** END ADD ****
+
+        self.__set_properties()
+        self.__do_layout()
+        # end wxGlade
+
+    def __set_properties(self):
+        # begin wxGlade: CustomFilterPanel.__set_properties
+        self.SetTitle("frame_1")
+        self.SetBackgroundColour(wx.Colour(255, 255, 255))
+        # end wxGlade
+
+    def __do_layout(self):
+        # begin wxGlade: CustomFilterPanel.__do_layout
+        sizer_1 = wx.BoxSizer(wx.VERTICAL)
+        filterPanelSizer = wx.BoxSizer(wx.HORIZONTAL)
+        reservedSizer = wx.StaticBoxSizer(self.reservedSizer_staticbox, wx.HORIZONTAL)
+        searchSizer = wx.StaticBoxSizer(self.searchSizer_staticbox, wx.HORIZONTAL)
+        searchSizerRight = wx.BoxSizer(wx.VERTICAL)
+        searchSizerLeft = wx.BoxSizer(wx.VERTICAL)
+        filterSizer = wx.StaticBoxSizer(self.filterSizer_staticbox, wx.HORIZONTAL)
+        filterSizerRight = wx.BoxSizer(wx.VERTICAL)
+        filterSizerLeft = wx.BoxSizer(wx.VERTICAL)
+        filterSizerLeft.Add(self.startMonthText, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL, 5)
+        filterSizerLeft.Add(self.startDateCombo, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL, 5)
+        filterSizer.Add(filterSizerLeft, 1, wx.EXPAND, 0)
+        filterSizerRight.Add(self.dateRangeText, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL, 5)
+        filterSizer.Add(filterSizerRight, 1, wx.EXPAND, 0)
+        filterPanelSizer.Add(filterSizer, 1, wx.RIGHT|wx.EXPAND, 5)
+        searchSizerLeft.Add(self.searchText, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL, 5)
+        searchSizer.Add(searchSizerLeft, 1, wx.EXPAND, 0)
+        searchSizerRight.Add(self.searchTypeText, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL, 5)
+        searchSizer.Add(searchSizerRight, 1, wx.EXPAND, 0)
+        filterPanelSizer.Add(searchSizer, 1, wx.EXPAND, 0)
+        filterPanelSizer.Add(reservedSizer, 1, wx.LEFT|wx.EXPAND, 5)
+        sizer_1.Add(filterPanelSizer, 1, wx.ALL|wx.EXPAND, 5)
+        self.SetSizer(sizer_1)
+        sizer_1.Fit(self)
+        self.Layout()
+        # end wxGlade
+
+
 class CustomFilterPanel(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent, -1)

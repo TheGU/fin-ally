@@ -9,9 +9,9 @@ import wx
 
 
 
-class FilterFrame(wx.Frame):
+class CustomFilterPanel(wx.Frame):
     def __init__(self, *args, **kwds):
-        # begin wxGlade: FilterFrame.__init__
+        # begin wxGlade: CustomFilterPanel.__init__
         kwds["style"] = wx.DEFAULT_FRAME_STYLE
         wx.Frame.__init__(self, *args, **kwds)
         self.searchSizer_staticbox = wx.StaticBox(self, -1, "search")
@@ -28,13 +28,13 @@ class FilterFrame(wx.Frame):
         # end wxGlade
 
     def __set_properties(self):
-        # begin wxGlade: FilterFrame.__set_properties
+        # begin wxGlade: CustomFilterPanel.__set_properties
         self.SetTitle("frame_1")
         self.SetBackgroundColour(wx.Colour(255, 255, 255))
         # end wxGlade
 
     def __do_layout(self):
-        # begin wxGlade: FilterFrame.__do_layout
+        # begin wxGlade: CustomFilterPanel.__do_layout
         sizer_1 = wx.BoxSizer(wx.VERTICAL)
         filterPanelSizer = wx.BoxSizer(wx.HORIZONTAL)
         reservedSizer = wx.StaticBoxSizer(self.reservedSizer_staticbox, wx.HORIZONTAL)
@@ -61,6 +61,22 @@ class FilterFrame(wx.Frame):
         sizer_1.Fit(self)
         self.Layout()
         # end wxGlade
+
+# end of class CustomFilterPanel
+
+
+class FilterFrame(wx.Frame):
+    def __init__(self, *args, **kwds):
+        # content of this block not found: did you rename this class?
+        pass
+
+    def __set_properties(self):
+        # content of this block not found: did you rename this class?
+        pass
+
+    def __do_layout(self):
+        # content of this block not found: did you rename this class?
+        pass
 
 # end of class FilterFrame
 
