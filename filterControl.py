@@ -99,7 +99,13 @@ class CustomFilterPanel(wx.Panel):
         self.Bind(wx.EVT_SEARCHCTRL_CANCEL_BTN, self.OnCancel, self.search)
         self.Bind(wx.EVT_TEXT_ENTER, self.OnSearch, self.search)
             
+        # create and bind the expenseType search widget
+        self.expenseTypeChoices = self.database.GetExpenseTypeList()
+        self.expenseTypeChoices.insert(0,"all")
         self.searchTypeText = wx.StaticText(self, -1, "search type", style=wx.ALIGN_CENTRE)
+        self.searchTypeCombo = wx.ComboBox(self, -1, value=self.expenseTypeChoices[0], choices=self.expenseTypeChoices, style=wx.CB_DROPDOWN|wx.CB_DROPDOWN)
+        self.Bind(wx.EVT_COMBOBOX, self.OnTypeSearch, self.searchTypeCombo)
+        
         self.reservedSizer_staticbox = wx.StaticBox(self, -1, " reserved")
         
         self.__do_layout()
@@ -112,25 +118,34 @@ class CustomFilterPanel(wx.Panel):
         searchSizerRight = wx.BoxSizer(wx.VERTICAL)
         searchSizerLeft = wx.BoxSizer(wx.VERTICAL)
         filterSizer = wx.StaticBoxSizer(self.filterSizer_staticbox, wx.HORIZONTAL)
-        filterSizerRight = wx.BoxSizer(wx.VERTICAL)
-        filterSizerMid = wx.BoxSizer(wx.VERTICAL)
+        
         filterSizerLeft = wx.BoxSizer(wx.VERTICAL)
         filterSizerLeft.Add(self.startMonthText, 0, wx.ALIGN_CENTER_HORIZONTAL, 5)
         filterSizerLeft.Add(self.startDateCombo, 0, wx.TOP|wx.ALIGN_CENTER_HORIZONTAL, 15)
         filterSizer.Add(filterSizerLeft, 0, wx.ALL|wx.EXPAND, 5)
+        
+        filterSizerMid = wx.BoxSizer(wx.VERTICAL)
         filterSizerMid.Add(self.startYearText, 0, wx.ALIGN_CENTER_HORIZONTAL, 5)
         filterSizerMid.Add(self.startYearCombo, 0, wx.TOP|wx.ALIGN_CENTER_HORIZONTAL, 15)
         filterSizer.Add(filterSizerMid, 0, wx.ALL|wx.EXPAND, 5)
+        
+        filterSizerRight = wx.BoxSizer(wx.VERTICAL)
         filterSizerRight.Add(self.dateRangeText, 0, wx.ALIGN_CENTER_HORIZONTAL, 5)
         filterSizerRight.Add(self.slider, 0, wx.ALIGN_CENTER_HORIZONTAL, 5)
-        filterSizer.Add(filterSizerRight, 1, wx.EXPAND, 0)
+        filterSizer.Add(filterSizerRight, 1, wx.ALL|wx.EXPAND, 5)
+        
         filterPanelSizer.Add(filterSizer, 1, wx.RIGHT|wx.EXPAND, 5)
+        
         searchSizerLeft.Add(self.searchText, 0, wx.ALIGN_CENTER_HORIZONTAL, 5)
         searchSizerLeft.Add(self.search, 0, wx.TOP|wx.ALIGN_CENTER_HORIZONTAL, 20)
-        searchSizer.Add(searchSizerLeft, 1, wx.EXPAND, 0)
+        searchSizer.Add(searchSizerLeft, 0, wx.ALL|wx.EXPAND, 5)
+        
         searchSizerRight.Add(self.searchTypeText, 0, wx.ALIGN_CENTER_HORIZONTAL, 5)
-        searchSizer.Add(searchSizerRight, 1, wx.EXPAND, 0)
-        filterPanelSizer.Add(searchSizer, 1, wx.EXPAND, 0)
+        searchSizerRight.Add(self.searchTypeCombo, 0, wx.TOP|wx.ALIGN_CENTER_HORIZONTAL, 20)
+        searchSizer.Add(searchSizerRight, 0, wx.ALL|wx.EXPAND, 5)
+        
+        filterPanelSizer.Add(searchSizer, 0, wx.EXPAND, 0)
+        
         filterPanelSizer.Add(reservedSizer, 1, wx.LEFT|wx.EXPAND, 5)
         sizer_1.Add(filterPanelSizer, 1, wx.ALL|wx.EXPAND, 5)
         self.SetSizer(sizer_1)
@@ -166,5 +181,10 @@ class CustomFilterPanel(wx.Panel):
         
     def OnYearStart(self, event):
         self.filterTerms.SetStartYear(int(self.startYearCombo.GetValue()))
+        self.dataTable.UpdateData()
+        event.Skip()
+        
+    def OnTypeSearch(self, event):
+        self.filterTerms.SetExpenseTypeTerms(self.searchTypeCombo.GetValue())
         self.dataTable.UpdateData()
         event.Skip()
