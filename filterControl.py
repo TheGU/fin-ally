@@ -85,10 +85,21 @@ class CustomFilterPanel(wx.Panel):
         self.startYearCombo = wx.ComboBox(self, -1, value="2010", choices=["2010", "2011"], style=wx.CB_DROPDOWN|wx.CB_DROPDOWN)
         self.Bind(wx.EVT_COMBOBOX, self.OnYearStart, self.startYearCombo)
         
-        # handle search and reserved boxes
-        self.searchText = wx.StaticText(self, -1, "search expenses", style=wx.ALIGN_CENTRE)
-        self.searchTypeText = wx.StaticText(self, -1, "search type", style=wx.ALIGN_CENTRE)
+        # create the overarcing search box 
         self.searchSizer_staticbox = wx.StaticBox(self, -1, "search")
+        
+        # create and bind the expense search widget
+        self.searchText = wx.StaticText(self, -1, "search expenses", style=wx.ALIGN_CENTRE)
+        # NOTE: for some reason the search control doesn't take a panel as the parent, just 'self'
+        self.search = wx.SearchCtrl(self, size=(200,-1), style=wx.TE_PROCESS_ENTER)
+        self.search.ShowCancelButton(1)
+        self.search.ShowSearchButton(1)
+        
+        self.Bind(wx.EVT_SEARCHCTRL_SEARCH_BTN, self.OnSearch, self.search)
+        self.Bind(wx.EVT_SEARCHCTRL_CANCEL_BTN, self.OnCancel, self.search)
+        self.Bind(wx.EVT_TEXT_ENTER, self.OnSearch, self.search)
+            
+        self.searchTypeText = wx.StaticText(self, -1, "search type", style=wx.ALIGN_CENTRE)
         self.reservedSizer_staticbox = wx.StaticBox(self, -1, " reserved")
         
         self.__do_layout()
@@ -115,6 +126,7 @@ class CustomFilterPanel(wx.Panel):
         filterSizer.Add(filterSizerRight, 1, wx.EXPAND, 0)
         filterPanelSizer.Add(filterSizer, 1, wx.RIGHT|wx.EXPAND, 5)
         searchSizerLeft.Add(self.searchText, 0, wx.ALIGN_CENTER_HORIZONTAL, 5)
+        searchSizerLeft.Add(self.search, 0, wx.TOP|wx.ALIGN_CENTER_HORIZONTAL, 20)
         searchSizer.Add(searchSizerLeft, 1, wx.EXPAND, 0)
         searchSizerRight.Add(self.searchTypeText, 0, wx.ALIGN_CENTER_HORIZONTAL, 5)
         searchSizer.Add(searchSizerRight, 1, wx.EXPAND, 0)
@@ -156,127 +168,3 @@ class CustomFilterPanel(wx.Panel):
         self.filterTerms.SetStartYear(int(self.startYearCombo.GetValue()))
         self.dataTable.UpdateData()
         event.Skip()
-
-#class CustomFilterPanel(wx.Panel):
-#    def __init__(self, parent):
-#        wx.Panel.__init__(self, parent, -1)
-#        
-#        self.database = Database()
-#        self.bufferSize = (15,15)
-#        self.parent = parent
-#        self.dataTable = CustomDataTable(gridlib.Grid)
-#        
-#        # values populated by controls in this panel - consumed by the application
-#        self.startMonth = "January"
-#        self.monthRange = 1
-#        self.searchTerm = ""
-#        
-#        self.filterTerms = FilterTerms()
-#        
-#        # create the month range static text
-#        self.monthRangeTextPanel = wx.Panel(self, -1)
-#        self.text1 = wx.StaticText(self.monthRangeTextPanel, -1, "number of months to display", (0, 0))
-#        
-#        # create the month range control
-#        self.monthRangePanel = wx.Panel(self, -1)
-#        self.slider = wx.Slider(self.monthRangePanel, 
-#                           100, # id
-#                           1,  # default
-#                           1,   # min
-#                           12,  # max
-#                           (0,10), # pos
-#                           (250, -1),# size
-#                           wx.SL_HORIZONTAL | wx.SL_AUTOTICKS | wx.SL_LABELS )
-#        self.slider.SetTickFreq(1, 1)
-#        self.Bind(wx.EVT_SLIDER, self.OnMonthRange, self.slider)
-#        
-#        # populate the first sub-panel: month range selection
-#        self.vSizer1 = wx.BoxSizer(wx.VERTICAL)
-#        self.vSizer1.Add(self.monthRangeTextPanel, 0, wx.CENTER)
-#        self.vSizer1.Add(self.monthRangePanel, 0)
-#        
-#        # create the starting month static text
-#        self.startMonthTextPanel = wx.Panel(self, -1)
-#        self.text2 = wx.StaticText(self.startMonthTextPanel, -1, "starting month", (0,0))
-#        
-#        # create the start month control
-#        self.startMonthPanel = wx.Panel(self, -1)
-#        
-#        # this comboBox is based on monthDict, so find the current month key
-#        # in monthDict and use as default
-#        now = datetime.now()
-#        for key in monthDict:
-#            if(now.month == monthDict[key]):
-#                defaultMonth = key
-#        
-#        self.startMonthControl = wx.ComboBox(self.startMonthPanel, 
-#                                             -1, 
-#                                             defaultMonth,     # default
-#                                             (0, 30),   # pos 
-#                                             (160, -1), # size
-#                                             list(monthDict.keys()),
-#                                             wx.CB_DROPDOWN)
-#        self.Bind(wx.EVT_COMBOBOX, self.OnMonthStart, self.startMonthControl)
-#        
-#        # populate the second sub-panel: start month selection
-#        self.vSizer2 = wx.BoxSizer(wx.VERTICAL)
-#        self.vSizer2.Add(self.startMonthTextPanel, 0, wx.CENTER)
-#        self.vSizer2.Add(self.startMonthPanel, 0)
-#        
-#        # create the search static text
-#        self.searchTextPanel = wx.Panel(self, -1)
-#        self.text3 = wx.StaticText(self.searchTextPanel, -1, "search expenses", (0,0))
-#        
-#        # create the search control
-#        # NOTE: for some reason the search control doesn't take a panel as the parent, just 'self'
-#        self.search = wx.SearchCtrl(self, size=(200,-1), style=wx.TE_PROCESS_ENTER)
-#        self.search.ShowCancelButton(1)
-#        self.search.ShowSearchButton(1)
-#        
-#        self.Bind(wx.EVT_SEARCHCTRL_SEARCH_BTN, self.OnSearch, self.search)
-#        self.Bind(wx.EVT_SEARCHCTRL_CANCEL_BTN, self.OnCancel, self.search)
-#        self.Bind(wx.EVT_TEXT_ENTER, self.OnSearch, self.search)
-#        
-#        # populate the third sub-panel: search control
-#        self.vSizer3 = wx.BoxSizer(wx.VERTICAL)
-#        self.vSizer3.Add(self.searchTextPanel, 0, wx.CENTER)
-#        self.vSizer3.Add(wx.Panel(self, -1, size = (self.bufferSize[0], self.bufferSize[1]*2)))
-#        self.vSizer3.Add(self.search, 0)
-#        
-#        # populate the overall horizontal panel
-#        self.hSizer = wx.BoxSizer(wx.HORIZONTAL)
-#        self.hSizer.Add(wx.Panel(self, -1, size = self.bufferSize))
-#        self.hSizer.Add(self.vSizer2, 0)
-#        self.hSizer.Add(wx.Panel(self, -1, size = self.bufferSize))
-#        self.hSizer.Add(self.vSizer1, 0)
-#        self.hSizer.Add(wx.Panel(self, -1, size = self.bufferSize))
-#        self.hSizer.Add(self.vSizer3, 0, wx.ALIGN_RIGHT)
-#        
-#        self.SetSizer(self.hSizer)
-#        
-#    def OnSearch(self, event):
-#        localSearch = self.search.GetValue()
-#        
-#        # replace null match with "match anything"
-#        if(localSearch == ""):
-#            localSearch = BLANK_TERM
-#            
-#        self.filterTerms.SetSearchTerms(localSearch)
-#        self.dataTable.UpdateData()
-#        event.Skip()
-#        
-#    def OnCancel(self, event):
-#        self.search.SetValue("")
-#        self.filterTerms.SetSearchTerms(BLANK_TERM)
-#        self.dataTable.UpdateData()
-#        event.Skip()
-#        
-#    def OnMonthStart(self, event):
-#        self.filterTerms.SetStartMonth(monthDict[self.startMonthControl.GetValue()])
-#        self.dataTable.UpdateData()
-#        event.Skip()
-#        
-#    def OnMonthRange(self, event):
-#        self.filterTerms.SetMonthRange(self.slider.GetValue())
-#        self.dataTable.UpdateData()
-#        event.Skip()
