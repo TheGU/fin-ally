@@ -75,10 +75,13 @@ def IdentifyDatabase():
 #							CLASSES
 #********************************************************************
 class FilterTerms():
-	"""Class containing filter terms for global use. Methods 
-	include getters and setters for all filter methods."""
+	"""Class containing filter terms for global use. Methods include 
+	getters and setters for all filter methods. NOTE: this is not 
+	stored in the database because it's not desired to store this 
+	information across tool uses."""
 	
 	startMonth = datetime.now().month
+	startYear  = datetime.now().year
 	monthRange = 1
 	searchTerms = "[BLANK]"
 	
@@ -88,6 +91,12 @@ class FilterTerms():
 	def GetStartMonth(self):
 		return self.__class__.startMonth
 	
+	def SetStartYear(self, year):
+		self.__class__.startYear = year
+		
+	def GetStartYear(self):
+		return self.__class__.startYear
+		
 	def SetMonthRange(self, range):
 		self.__class__.monthRange = range
 
@@ -270,18 +279,19 @@ class Database():
 		filters = FilterTerms()
 		
 		# generate date objects for start and end dates
-		startDate = date(2010, filters.GetStartMonth(), 1)
-		temp = filters.GetStartMonth() + filters.GetMonthRange()
+		startDate    = date(filters.GetStartYear(), filters.GetStartMonth(), 1)
+		tempEndMonth = filters.GetStartMonth() + filters.GetMonthRange()
+		tempEndYear  = filters.GetStartYear()
 		
-		# TODO: update this to work correctly with years
-		if (temp <= 12):
-			endDate = date(2010, temp, 1)
-		else:
-			endDate = date(2010, 12, 31)
+		# TODO: update this to work correctly past two years
+		if (tempEndMonth <= 12):
+			endDate = date(tempEndYear, tempEndMonth, 1)
+		elif (tempEndMonth <= 24):
+			endDate = date(tempEndYear+1, tempEndMonth-12, 1)
 		
 		# grab all expenses
 		expenseList = session.query(Expense).filter(Expense.date >= startDate). \
-											 filter(Expense.date <= endDate).    \
+											 filter(Expense.date < endDate).    \
 											 order_by(localSortTerm).all()
 			
 		# compile regex match terms
