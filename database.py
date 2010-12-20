@@ -84,6 +84,7 @@ class FilterTerms():
 	startYear  = datetime.now().year
 	monthRange = 1
 	searchTerms = "[BLANK]"
+	typeTerms  = "all"
 	
 	def SetStartMonth(self, month):
 		self.__class__.startMonth = month
@@ -108,6 +109,12 @@ class FilterTerms():
 
 	def GetSearchTerms(self):
 		return self.__class__.searchTerms
+	
+	def SetExpenseTypeTerms(self, type):
+		self.__class__.typeTerms = type
+		
+	def GetExpenseTypeTerms(self):
+		return self.__class__.typeTerms
 
 def RegexMatch():
 	""""""
@@ -296,10 +303,11 @@ class Database():
 			
 		# compile regex match terms
 		matchString = RegexMatch()
+		typeString  = filters.GetExpenseTypeTerms()
 											 
 		# iterate through expenses - packing into listxlist
 		for i in expenseList:
-			if(re.search(matchString, i.description)):
+			if(re.search(matchString, i.description) and (i.expenseType.description == typeString or typeString == "all")):
 				minorList = [i.user.name, 
 							i.expenseType.description, 
 							str(i.amount), 
