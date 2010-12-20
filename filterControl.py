@@ -52,7 +52,7 @@ class CustomFilterPanel(wx.Panel):
         
         self.filterTerms = FilterTerms()
         
-        # create the overarching date filter box
+        # create the overarcing date filter box
         self.filterSizer_staticbox = wx.StaticBox(self, -1, "date filter")
         
         # create and bind the month range control
@@ -153,7 +153,8 @@ class CustomFilterPanel(wx.Panel):
         event.Skip()
         
     def OnYearStart(self, event):
-        print "what? huh?"
+        self.filterTerms.SetStartYear(int(self.startYearCombo.GetValue()))
+        self.dataTable.UpdateData()
         event.Skip()
 
 #class CustomFilterPanel(wx.Panel):
