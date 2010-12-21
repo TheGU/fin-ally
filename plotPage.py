@@ -117,9 +117,6 @@ class PlotPage(wx.Panel):
             self.sum = self.sum + value
             self.labels.append(key)
         
-        print self.data
-        print self.labels
-        
         self.axes.clear()        
 
         # create the pie chart

@@ -33,6 +33,7 @@ import cfg
 import os
 from datetime import date, datetime
 from database import *
+from threads import ExpenseThread
         
 #********************************************************************
 class NewExpenseDialog(wx.Dialog):
@@ -43,10 +44,11 @@ class NewExpenseDialog(wx.Dialog):
         
         #**** ADDED ****
         self.database       = Database()
-        self.userList        = self.database.GetSimpleUserList()
-        self.typeList        = self.database.GetExpenseTypeList()        
-        self.prefs            = self.database.GetPrefs()
+        self.userList       = self.database.GetSimpleUserList()
+        self.typeList       = self.database.GetExpenseTypeList()        
+        self.prefs          = self.database.GetPrefs()
         self.parent         = parent
+        self.eThread        = ExpenseThread()
         #**** END ADD ****
         
         self.CalSizer_staticbox = wx.StaticBox(self, -1, "Expense Date")
@@ -174,6 +176,7 @@ class NewExpenseDialog(wx.Dialog):
         
         # update grid with new row, format new row
         self.parent.grid.tableBase.UpdateData()
+        self.eThread.RunRefreshFuncs()
         
         self.Close()
     
