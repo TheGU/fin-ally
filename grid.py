@@ -34,6 +34,7 @@ from database import Database
 from utils import dateMatch
 from prefs import SaveColumnPreferences
 from colInfo import colInfo
+from threads import ExpenseThread
 
 #********************************************************************        
 class GraphicsGrid(gridlib.Grid):
@@ -65,7 +66,7 @@ class GraphicsGrid(gridlib.Grid):
                              
         self.rowAttr = gridlib.GridCellAttr()                               
         self.FormatTableRows()  
-        self.FormatTableCols()                       
+        self.FormatTableCols()                  
 
         # bind editor creation to an event so we can 'catch' unique editors
         self.Bind(gridlib.EVT_GRID_EDITOR_CREATED,
@@ -256,6 +257,8 @@ class CustomDataTable(gridlib.PyGridTableBase):
         
         if(first):
             self.__class__.parent = parent
+            
+        self.eThread = ExpenseThread()     
     
     #***************************
     # REQUIRED METHODS
@@ -313,7 +316,7 @@ class CustomDataTable(gridlib.PyGridTableBase):
         
         # we want to avoid trying to modify the editor property if we've 
         # just finished working with an editor.
-        self.UpdateData(comboBoxEdit)
+        self.UpdateData(comboBoxEdit) 
             
     #***************************
     # OPTIONAL METHODS
@@ -330,6 +333,8 @@ class CustomDataTable(gridlib.PyGridTableBase):
         self.__class__.previousRowCnt = self.GetNumberRows()
         self.__class__.localData = self.database.GetAllExpenses()
         self.__ResetView(skipEditorRefresh)
+        
+        self.eThread.RunRefreshFuncs()
     
     def GetPrevNumberRows(self):
         return self.__class__.previousRowCnt
