@@ -27,6 +27,8 @@
 import wx
 import wx.grid     as gridlib
 import wx.calendar as callib
+from database import *
+from decimal import *
 
 # The recommended way to use wx with mpl is with the WXAgg
 # backend. 
@@ -50,14 +52,18 @@ class PlotPage(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
         
-        self.data = [5, 6, 9, 14]        
+        self.database = Database()
+        self.data = []    
+        self.labels = []
+        self.sum = 0
+        self.explode = (0, 0.05, 0, 0)  
         self.create_main_panel()
         self.draw_figure()
         
     def create_main_panel(self):
         """Create and configure the 'Figure', which is the top level Artist in mplotlib."""
         # create 5x4 inch Figure (top level Artist)with 100dpi
-        self.fig = Figure((5.0, 4.0), dpi=100)
+        self.fig = Figure((4.5, 4.5), dpi=100)
         # the canvas contains the Figure and performs event handling on the Figure
         self.canvas = FigCanvas(self, -1, self.fig)
         
@@ -73,25 +79,47 @@ class PlotPage(wx.Panel):
         
         # create sizers
         self.vbox = wx.BoxSizer(wx.VERTICAL)
-        self.vbox.Add(self.canvas, 1, wx.LEFT | wx.TOP | wx.GROW)
+        self.vbox.Add(self.canvas, 0, wx.ALIGN_CENTER_HORIZONTAL)
         self.vbox.Add(self.toolbar, 0, wx.EXPAND)
-        self.vbox.AddSpacer(10)
         self.SetSizer(self.vbox)
-        self.vbox.Fit(self)
+
+    def PieSliceValue(self, value):
+        print value
+        return self.sum * Decimal(str(value/100))
 
     def draw_figure(self):
         """redraw the figure!"""
-        x = range(len(self.data))
-
-        self.axes.clear()        
         
-        self.axes.bar(
-            left=x, 
-            height=self.data, 
-            width=1, 
-            align='center', 
-            alpha=0.44,
-            picker=5)
+        # clear and re-load self.data with summations of all like
+        # expense-type expenses
+        self.data = [] # clear self.data
+        self.labels = [] # clear self.labels
+        self.sum = Decimal(0)
+        tempData = self.database.GetAllExpenses()
+        tempDict = {}
+        
+        # iterate through all expenses
+        for i in tempData:
+            # if key already exists - add to sum
+            if tempDict.has_key(i[1]):
+                tempDict[i[1]] = tempDict[i[1]] + Decimal(i[2]) 
+            else: # else create new key/value pair
+                tempDict[i[1]] = Decimal(i[2])
+        
+        # iterate through final dictionary and add values to self.data and self.labels
+        for key, value in tempDict.iteritems():
+            self.data.append(value)
+            self.sum = self.sum + value
+            self.labels.append(key)
+        
+        print self.data
+        print self.labels
+        
+        self.axes.clear()        
+
+        # create the pie chart
+
+        self.axes.pie(self.data, labels=self.labels, autopct=self.PieSliceValue, shadow=True)
         
         self.canvas.draw()
     
