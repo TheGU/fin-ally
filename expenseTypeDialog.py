@@ -164,6 +164,7 @@ class expenseTypeDialog(wx.Dialog):
         
         # create unifying expenseType thread
         self.etThread = ExpenseTypeThread()
+        self.etThread.StoreRefreshFunc(self.ExpTypeDiaDelComboUpdate)
 
     def __set_properties(self):
         # begin wxGlade: expenseTypeDialog.__set_properties
@@ -201,6 +202,11 @@ class expenseTypeDialog(wx.Dialog):
         
     #**** ADDED ****
     
+    def ExpTypeDiaDelComboUpdate(self):
+        self.deleteComboBox.Clear()
+        for i in self.database.GetExpenseTypeList():
+            self.deleteComboBox.Append(i)
+    
     def onAddButton(self, event):
         """triggers when the add button is clicked in the expense type dialog. This function
         determines if conditions are correct for a new expense type entry and creates that type"""
@@ -211,10 +217,6 @@ class expenseTypeDialog(wx.Dialog):
                 # refresh Grid
                 self.expenseTypeGrid.RefreshData()
                 self.dataTable.UpdateData()
-                
-                # refresh comboBox choices and add new entry
-                self.expenseTypeChoices = self.database.GetExpenseTypeList()
-                self.deleteComboBox.Append(localText)
                 
                 # refresh all expenseType dependents
                 self.etThread.RunRefreshFuncs()
@@ -251,9 +253,6 @@ class expenseTypeDialog(wx.Dialog):
                     # remove from Preferences
                     if(self.database.GetPrefs().defExpenseType_id == typeToDelete):
                         self.database.SetDefExpTypePref("")
-                    
-                    # remove from ComboBox
-                    self.deleteComboBox.Delete(self.deleteComboBox.GetSelection())
                     
                     localId = self.database.GetExpenseTypeId(typeToDelete)
                     self.database.DeleteExpenseType(localId)
