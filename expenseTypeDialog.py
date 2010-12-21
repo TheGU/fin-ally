@@ -33,6 +33,8 @@ import os
 from datetime import date, datetime
 from database import *
 from grid import CustomDataTable
+from threads import ExpenseTypeThread
+
 
 #********************************************************************
 class TypeColumnInfo:
@@ -78,6 +80,9 @@ class SimpleTypeGrid(gridlib.Grid):
             
         self.SetColSize(0,100)
         
+        # create unifying expenseType thread
+        self.etThread = ExpenseTypeThread()
+        
     def OnCellChange(self, evt):
         """Using a class variable that stores the previous ExpenseType description,
         this method edits the ExpenseType table in the database"""
@@ -87,6 +92,7 @@ class SimpleTypeGrid(gridlib.Grid):
         etId = self.database.GetExpenseTypeId(self.currentValue)
         self.database.EditExpenseType(value, etId)
         self.dataTable.UpdateData()
+        self.etThread.RunRefreshFuncs()
 
         evt.Skip()
         
@@ -155,6 +161,9 @@ class expenseTypeDialog(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.onAddButton, self.addButton)
         #**** END ADD ****
         # end wxGlade
+        
+        # create unifying expenseType thread
+        self.etThread = ExpenseTypeThread()
 
     def __set_properties(self):
         # begin wxGlade: expenseTypeDialog.__set_properties
@@ -197,18 +206,22 @@ class expenseTypeDialog(wx.Dialog):
         determines if conditions are correct for a new expense type entry and creates that type"""
         localText = self.newExpenseTypeEntry.GetValue()
         if(localText != self.newTypeText):
-            # create new entry
-            success = self.database.CreateExpenseType(localText)
-            # reset text in text entry box
-            self.newExpenseTypeEntry.SetValue(self.newTypeText)
-            # refresh Grid
-            self.expenseTypeGrid.RefreshData()
-            self.dataTable.UpdateData()
-            
-            if success:
+            # if we successfully create a new expenseType...
+            if self.database.CreateExpenseType(localText):
+                # refresh Grid
+                self.expenseTypeGrid.RefreshData()
+                self.dataTable.UpdateData()
+                
                 # refresh comboBox choices and add new entry
                 self.expenseTypeChoices = self.database.GetExpenseTypeList()
                 self.deleteComboBox.Append(localText)
+                
+                # refresh all expenseType dependents
+                self.etThread.RunRefreshFuncs()
+            
+            # reset text in text entry box
+            self.newExpenseTypeEntry.SetValue(self.newTypeText)
+            
         else:
             print "please enter a new expense type description!"
         event.Skip()
@@ -248,6 +261,8 @@ class expenseTypeDialog(wx.Dialog):
                     # refresh Grid with delete option activated
                     self.expenseTypeGrid.RefreshData(delete=1)
                     self.dataTable.UpdateData()
+                    
+                    self.etThread.RunRefreshFuncs()
             else:
                 print "expense %s doesn't seem to exist anymore, close dialog and try again" % (typeToDelete)
         else:
