@@ -41,3 +41,21 @@ class ExpenseTypeThread():
     def RunRefreshFuncs(self):
         for i in self.__class__.refreshFuncList:
             i() # actually execute the function
+            
+class ExpenseThread():
+    """This class supports global Expense updates. It will execute every function
+    present in the class variable refreshFuncList when the method RunRefreshFuncs is
+    called. This class is intended to provide unified updates for all expense
+    components when any modification to the underlying expense objects are made."""
+    
+    refreshFuncList = []
+    
+    def StoreRefreshFunc(self, func):
+        self.__class__.refreshFuncList.append(func)
+        
+    def ClearRefreshFuncList(self):
+        self.__class__.refreshFuncList = []
+        
+    def RunRefreshFuncs(self):
+        for i in self.__class__.refreshFuncList:
+            i() # actually execute the function
