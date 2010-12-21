@@ -29,6 +29,7 @@ import wx.grid     as gridlib
 import wx.calendar as callib
 from database import *
 from decimal import *
+from threads import ExpenseThread
 
 # The recommended way to use wx with mpl is with the WXAgg
 # backend. 
@@ -57,6 +58,11 @@ class PlotPage(wx.Panel):
         self.labels = []
         self.sum = 0
         self.explode = (0, 0.05, 0, 0)  
+        
+        # store thread refresh function 
+        self.eThread = ExpenseThread()
+        self.eThread.StoreRefreshFunc(self.draw_figure)
+        
         self.create_main_panel()
         self.draw_figure()
         
@@ -84,7 +90,6 @@ class PlotPage(wx.Panel):
         self.SetSizer(self.vbox)
 
     def PieSliceValue(self, value):
-        print value
         return self.sum * Decimal(str(value/100))
 
     def draw_figure(self):
@@ -118,7 +123,6 @@ class PlotPage(wx.Panel):
         self.axes.clear()        
 
         # create the pie chart
-
         self.axes.pie(self.data, labels=self.labels, autopct=self.PieSliceValue, shadow=True)
         
         self.canvas.draw()
