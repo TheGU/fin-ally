@@ -60,8 +60,8 @@ class PlotPage(wx.Panel):
         self.explode = (0, 0.05, 0, 0)  
         
         # store thread refresh function 
-        self.eThread = ExpenseThread()
-        self.eThread.StoreRefreshFunc(self.draw_figure)
+        # NOTE: we don't even need to create an ExpenseThread member here
+        ExpenseThread().StoreRefreshFunc(self.draw_figure)
         
         self.create_main_panel()
         self.draw_figure()
@@ -74,7 +74,7 @@ class PlotPage(wx.Panel):
         self.canvas = FigCanvas(self, -1, self.fig)
         
         # create the main axis so that it is a sub-rectangle of the parent window.
-        self.rect = .1,.1,.8,.8 #(left,bottom,width,height)
+        self.rect = .05,.05,.9,.9 #(left,bottom,width,height)
         self.axes = self.fig.add_axes(self.rect)
         
         # Bind the 'pick' event for clicking on one of the bars
@@ -85,12 +85,14 @@ class PlotPage(wx.Panel):
         
         # create sizers
         self.vbox = wx.BoxSizer(wx.VERTICAL)
-        self.vbox.Add(self.canvas, 0, wx.ALIGN_CENTER_HORIZONTAL)
+        self.vbox.Add(self.canvas, 1, wx.ALIGN_CENTER_HORIZONTAL | wx.EXPAND)
         self.vbox.Add(self.toolbar, 0, wx.EXPAND)
         self.SetSizer(self.vbox)
 
     def PieSliceValue(self, value):
-        return self.sum * Decimal(str(value/100))
+        """called by the matplotlib plot function to generate numeric labels
+        for the pie slices. 'value' is passed in as a number between 0 and 100."""
+        return "%.2f" % (self.sum * Decimal(str(value/100)))
 
     def draw_figure(self):
         """redraw the figure!"""
@@ -103,25 +105,28 @@ class PlotPage(wx.Panel):
         tempData = self.database.GetAllExpenses()
         tempDict = {}
         
-        # iterate through all expenses
+        # create the expenseType/amount dictionary
+        # TODO: there has got to be a better way to do this - something more
+        # (groan) Pythonic
         for i in tempData:
-            # if key already exists - add to sum
             if tempDict.has_key(i[1]):
-                tempDict[i[1]] = tempDict[i[1]] + Decimal(i[2]) 
-            else: # else create new key/value pair
-                tempDict[i[1]] = Decimal(i[2])
+                tempDict[i[1]] += Decimal(i[2])
+            else: 
+                tempDict[i[1]]  = Decimal(i[2])
         
-        # iterate through final dictionary and add values to self.data and self.labels
+        # iterate through created dictionary and add values to self.data and self.labels
         for key, value in tempDict.iteritems():
             self.data.append(value)
             self.sum = self.sum + value
             self.labels.append(key)
         
+        # skip this and you'll see pie chart ghosts...
         self.axes.clear()        
 
         # create the pie chart
-        self.axes.pie(self.data, labels=self.labels, autopct=self.PieSliceValue, shadow=True)
+        self.axes.pie(self.data, labels=self.labels, autopct=self.PieSliceValue, labeldistance=1.1)
         
+        # draw the pie chart
         self.canvas.draw()
     
     def on_pick(self, event):
