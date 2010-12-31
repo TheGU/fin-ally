@@ -132,7 +132,7 @@ class GraphicsPage(wx.Panel):
 class AppMainFrame(wx.Frame):
 	"""This class inherts wx.Frame methods, and is the top level window of our application."""
 	
-	size = (900,400)
+	size = (865,750)
 	
 	def __init__(self, title):
 		wx.Frame.__init__(	self,
@@ -185,6 +185,8 @@ class AppMainFrame(wx.Frame):
 		ArtManager.Get().SetRaiseToolbar(False)
 
 		self.menuBar.Refresh()
+		
+		self.SetSizeHints(865,750,3000,3000)
 
 	def SetBackgroundColor(self, colorString):
 		self.SetBackgroundColour(colorString)

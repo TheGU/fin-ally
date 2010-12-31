@@ -56,6 +56,7 @@ class PlotPage(wx.Panel):
         self.database = Database()
         self.data = []    
         self.labels = []
+        self.wedges = []
         self.sum = 0
         self.explode = (0, 0.05, 0, 0)  
         
@@ -66,6 +67,12 @@ class PlotPage(wx.Panel):
         self.create_main_panel()
         self.draw_figure()
         
+    def on_pick(self, event):
+        """Triggered when a section of the plot is clicked. matplotlib.backend_bases.PickEvent"""
+        wedge = event.artist
+        label = wedge.get_label()
+        print wedge, label
+        
     def create_main_panel(self):
         """Create and configure the 'Figure', which is the top level Artist in mplotlib."""
         # create 5x4 inch Figure (top level Artist)with 100dpi
@@ -74,18 +81,19 @@ class PlotPage(wx.Panel):
         self.canvas = FigCanvas(self, -1, self.fig)
         
         # create the main axis so that it is a sub-rectangle of the parent window.
-        self.rect = .05,.05,.9,.9 #(left,bottom,width,height)
+        self.rect = .2, .2, .6, .6
         self.axes = self.fig.add_axes(self.rect)
         
         # Bind the 'pick' event for clicking on one of the bars
         self.canvas.mpl_connect('pick_event', self.on_pick)
+        #self.fig.canvas.mpl_connect('pick_event', self.on_pick)
 
         # Create the navigation toolbar, tied to the canvas
         self.toolbar = NavigationToolbar(self.canvas)
         
         # create sizers
         self.vbox = wx.BoxSizer(wx.VERTICAL)
-        self.vbox.Add(self.canvas, 1, wx.ALIGN_CENTER_HORIZONTAL | wx.EXPAND)
+        self.vbox.Add(self.canvas, 1, wx.ALIGN_LEFT)
         self.vbox.Add(self.toolbar, 0, wx.EXPAND)
         self.SetSizer(self.vbox)
 
@@ -124,14 +132,11 @@ class PlotPage(wx.Panel):
         self.axes.clear()        
 
         # create the pie chart
-        self.axes.pie(self.data, labels=self.labels, autopct=self.PieSliceValue, labeldistance=1.1)
+        self.wedges, self.temp_labels, self.temp_crap = self.axes.pie(self.data, labels=self.labels, autopct=self.PieSliceValue, labeldistance=1.1)
         
+        # set picker status for each new wedge
+        for wedge in self.wedges:
+            wedge.set_picker(True)
+            
         # draw the pie chart
         self.canvas.draw()
-    
-    def on_pick(self, event):
-        """Triggered when a section of the plot is clicked. matplotlib.backend_bases.PickEvent"""
-        
-        box_points = event.artist.get_bbox().get_points()
-        msg = "You've clicked on a bar with coords:\n %s" % box_points
-        print msg
