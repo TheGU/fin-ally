@@ -26,7 +26,6 @@
 
 import wx
 import wx.grid     as gridlib
-import wx.calendar as callib
 from database import *
 from decimal import *
 from threads import ExpenseThread
@@ -41,6 +40,32 @@ from matplotlib.backends.backend_wxagg import \
     FigureCanvasWxAgg as FigCanvas, \
     NavigationToolbar2WxAgg as NavigationToolbar
 
+#********************************************************************
+class SimplePlotGrid(gridlib.Grid):
+    """This is a simple grid class - which means most of the methods are automatically
+    defined by the wx library"""
+    def __init__(self, parent):
+        gridlib.Grid.__init__(self, parent, -1)
+        self.CreateGrid(100,2)
+        
+        self.SetColLabelValue(0,"expense")       
+        self.SetColLabelValue(1,"amount")
+        self.EnableEditing(False)
+        
+        self.data = []
+        
+    def SetData(self, localData):
+        """Clears the grid before re-loading data and refreshing to ensure a repaint"""
+        self.ClearGrid()
+        self.data = localData
+        self.RefreshData()
+        
+    def RefreshData(self):
+        """iterates through local list self.data and loads grid with the data"""
+        for i in range(len(self.data)):
+            self.SetCellValue(i,0,str(self.data[i][0]))
+            self.SetCellValue(i,1,str(self.data[i][1]))
+        
 #********************************************************************    
 class PlotPage(wx.Panel):
     """
@@ -59,6 +84,9 @@ class PlotPage(wx.Panel):
         self.wedges = []
         self.sum = 0
         self.explode = (0, 0.05, 0, 0)  
+    
+        self.database = Database()
+        self.plotGrid = SimplePlotGrid(self)
         
         # store thread refresh function 
         # NOTE: we don't even need to create an ExpenseThread member here
@@ -71,7 +99,13 @@ class PlotPage(wx.Panel):
         """Triggered when a section of the plot is clicked. matplotlib.backend_bases.PickEvent"""
         wedge = event.artist
         label = wedge.get_label()
-        print wedge, label
+        
+        # iterate through all data and grab pertinent expenses
+        tempData = self.database.GetAllExpenses()
+        # for each expense pull out expense description and amount when type matches
+        gridData = [(i[4], i[2]) for i in tempData if i[1]== label]
+        # set data into grid
+        self.plotGrid.SetData(gridData)
         
     def create_main_panel(self):
         """Create and configure the 'Figure', which is the top level Artist in mplotlib."""
@@ -95,7 +129,12 @@ class PlotPage(wx.Panel):
         self.vbox = wx.BoxSizer(wx.VERTICAL)
         self.vbox.Add(self.canvas, 1, wx.ALIGN_LEFT)
         self.vbox.Add(self.toolbar, 0, wx.EXPAND)
-        self.SetSizer(self.vbox)
+        
+        self.hbox = wx.BoxSizer(wx.HORIZONTAL)
+        self.hbox.Add(self.vbox, 0)
+        self.hbox.Add(self.plotGrid, 1, wx.EXPAND)
+        
+        self.SetSizer(self.hbox)
 
     def PieSliceValue(self, value):
         """called by the matplotlib plot function to generate numeric labels
