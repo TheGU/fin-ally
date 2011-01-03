@@ -194,7 +194,7 @@ class AppMainFrame(wx.Frame):
 	def OnQuit(self, event):
 		localSize = self.GetSize()
 		SaveWindowPreferences(localSize[0], localSize[1])
-		self._mgr.UnInit()
+		self._mgr.UnInit(),
 		self.Destroy()  
 		
 	def OnPrefs(self, event):

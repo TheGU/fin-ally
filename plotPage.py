@@ -36,9 +36,15 @@ from threads import ExpenseThread
 import matplotlib
 matplotlib.use('WXAgg')
 from matplotlib.figure import Figure
+from matplotlib.pyplot import legend as Legend
+from matplotlib.font_manager import fontManager, FontProperties
 from matplotlib.backends.backend_wxagg import \
     FigureCanvasWxAgg as FigCanvas, \
     NavigationToolbar2WxAgg as NavigationToolbar
+    
+def dump(obj):
+  for attr in dir(obj):
+    print "obj.%s = %s" % (attr, getattr(obj, attr))
 
 #********************************************************************
 class SimplePlotGrid(gridlib.Grid):
@@ -110,12 +116,13 @@ class PlotPage(wx.Panel):
     def create_main_panel(self):
         """Create and configure the 'Figure', which is the top level Artist in mplotlib."""
         # create 5x4 inch Figure (top level Artist)with 100dpi
-        self.fig = Figure((4.5, 4.5), dpi=100)
+        self.fig = Figure((5.0, 5.0), dpi=100)
+        
         # the canvas contains the Figure and performs event handling on the Figure
         self.canvas = FigCanvas(self, -1, self.fig)
         
         # create the main axis so that it is a sub-rectangle of the parent window.
-        self.rect = .2, .2, .6, .6
+        self.rect = 0, 0, .9, .9
         self.axes = self.fig.add_axes(self.rect)
         
         # Bind the 'pick' event for clicking on one of the bars
@@ -171,7 +178,24 @@ class PlotPage(wx.Panel):
         self.axes.clear()        
 
         # create the pie chart
-        self.wedges, self.temp_labels, self.temp_crap = self.axes.pie(self.data, labels=self.labels, autopct=self.PieSliceValue, labeldistance=1.1)
+        self.wedges, self.temp_labels, self.temp_crap = self.axes.pie(self.data, labels = self.labels, autopct=self.PieSliceValue, labeldistance=10.1)
+        
+        # remove legend elements that are below some threshold and feed the remaining elements to the legend
+#        tempWedges = [] 
+#        tempLabels = []
+#        legend = False
+#        for i in range(len(self.wedges)):
+#            #print self.labels[i], abs(self.wedges[i].theta1 - self.wedges[i].theta2)
+#            if abs(self.wedges[i].theta1 - self.wedges[i].theta2) < 10:
+#                tempWedges.append(self.wedges[i])
+#                tempLabels.append(self.labels[i])
+#                legend= True
+#        
+#        if legend == True:
+#            self.fig.legend(tempWedges, tempLabels)
+        if self.wedges:
+            font = FontProperties(size='x-small');
+            self.fig.legend(self.wedges, self.labels, fancybox = True, prop=font)
         
         # set picker status for each new wedge
         for wedge in self.wedges:
